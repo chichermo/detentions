@@ -6,16 +6,17 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const date = searchParams.get('date');
   
-  const detentions = getDetentions(date || undefined);
+  const detentions = await getDetentions(date || undefined);
   return NextResponse.json(detentions);
 }
 
 export async function POST(request: NextRequest) {
   try {
     const detention: Detention = await request.json();
-    saveDetention(detention);
+    await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error) {
+    console.error('Error saving detention:', error);
     return NextResponse.json(
       { success: false, error: 'Error al guardar detención' },
       { status: 500 }
@@ -35,9 +36,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    deleteDetention(id);
+    await deleteDetention(id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Error deleting detention:', error);
     return NextResponse.json(
       { success: false, error: 'Error al eliminar detención' },
       { status: 500 }

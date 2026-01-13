@@ -38,6 +38,18 @@ npm run dev
 http://localhost:3000
 ```
 
+## Configuración de Base de Datos (Supabase)
+
+Para que los datos se guarden persistentemente, necesitas configurar Supabase:
+
+1. **Crea un proyecto en Supabase** (gratis): [https://supabase.com](https://supabase.com)
+2. **Ejecuta el SQL schema**: Ve a SQL Editor en Supabase y ejecuta el contenido de `supabase/schema.sql`
+3. **Configura las variables de entorno**:
+   - Crea `.env.local` con tus credenciales de Supabase (ver `.env.local.example`)
+   - En Vercel: Settings → Environment Variables → Agrega `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+**Guía completa**: Ver [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
 ## Despliegue en Vercel
 
 ### Opción 1: Despliegue Directo desde GitHub
@@ -45,6 +57,7 @@ http://localhost:3000
 1. Conecta tu repositorio de GitHub a Vercel
 2. Vercel detectará automáticamente Next.js
 3. El despliegue se realizará automáticamente
+4. **Importante**: Configura las variables de entorno de Supabase en Vercel
 
 ### Opción 2: Usar Vercel KV para Persistencia (Recomendado)
 

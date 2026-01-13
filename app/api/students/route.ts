@@ -6,16 +6,17 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const day = searchParams.get('day') as DayOfWeek | null;
   
-  const students = getStudents(day || undefined);
+  const students = await getStudents(day || undefined);
   return NextResponse.json(students);
 }
 
 export async function POST(request: NextRequest) {
   try {
     const student: Student = await request.json();
-    saveStudent(student);
+    await saveStudent(student);
     return NextResponse.json({ success: true, student });
   } catch (error) {
+    console.error('Error saving student:', error);
     return NextResponse.json(
       { success: false, error: 'Error al guardar estudiante' },
       { status: 500 }
@@ -35,9 +36,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    deleteStudent(id);
+    await deleteStudent(id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Error deleting student:', error);
     return NextResponse.json(
       { success: false, error: 'Error al eliminar estudiante' },
       { status: 500 }
