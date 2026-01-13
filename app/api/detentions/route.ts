@@ -1,0 +1,46 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getDetentions, saveDetention, deleteDetention } from '@/lib/data';
+import { Detention } from '@/types';
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const date = searchParams.get('date');
+  
+  const detentions = getDetentions(date || undefined);
+  return NextResponse.json(detentions);
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const detention: Detention = await request.json();
+    saveDetention(detention);
+    return NextResponse.json({ success: true, detention });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: 'Error al guardar detención' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'ID requerido' },
+        { status: 400 }
+      );
+    }
+    
+    deleteDetention(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: 'Error al eliminar detención' },
+      { status: 500 }
+    );
+  }
+}
