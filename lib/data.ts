@@ -2,12 +2,12 @@ import { Student, Detention, DetentionSession, DayOfWeek } from '@/types';
 import { supabase } from './supabase';
 
 // Detectar si Supabase está configurado
-const useSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const useSupabase = supabase !== null;
 
 // Funciones para estudiantes
 export async function getStudents(day?: DayOfWeek): Promise<Student[]> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       let query = supabase.from('students').select('*');
       
       if (day) {
@@ -39,7 +39,7 @@ export async function getStudents(day?: DayOfWeek): Promise<Student[]> {
 
 export async function saveStudent(student: Student): Promise<void> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       const { error } = await supabase
         .from('students')
         .upsert({
@@ -56,7 +56,7 @@ export async function saveStudent(student: Student): Promise<void> {
         throw error;
       }
     } else {
-      throw new Error('Supabase not configured');
+      throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }
   } catch (error) {
     console.error('Error in saveStudent:', error);
@@ -66,7 +66,7 @@ export async function saveStudent(student: Student): Promise<void> {
 
 export async function deleteStudent(id: string): Promise<void> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       const { error } = await supabase
         .from('students')
         .delete()
@@ -77,7 +77,7 @@ export async function deleteStudent(id: string): Promise<void> {
         throw error;
       }
     } else {
-      throw new Error('Supabase not configured');
+      throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }
   } catch (error) {
     console.error('Error in deleteStudent:', error);
@@ -88,7 +88,7 @@ export async function deleteStudent(id: string): Promise<void> {
 // Funciones para detenciones
 export async function getDetentions(date?: string): Promise<Detention[]> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       let query = supabase.from('detentions').select('*');
       
       if (date) {
@@ -128,7 +128,7 @@ export async function getDetentions(date?: string): Promise<Detention[]> {
 
 export async function getDetentionsByDateRange(startDate: string, endDate: string): Promise<Detention[]> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       const { data, error } = await supabase
         .from('detentions')
         .select('*')
@@ -166,7 +166,7 @@ export async function getDetentionsByDateRange(startDate: string, endDate: strin
 
 export async function saveDetention(detention: Detention): Promise<void> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       const { error } = await supabase
         .from('detentions')
         .upsert({
@@ -191,7 +191,7 @@ export async function saveDetention(detention: Detention): Promise<void> {
         throw error;
       }
     } else {
-      throw new Error('Supabase not configured');
+      throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }
   } catch (error) {
     console.error('Error in saveDetention:', error);
@@ -201,7 +201,7 @@ export async function saveDetention(detention: Detention): Promise<void> {
 
 export async function deleteDetention(id: string): Promise<void> {
   try {
-    if (useSupabase) {
+    if (useSupabase && supabase) {
       const { error } = await supabase
         .from('detentions')
         .delete()
@@ -212,7 +212,7 @@ export async function deleteDetention(id: string): Promise<void> {
         throw error;
       }
     } else {
-      throw new Error('Supabase not configured');
+      throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }
   } catch (error) {
     console.error('Error in deleteDetention:', error);
