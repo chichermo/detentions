@@ -69,6 +69,22 @@ export default function DetentionSessionPage() {
     }
   };
 
+  const handleReorder = async (reorderedDetentions: Detention[]) => {
+    try {
+      // Update all detentions with new numbers
+      for (const detention of reorderedDetentions) {
+        await fetch('/api/detentions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(detention),
+        });
+      }
+      fetchDetentions();
+    } catch (error) {
+      console.error('Error reordering detentions:', error);
+    }
+  };
+
   const handleEdit = (detention: Detention) => {
     setEditingId(detention.id);
     // Extraer solo el nombre del estudiante (sin el grado)
