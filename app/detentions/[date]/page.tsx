@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy } from 'lucide-react';
+import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History } from 'lucide-react';
 import DuplicateSession from '@/app/components/DuplicateSession';
+import DragDropDetentions from '@/app/components/DragDropDetentions';
+import AuditHistory from '@/app/components/AuditHistory';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -20,6 +22,10 @@ export default function DetentionSessionPage() {
   const [editingDetention, setEditingDetention] = useState<Partial<Detention> | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newDetention, setNewDetention] = useState<Partial<Detention> | null>(null);
+  const [showAuditHistory, setShowAuditHistory] = useState(false);
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const [showAuditHistory, setShowAuditHistory] = useState(false);
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDetentions();
@@ -268,14 +274,20 @@ export default function DetentionSessionPage() {
             </button>
           </div>
         ) : (
-          <div className="card overflow-hidden print:shadow-none">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-700">
-                <thead className="bg-slate-800/50 print:bg-slate-800">
-                  <tr>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16">
-                      #
-                    </th>
+          <>
+            <DragDropDetentions
+              detentions={detentions}
+              onReorder={handleReorder}
+            >
+              {(detention, index, isDragging) => (
+                <div className="card overflow-hidden print:shadow-none">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-700">
+                      <thead className="bg-slate-800/50 print:bg-slate-800">
+                        <tr>
+                          <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16">
+                            #
+                          </th>
                     <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
                       Leerling
                     </th>
@@ -374,6 +386,16 @@ export default function DetentionSessionPage() {
                           <td className="px-4 py-4 whitespace-nowrap text-right print:hidden">
                             <div className="flex justify-end gap-2">
                               <button
+                                onClick={() => {
+                                  setSelectedRecordId(detention.id);
+                                  setShowAuditHistory(true);
+                                }}
+                                className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-500/20 rounded-lg transition-all"
+                                title="Geschiedenis"
+                              >
+                                <History className="h-5 w-5" />
+                              </button>
+                              <button
                                 onClick={() => handleEdit(detention)}
                                 className="text-indigo-400 hover:text-indigo-300 p-2 hover:bg-indigo-500/20 rounded-lg transition-all"
                                 title="Bewerken"
@@ -397,6 +419,29 @@ export default function DetentionSessionPage() {
               </table>
             </div>
           </div>
+              )}
+            </DragDropDetentions>
+
+            {showAuditHistory && selectedRecordId && (
+              <div className="mt-6">
+                <AuditHistory
+                  tableName="detentions"
+                  recordId={selectedRecordId}
+                />
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setShowAuditHistory(false);
+                      setSelectedRecordId(null);
+                    }}
+                    className="btn-secondary"
+                  >
+                    Sluiten
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
