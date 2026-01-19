@@ -12,20 +12,28 @@ async function loadAutoTablePlugin(): Promise<void> {
   if (autoTablePlugin) return;
   if (loadingPromise) return loadingPromise;
 
-  loadingPromise = new Promise((resolve, reject) => {
+  loadingPromise = new Promise(async (resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('Cannot load jspdf-autotable on server'));
       return;
     }
 
     try {
-      // @ts-ignore
-      require('jspdf-autotable');
+      // Usar importación dinámica para cargar el plugin
+      await import('jspdf-autotable');
       autoTablePlugin = true;
       resolve();
     } catch (error) {
       console.error('Error loading jspdf-autotable:', error);
-      reject(error);
+      // Intentar con require como fallback
+      try {
+        // @ts-ignore
+        require('jspdf-autotable');
+        autoTablePlugin = true;
+        resolve();
+      } catch (requireError) {
+        reject(requireError);
+      }
     }
   });
 
