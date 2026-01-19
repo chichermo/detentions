@@ -28,6 +28,19 @@ const nextConfig = {
       },
     ];
   },
+  // Configuración para webpack - asegurar que jspdf-autotable se incluya
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Asegurar que jspdf-autotable se resuelva correctamente en el cliente
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;

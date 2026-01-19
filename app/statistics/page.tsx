@@ -151,6 +151,17 @@ export default function StatisticsPage() {
   // Exportar a PDF
   const exportToPDF = async () => {
     try {
+      // Asegurar que el módulo esté cargado antes de crear el PDF
+      if (typeof window !== 'undefined') {
+        try {
+          await import('jspdf-autotable');
+          // Esperar a que se registre
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (err) {
+          console.warn('No se pudo precargar jspdf-autotable:', err);
+        }
+      }
+
       const doc = await createPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
