@@ -444,6 +444,7 @@ export default function DetentionSessionPage() {
               </table>
             </div>
           </div>
+        )}
 
         {showAuditHistory && selectedRecordId && (
           <div className="mt-6 space-y-6">
