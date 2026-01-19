@@ -8,11 +8,17 @@ import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isW
 import nl from 'date-fns/locale/nl';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
-// Importar autoTable como función
-import autoTable from 'jspdf-autotable';
+// Importar jspdf-autotable - debe importarse después de jsPDF
+// @ts-ignore
+import 'jspdf-autotable';
+
+// autoTable se agrega al prototipo de jsPDF, así que lo usamos directamente
+const autoTable = (doc: jsPDF, options: any) => {
+  // @ts-ignore
+  return (doc as any).autoTable(options);
+};
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
