@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, Users, Plus, Search, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, Users, Plus, Search, Clock, ArrowRight, BarChart3 } from 'lucide-react';
 import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -116,6 +116,28 @@ export default function Home() {
                   Bekijk alle nablijven sessies
                 </p>
                 <div className="mt-3 flex items-center text-purple-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span>Bekijken</span>
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/statistics"
+            className="card-hover p-6 group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-start gap-4">
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
+                <BarChart3 className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Statistieken</h2>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Analyse en rapporten met export
+                </p>
+                <div className="mt-3 flex items-center text-orange-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                   <span>Bekijken</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </div>

@@ -125,6 +125,7 @@ Esto importará los estudiantes y las detenciones a los archivos JSON locales.
 
 ## Notas de Despliegue
 
-- En Vercel, los datos se almacenan en memoria (se pierden al reiniciar)
-- Para producción, configura Vercel KV o una base de datos externa
+- **Con Supabase**: Los datos se guardan persistentemente en la base de datos
+- **Sin Supabase**: Los datos se almacenan en memoria (se pierden al reiniciar)
 - Los archivos JSON solo funcionan en desarrollo local
+- Para producción, **configura Supabase** siguiendo [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)

@@ -12,7 +12,13 @@ export default function NewDetentionPage() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>('MAANDAG');
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [date, setDate] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('date') || format(new Date(), 'yyyy-MM-dd');
+    }
+    return format(new Date(), 'yyyy-MM-dd');
+  });
   const [detentions, setDetentions] = useState<Partial<Detention>[]>([]);
 
   useEffect(() => {

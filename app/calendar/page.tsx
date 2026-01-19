@@ -163,6 +163,27 @@ export default function CalendarPage() {
           </div>
         </div>
 
+        {/* Selected Date Info */}
+        {selectedDate && !sessions.find(s => s.date === selectedDate) && (
+          <div className="card p-8 mb-8">
+            <h2 className="section-title mb-4">
+              {format(parseISO(selectedDate), "EEEE d MMMM yyyy", { locale: nl })}
+            </h2>
+            <div className="text-center py-10">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-2xl mb-5 border border-slate-700">
+                <CalendarIcon className="h-10 w-10 text-slate-500" />
+              </div>
+              <p className="text-slate-400 font-medium mb-4">Geen nablijven sessie geregistreerd voor deze datum.</p>
+              <button
+                onClick={() => router.push(`/detentions/new?date=${selectedDate}`)}
+                className="btn-primary"
+              >
+                Nieuwe Sessie Aanmaken
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sessions List */}
         <div className="card p-8">
           <h2 className="section-title mb-8">
@@ -188,7 +209,10 @@ export default function CalendarPage() {
                 .map((session) => (
                   <button
                     key={session.date}
-                    onClick={() => router.push(`/detentions/${session.date}`)}
+                    onClick={() => {
+                      setSelectedDate(null);
+                      router.push(`/detentions/${session.date}`);
+                    }}
                     className="w-full text-left border border-slate-700 rounded-xl p-5 hover:bg-slate-700/50 hover:border-indigo-500/50 hover:shadow-lg transition-all duration-200 group"
                   >
                     <div className="flex items-center justify-between">
