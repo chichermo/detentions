@@ -11,11 +11,17 @@ import PeriodComparison from '@/app/components/PeriodComparison';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 
-// Importar jspdf-autotable al inicio para que esté disponible
-if (typeof window !== 'undefined') {
-  import('jspdf-autotable').catch(err => {
-    console.warn('Could not preload jspdf-autotable:', err);
-  });
+// Precargar jspdf-autotable cuando el componente se monte
+let autotablePreloaded = false;
+if (typeof window !== 'undefined' && !autotablePreloaded) {
+  import('jspdf-autotable')
+    .then(() => {
+      autotablePreloaded = true;
+      console.log('jspdf-autotable precargado correctamente');
+    })
+    .catch(err => {
+      console.warn('No se pudo precargar jspdf-autotable:', err);
+    });
 }
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
@@ -27,6 +33,22 @@ export default function StatisticsPage() {
   const [detentions, setDetentions] = useState<Detention[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [filterType, setFilterType] = useState<FilterType>('month');
+  const [pdfReady, setPdfReady] = useState(false);
+
+  // Precargar jspdf-autotable cuando el componente se monte
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('jspdf-autotable')
+        .then(() => {
+          setPdfReady(true);
+          console.log('jspdf-autotable listo para usar');
+        })
+        .catch(err => {
+          console.error('Error precargando jspdf-autotable:', err);
+          setPdfReady(false);
+        });
+    }
+  }, []);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -484,7 +506,9 @@ export default function StatisticsPage() {
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={exportToPDF}
-                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
+                disabled={!pdfReady}
+                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!pdfReady ? 'Cargando módulo PDF...' : 'Exporteer naar PDF'}
               >
                 <FileText className="h-4 w-4" />
                 <span className="hidden sm:inline">Exporteer PDF</span>
