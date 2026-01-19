@@ -10,29 +10,45 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
-// Importar jspdf-autotable - se debe importar después de jsPDF
-// En Next.js, necesitamos importarlo de forma que funcione en el cliente
-if (typeof window !== 'undefined') {
-  // @ts-ignore
-  require('jspdf-autotable');
-}
+// Importar jspdf-autotable dinámicamente solo en el cliente
+let autoTableLoaded = false;
 
-// Función wrapper para autoTable que usa el método extendido
+const loadAutoTable = () => {
+  if (typeof window === 'undefined') return;
+  if (autoTableLoaded) return;
+  
+  try {
+    // @ts-ignore
+    require('jspdf-autotable');
+    autoTableLoaded = true;
+  } catch (e) {
+    console.error('Error loading jspdf-autotable:', e);
+  }
+};
+
+// Función wrapper para autoTable
 const autoTable = (doc: jsPDF, options: any) => {
+  // Cargar el plugin si no está cargado
+  loadAutoTable();
+  
   // @ts-ignore - autoTable se agrega al prototipo de jsPDF por jspdf-autotable
   if (typeof (doc as any).autoTable === 'function') {
     // @ts-ignore
     return (doc as any).autoTable(options);
-  } else {
-    // Si no está disponible, intentar cargarlo
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      require('jspdf-autotable');
+  }
+  
+  // Si aún no está disponible, intentar cargar de nuevo
+  if (typeof window !== 'undefined') {
+    // @ts-ignore
+    const autotable = require('jspdf-autotable');
+    // @ts-ignore
+    if (typeof (doc as any).autoTable === 'function') {
       // @ts-ignore
       return (doc as any).autoTable(options);
     }
-    throw new Error('jspdf-autotable no está disponible');
   }
+  
+  throw new Error('jspdf-autotable no está disponible. Por favor, recarga la página.');
 };
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
@@ -158,6 +174,11 @@ export default function StatisticsPage() {
 
   // Exportar a PDF
   const exportToPDF = () => {
+    // Asegurar que autoTable esté cargado antes de crear el PDF
+    if (typeof window !== 'undefined') {
+      loadAutoTable();
+    }
+    
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();

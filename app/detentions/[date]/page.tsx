@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X } from 'lucide-react';
+import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy } from 'lucide-react';
+import DuplicateSession from '@/app/components/DuplicateSession';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';

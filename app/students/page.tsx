@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Edit, ArrowLeft, Users, Check } from 'lucide-react';
+import { Plus, Trash2, Edit, ArrowLeft, Users, Check, Upload } from 'lucide-react';
 import { Student, DayOfWeek } from '@/types';
+import AdvancedSearch, { SearchFilters } from '@/app/components/AdvancedSearch';
+import EnhancedTable from '@/app/components/EnhancedTable';
+import MassImport from '@/app/components/MassImport';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
 
@@ -14,6 +17,8 @@ export default function StudentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ name: '', grade: '' });
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({ text: '' });
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -27,6 +32,33 @@ export default function StudentsPage() {
     } catch (error) {
       console.error('Error fetching students:', error);
     }
+  };
+
+  const getFilteredStudents = () => {
+    let filtered = students;
+
+    if (searchFilters.text) {
+      const term = searchFilters.text.toLowerCase();
+      filtered = filtered.filter(s =>
+        s.name.toLowerCase().includes(term) ||
+        s.grade?.toLowerCase().includes(term)
+      );
+    }
+
+    if (searchFilters.student) {
+      const term = searchFilters.student.toLowerCase();
+      filtered = filtered.filter(s => s.name.toLowerCase().includes(term));
+    }
+
+    return filtered;
+  };
+
+  const filteredStudents = getFilteredStudents();
+
+  const handleImportStudents = async (importedStudents: Student[]) => {
+    // Los estudiantes ya se importaron en el componente MassImport
+    await fetchStudents();
+    setShowImport(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,6 +127,32 @@ export default function StudentsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Import Button */}
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={() => setShowImport(!showImport)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Upload className="h-5 w-5" />
+            {showImport ? 'Verberg Import' : 'Massa Import'}
+          </button>
+        </div>
+
+        {showImport && (
+          <div className="mb-6">
+            <MassImport
+              type="students"
+              onImportStudents={handleImportStudents}
+            />
+          </div>
+        )}
+
+        {/* Advanced Search */}
+        <AdvancedSearch
+          onSearch={setSearchFilters}
+          placeholder="Zoek leerlingen..."
+        />
+
         {/* Day Selector */}
         <div className="mb-8 flex gap-3">
           {DAYS.map((day) => (
