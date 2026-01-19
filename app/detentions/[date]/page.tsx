@@ -49,13 +49,17 @@ export default function DetentionSessionPage() {
   };
 
   useEffect(() => {
-    fetchDetentions();
+    if (date) {
+      fetchDetentions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
   useEffect(() => {
     if (detentions.length > 0) {
       fetchStudents(detentions[0].dayOfWeek);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detentions]);
 
   const handleDelete = async (id: string) => {
