@@ -525,7 +525,7 @@ export default function StatisticsPage() {
           )}
         </div>
 
-        {/* Tabla Completa de Detenciones */}
+        {/* Tabla Completa de Nablijven */}
         <div className="card p-6">
           <h3 className="text-lg font-bold text-slate-100 mb-4">Alle Nablijven ({filteredDetentions.length})</h3>
           <div className="overflow-x-auto">
