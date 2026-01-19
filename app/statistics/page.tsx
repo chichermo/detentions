@@ -10,28 +10,28 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
-// Importar jspdf-autotable dinámicamente
-// @ts-ignore
-let autoTableLoaded = false;
-
-const loadAutoTable = () => {
-  if (!autoTableLoaded && typeof window !== 'undefined') {
-    // @ts-ignore
-    require('jspdf-autotable');
-    autoTableLoaded = true;
-  }
-};
-
-// Función wrapper para autoTable
-const autoTable = (doc: jsPDF, options: any) => {
-  loadAutoTable();
+// Importar jspdf-autotable - se debe importar después de jsPDF
+// En Next.js, necesitamos importarlo de forma que funcione en el cliente
+if (typeof window !== 'undefined') {
   // @ts-ignore
+  require('jspdf-autotable');
+}
+
+// Función wrapper para autoTable que usa el método extendido
+const autoTable = (doc: jsPDF, options: any) => {
+  // @ts-ignore - autoTable se agrega al prototipo de jsPDF por jspdf-autotable
   if (typeof (doc as any).autoTable === 'function') {
     // @ts-ignore
     return (doc as any).autoTable(options);
   } else {
-    console.error('jspdf-autotable no está disponible');
-    throw new Error('jspdf-autotable no está cargado correctamente');
+    // Si no está disponible, intentar cargarlo
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      require('jspdf-autotable');
+      // @ts-ignore
+      return (doc as any).autoTable(options);
+    }
+    throw new Error('jspdf-autotable no está disponible');
   }
 };
 
