@@ -136,72 +136,261 @@ export default function StatisticsPage() {
   const exportToPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    let yPos = margin;
     
-    // Título
-    doc.setFontSize(20);
-    doc.text('Nablijven Statistieken', pageWidth / 2, 20, { align: 'center' });
+    // Función para agregar nueva página si es necesario
+    const checkPageBreak = (requiredSpace: number) => {
+      if (yPos + requiredSpace > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin;
+        return true;
+      }
+      return false;
+    };
     
-    // Período
+    // Título principal
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Nablijven Statistieken Rapport', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 10;
+    
+    // Fecha de generación
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gegenereerd op: ${format(new Date(), 'dd MMMM yyyy, HH:mm', { locale: nl })}`, pageWidth / 2, yPos, { align: 'center' });
+    yPos += 8;
+    
+    // Período analizado
     doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
     let periodText = '';
     switch (filterType) {
       case 'day':
-        periodText = `Dag: ${format(parseISO(selectedDate), 'dd MMMM yyyy', { locale: nl })}`;
+        periodText = `Geanalyseerde Dag: ${format(parseISO(selectedDate), 'dd MMMM yyyy', { locale: nl })}`;
         break;
       case 'month':
-        periodText = `Maand: ${format(parse(selectedMonth + '-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: nl })}`;
+        periodText = `Geanalyseerde Maand: ${format(parse(selectedMonth + '-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: nl })}`;
         break;
       case 'year':
-        periodText = `Jaar: ${selectedYear}`;
+        periodText = `Geanalyseerd Jaar: ${selectedYear}`;
         break;
       case 'custom':
-        periodText = `Periode: ${format(parseISO(customStartDate), 'dd MMM yyyy', { locale: nl })} - ${format(parseISO(customEndDate), 'dd MMM yyyy', { locale: nl })}`;
+        periodText = `Geanalyseerde Periode: ${format(parseISO(customStartDate), 'dd MMMM yyyy', { locale: nl })} tot ${format(parseISO(customEndDate), 'dd MMMM yyyy', { locale: nl })}`;
         break;
     }
-    doc.text(periodText, pageWidth / 2, 30, { align: 'center' });
-    
-    let yPos = 45;
-    
-    // Resumen
-    doc.setFontSize(14);
-    doc.text('Resumen', 14, yPos);
-    yPos += 10;
-    
-    doc.setFontSize(10);
-    doc.text(`Total nablijven: ${stats.total}`, 14, yPos);
-    yPos += 7;
-    doc.text(`Met chromebook: ${stats.withChromebook}`, 14, yPos);
-    yPos += 7;
-    doc.text(`Te printen: ${stats.toPrint}`, 14, yPos);
+    doc.text(periodText, pageWidth / 2, yPos, { align: 'center' });
     yPos += 15;
     
-    // Tabla de nablijven
-    if (filteredDetentions.length > 0) {
-      doc.setFontSize(14);
-      doc.text('Nablijven', 14, yPos);
+    // Línea separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+    
+    // ========== SECCIÓN 1: OVERZICHT (RESUMEN) ==========
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('1. Overzicht', margin, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    
+    // Estadísticas principales en una tabla visual
+    const summaryData = [
+      ['Totaal aantal nablijven', stats.total.toString()],
+      ['Met chromebook toegang', stats.withChromebook.toString()],
+      ['Te printen', stats.toPrint.toString()],
+      ['Zonder chromebook', (stats.total - stats.withChromebook).toString()],
+      ['Percentage met chromebook', stats.total > 0 ? ((stats.withChromebook / stats.total) * 100).toFixed(1) + '%' : '0%'],
+    ];
+    
+    (doc as any).autoTable({
+      startY: yPos,
+      head: [['Statistiek', 'Waarde']],
+      body: summaryData,
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
+      columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' } },
+      margin: { left: margin, right: margin },
+    });
+    
+    yPos = (doc as any).lastAutoTable.finalY + 15;
+    checkPageBreak(50);
+    
+    // ========== SECCIÓN 2: VERDELING PER DAG ==========
+    if (dayChartData.length > 0) {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('2. Verdeling per Dag van de Week', margin, yPos);
       yPos += 10;
       
-      const tableData = filteredDetentions.map(d => [
+      const dayTableData = dayChartData.map(day => [day.name, day.count.toString()]);
+      dayTableData.push(['TOTAAL', stats.total.toString()]);
+      
+      (doc as any).autoTable({
+        startY: yPos,
+        head: [['Dag', 'Aantal Nablijven']],
+        body: dayTableData,
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: { 
+          0: { fontStyle: 'bold' }, 
+          1: { halign: 'right' }
+        },
+        margin: { left: margin, right: margin },
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+      checkPageBreak(50);
+    }
+    
+    // ========== SECCIÓN 3: TOP 10 LEERLINGEN ==========
+    if (topStudents.length > 0) {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('3. Top 10 Leerlingen met Meeste Nablijven', margin, yPos);
+      yPos += 10;
+      
+      const studentsTableData = topStudents.map((s, idx) => [
+        (idx + 1).toString(),
+        s.name,
+        s.count.toString()
+      ]);
+      
+      (doc as any).autoTable({
+        startY: yPos,
+        head: [['#', 'Leerling', 'Aantal']],
+        body: studentsTableData,
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: { 
+          0: { halign: 'center', cellWidth: 15 }, 
+          1: { fontStyle: 'bold' },
+          2: { halign: 'right' }
+        },
+        margin: { left: margin, right: margin },
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+      checkPageBreak(50);
+    }
+    
+    // ========== SECCIÓN 4: TOP 10 LEERKRACHTEN ==========
+    if (topTeachers.length > 0) {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('4. Top 10 Leerkrachten met Meeste Nablijven', margin, yPos);
+      yPos += 10;
+      
+      const teachersTableData = topTeachers.map((t, idx) => [
+        (idx + 1).toString(),
+        t.name,
+        t.count.toString()
+      ]);
+      
+      (doc as any).autoTable({
+        startY: yPos,
+        head: [['#', 'Leerkracht', 'Aantal']],
+        body: teachersTableData,
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: { 
+          0: { halign: 'center', cellWidth: 15 }, 
+          1: { fontStyle: 'bold' },
+          2: { halign: 'right' }
+        },
+        margin: { left: margin, right: margin },
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+      checkPageBreak(50);
+    }
+    
+    // ========== SECCIÓN 5: TOP 10 REDENEN ==========
+    if (topReasons.length > 0) {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('5. Top 10 Meest Voorkomende Redenen', margin, yPos);
+      yPos += 10;
+      
+      const reasonsTableData = topReasons.map((r, idx) => [
+        (idx + 1).toString(),
+        r.name.length > 50 ? r.name.substring(0, 47) + '...' : r.name,
+        r.count.toString()
+      ]);
+      
+      (doc as any).autoTable({
+        startY: yPos,
+        head: [['#', 'Reden', 'Aantal']],
+        body: reasonsTableData,
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [239, 68, 68], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: { 
+          0: { halign: 'center', cellWidth: 15 }, 
+          1: { cellWidth: 'auto' },
+          2: { halign: 'right' }
+        },
+        margin: { left: margin, right: margin },
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+      checkPageBreak(50);
+    }
+    
+    // ========== SECCIÓN 6: GEDETAILLEERDE LIJST ==========
+    if (filteredDetentions.length > 0) {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('6. Gedetailleerde Lijst van Alle Nablijven', margin, yPos);
+      yPos += 10;
+      
+      const detailedTableData = filteredDetentions.map(d => [
         d.number.toString(),
         format(parseISO(d.date), 'dd/MM/yyyy'),
-        d.student,
-        d.teacher || '',
-        d.reason || '',
+        d.dayOfWeek,
+        d.student.length > 30 ? d.student.substring(0, 27) + '...' : d.student,
+        (d.teacher || '-').length > 20 ? (d.teacher || '-').substring(0, 17) + '...' : (d.teacher || '-'),
+        (d.reason || '-').length > 25 ? (d.reason || '-').substring(0, 22) + '...' : (d.reason || '-'),
         d.shouldPrint ? 'Ja' : 'Nee',
         d.canUseChromebook ? 'Ja' : 'Nee'
       ]);
       
       (doc as any).autoTable({
         startY: yPos,
-        head: [['#', 'Datum', 'Leerling', 'Leerkracht', 'Reden', 'Print', 'Chromebook']],
-        body: tableData,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [139, 92, 246] },
-        margin: { top: yPos }
+        head: [['#', 'Datum', 'Dag', 'Leerling', 'Leerkracht', 'Reden', 'Print', 'Chromebook']],
+        body: detailedTableData,
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        headStyles: { fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 12 },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 40 },
+          4: { cellWidth: 30 },
+          5: { cellWidth: 35 },
+          6: { halign: 'center', cellWidth: 15 },
+          7: { halign: 'center', cellWidth: 20 }
+        },
+        margin: { left: margin, right: margin },
+        alternateRowStyles: { fillColor: [249, 250, 251] },
       });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 10;
     }
     
-    doc.save(`nablijven-statistieken-${filterType}-${Date.now()}.pdf`);
+    // ========== NOTA FINAL ==========
+    checkPageBreak(20);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(128, 128, 128);
+    doc.text('Dit rapport is automatisch gegenereerd door het Nablijven Systeem.', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 5;
+    doc.text(`Totaal aantal pagina's: ${doc.getNumberOfPages()}`, pageWidth / 2, yPos, { align: 'center' });
+    
+    // Guardar PDF
+    doc.save(`nablijven-rapport-${filterType}-${Date.now()}.pdf`);
   };
 
   // Exportar a Excel
