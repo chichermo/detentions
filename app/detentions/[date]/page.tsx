@@ -6,6 +6,7 @@ import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History, GripVe
 import DuplicateSession from '@/app/components/DuplicateSession';
 import DragDropDetentions from '@/app/components/DragDropDetentions';
 import AuditHistory from '@/app/components/AuditHistory';
+import FileAttachment from '@/app/components/FileAttachment';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';

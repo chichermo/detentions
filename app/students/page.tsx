@@ -7,6 +7,8 @@ import { Student, DayOfWeek } from '@/types';
 import AdvancedSearch, { SearchFilters } from '@/app/components/AdvancedSearch';
 import EnhancedTable from '@/app/components/EnhancedTable';
 import MassImport from '@/app/components/MassImport';
+import SmartschoolImport from '@/app/components/SmartschoolImport';
+import FileAttachment from '@/app/components/FileAttachment';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
 
@@ -139,7 +141,10 @@ export default function StudentsPage() {
         </div>
 
         {showImport && (
-          <div className="mb-6">
+          <div className="mb-6 space-y-4">
+            <SmartschoolImport
+              onImport={handleImportStudents}
+            />
             <MassImport
               type="students"
               onImportStudents={handleImportStudents}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, Users, Plus, Search, Clock, ArrowRight, BarChart3, LayoutDashboard } from 'lucide-react';
+import { Calendar, Users, Plus, Search, Clock, ArrowRight, BarChart3, LayoutDashboard, Download } from 'lucide-react';
 import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
