@@ -175,10 +175,10 @@ export default function StatisticsPage() {
     doc.text(`Te printen: ${stats.toPrint}`, 14, yPos);
     yPos += 15;
     
-    // Tabla de detenciones
+    // Tabla de nablijven
     if (filteredDetentions.length > 0) {
       doc.setFontSize(14);
-      doc.text('Detenciones', 14, yPos);
+      doc.text('Nablijven', 14, yPos);
       yPos += 10;
       
       const tableData = filteredDetentions.map(d => [
@@ -233,7 +233,7 @@ export default function StatisticsPage() {
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumen');
     
-    // Hoja 2: Detenciones
+    // Hoja 2: Nablijven
     const detentionsData = [
       ['#', 'Datum', 'Dag', 'Leerling', 'Leerkracht', 'Reden', 'Opdracht', 'LVS Datum', 'Print', 'Chromebook', 'Opmerkingen'],
       ...filteredDetentions.map(d => [
@@ -252,7 +252,7 @@ export default function StatisticsPage() {
     ];
     
     const detentionsSheet = XLSX.utils.aoa_to_sheet(detentionsData);
-    XLSX.utils.book_append_sheet(workbook, detentionsSheet, 'Detenciones');
+    XLSX.utils.book_append_sheet(workbook, detentionsSheet, 'Nablijven');
     
     XLSX.writeFile(workbook, `nablijven-statistieken-${filterType}-${Date.now()}.xlsx`);
   };
@@ -527,7 +527,7 @@ export default function StatisticsPage() {
 
         {/* Tabla Completa de Detenciones */}
         <div className="card p-6">
-          <h3 className="text-lg font-bold text-slate-100 mb-4">Alle Detenciones ({filteredDetentions.length})</h3>
+          <h3 className="text-lg font-bold text-slate-100 mb-4">Alle Nablijven ({filteredDetentions.length})</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -545,7 +545,7 @@ export default function StatisticsPage() {
                 {filteredDetentions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-slate-400">
-                      Geen detenciones gevonden voor de geselecteerde periode.
+                      Geen nablijven gevonden voor de geselecteerde periode.
                     </td>
                   </tr>
                 ) : (
