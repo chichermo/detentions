@@ -7,6 +7,7 @@ import { Detention, Student } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import PeriodComparison from '@/app/components/PeriodComparison';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 
@@ -666,6 +667,11 @@ export default function StatisticsPage() {
               </ResponsiveContainer>
             </div>
           )}
+        </div>
+
+        {/* Period Comparison */}
+        <div className="mb-8">
+          <PeriodComparison detentions={detentions} />
         </div>
 
         {/* Tablas de Datos */}
