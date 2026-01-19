@@ -449,54 +449,56 @@ export default function StatisticsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={() => router.push('/')}
                 className="btn-ghost p-2"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg shadow-purple-500/30">
-                  <BarChart3 className="h-5 w-5 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg shadow-purple-500/30">
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Statistieken</h1>
-                  <p className="text-slate-400 text-sm mt-1">Analyse en rapporten van nablijven</p>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight">Statistieken</h1>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-1 hidden sm:block">Analyse en rapporten van nablijven</p>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={exportToPDF}
-                className="btn-secondary flex items-center gap-2"
+                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
               >
                 <FileText className="h-4 w-4" />
-                Exporteer PDF
+                <span className="hidden sm:inline">Exporteer PDF</span>
+                <span className="sm:hidden">PDF</span>
               </button>
               <button
                 onClick={exportToExcel}
-                className="btn-secondary flex items-center gap-2"
+                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                Exporteer Excel
+                <span className="hidden sm:inline">Exporteer Excel</span>
+                <span className="sm:hidden">Excel</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Filtros */}
-        <div className="card p-8 mb-8">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="card p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Filter className="h-5 w-5 text-indigo-400" />
-            <h2 className="section-title">Filters</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">Filters</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
             <button
               onClick={() => setFilterType('day')}
               className={`btn ${filterType === 'day' ? 'btn-primary' : 'btn-secondary'}`}

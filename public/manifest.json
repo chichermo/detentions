@@ -1,0 +1,49 @@
+{
+  "name": "Nablijven Systeem",
+  "short_name": "Nablijven",
+  "description": "Systeem voor het beheren van nablijven op school",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nieuwe Nablijven",
+      "short_name": "Nieuw",
+      "description": "Registreer een nieuwe nablijven sessie",
+      "url": "/detentions/new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Leerlingen",
+      "short_name": "Leerlingen",
+      "description": "Beheer lijsten van leerlingen",
+      "url": "/students",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Statistieken",
+      "short_name": "Stats",
+      "description": "Bekijk statistieken en rapporten",
+      "url": "/statistics",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

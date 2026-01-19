@@ -6,6 +6,7 @@ import { Calendar, Users, Plus, Search, Clock, ArrowRight, BarChart3 } from 'luc
 import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
+import InstallPrompt from '@/app/components/InstallPrompt';
 
 export default function Home() {
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
@@ -54,9 +55,9 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8 sm:mb-12">
           <Link
             href="/students"
             className="card-hover p-6 group relative overflow-hidden"

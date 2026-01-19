@@ -115,3 +115,38 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Animaciones para PWA */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Mejoras de responsividad */
+@media (max-width: 640px) {
+  .section-title {
+    @apply text-xl;
+  }
+  
+  .card {
+    @apply rounded-xl;
+  }
+}
+
+/* Safe area para dispositivos móviles */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
