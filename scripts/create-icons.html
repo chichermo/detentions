@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create PWA Icons</title>
+</head>
+<body>
+    <h1>Crear Iconos para PWA</h1>
+    <p>Usa esta herramienta para crear iconos placeholder:</p>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <br>
+    <button onclick="downloadIcons()">Descargar Iconos</button>
+    
+    <script>
+        function createIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            // Fondo indigo
+            ctx.fillStyle = '#6366f1';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Círculo blanco
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 20, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Letra N
+            ctx.fillStyle = '#6366f1';
+            ctx.font = `bold ${size/3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('N', size/2, size/2);
+        }
+        
+        function downloadIcons() {
+            const canvas192 = document.getElementById('canvas192');
+            const canvas512 = document.getElementById('canvas512');
+            
+            createIcon(canvas192, 192);
+            createIcon(canvas512, 512);
+            
+            canvas192.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-192.png';
+                a.click();
+            });
+            
+            canvas512.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-512.png';
+                a.click();
+            });
+        }
+        
+        // Crear iconos al cargar
+        window.onload = () => {
+            createIcon(document.getElementById('canvas192'), 192);
+            createIcon(document.getElementById('canvas512'), 512);
+        };
+    </script>
+</body>
+</html>

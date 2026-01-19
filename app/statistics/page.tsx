@@ -11,6 +11,9 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
+// Importar autoTable como función
+import autoTable from 'jspdf-autotable';
+
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
@@ -206,7 +209,7 @@ export default function StatisticsPage() {
       ['Percentage met chromebook', stats.total > 0 ? ((stats.withChromebook / stats.total) * 100).toFixed(1) + '%' : '0%'],
     ];
     
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['Statistiek', 'Waarde']],
       body: summaryData,
@@ -229,7 +232,7 @@ export default function StatisticsPage() {
       const dayTableData = dayChartData.map(day => [day.name, day.count.toString()]);
       dayTableData.push(['TOTAAL', stats.total.toString()]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Dag', 'Aantal Nablijven']],
         body: dayTableData,
@@ -242,7 +245,7 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
       checkPageBreak(50);
     }
     
@@ -259,7 +262,7 @@ export default function StatisticsPage() {
         s.count.toString()
       ]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['#', 'Leerling', 'Aantal']],
         body: studentsTableData,
@@ -273,7 +276,7 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
       checkPageBreak(50);
     }
     
@@ -290,7 +293,7 @@ export default function StatisticsPage() {
         t.count.toString()
       ]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['#', 'Leerkracht', 'Aantal']],
         body: teachersTableData,
@@ -304,7 +307,7 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
       checkPageBreak(50);
     }
     
@@ -321,7 +324,7 @@ export default function StatisticsPage() {
         r.count.toString()
       ]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['#', 'Reden', 'Aantal']],
         body: reasonsTableData,
@@ -335,7 +338,7 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
       checkPageBreak(50);
     }
     
@@ -357,7 +360,7 @@ export default function StatisticsPage() {
         d.canUseChromebook ? 'Ja' : 'Nee'
       ]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['#', 'Datum', 'Dag', 'Leerling', 'Leerkracht', 'Reden', 'Print', 'Chromebook']],
         body: detailedTableData,
