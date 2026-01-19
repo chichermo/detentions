@@ -51,6 +51,31 @@ export default function Home() {
                 <span>Beheer van nablijven (16:00 - 16:50)</span>
               </p>
             </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/backup');
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `nablijven-backup-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                  } catch (error) {
+                    console.error('Error downloading backup:', error);
+                    alert('Fout bij downloaden van backup');
+                  }
+                }}
+                className="btn-secondary flex items-center gap-2 text-sm"
+                title="Download Backup"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Backup</span>
+              </button>
+              <InstallPrompt />
+            </div>
           </div>
         </div>
       </header>

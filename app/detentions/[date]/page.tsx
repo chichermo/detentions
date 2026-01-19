@@ -430,12 +430,16 @@ export default function DetentionSessionPage() {
           </div>
 
         {showAuditHistory && selectedRecordId && (
-          <div className="mt-6">
+          <div className="mt-6 space-y-6">
             <AuditHistory
               tableName="detentions"
               recordId={selectedRecordId}
             />
-            <div className="mt-4 flex justify-end">
+            <FileAttachment
+              recordId={selectedRecordId}
+              recordType="detention"
+            />
+            <div className="flex justify-end">
               <button
                 onClick={() => {
                   setShowAuditHistory(false);

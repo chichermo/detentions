@@ -43,7 +43,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SyncStatus />
+      </body>
       <Script id="register-sw" strategy="afterInteractive">
         {`
           if ('serviceWorker' in navigator) {
