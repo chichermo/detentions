@@ -178,6 +178,18 @@ export default function StatisticsPage() {
       return false;
     };
     
+    // Función para actualizar yPos después de una tabla y verificar salto de página
+    const updateYPosAfterTable = (spacing: number = 15) => {
+      const lastTable = (doc as any).lastAutoTable;
+      if (lastTable && lastTable.finalY) {
+        yPos = lastTable.finalY + spacing;
+      } else {
+        yPos += spacing;
+      }
+      // Verificar si necesitamos una nueva página después de la tabla
+      checkPageBreak(30);
+    };
+    
     // Título principal
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
@@ -244,15 +256,15 @@ export default function StatisticsPage() {
       margin: { left: margin, right: margin },
     });
     
-    yPos = (doc as any).lastAutoTable.finalY + 15;
-    checkPageBreak(50);
+    updateYPosAfterTable(15);
     
     // ========== SECCIÓN 2: VERDELING PER DAG ==========
     if (dayChartData.length > 0) {
+      checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text('2. Verdeling per Dag van de Week', margin, yPos);
-      yPos += 10;
+      yPos += 12;
       
       const dayTableData = dayChartData.map(day => [day.name, day.count.toString()]);
       dayTableData.push(['TOTAAL', stats.total.toString()]);
@@ -270,16 +282,16 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
-      checkPageBreak(50);
+      updateYPosAfterTable(15);
     }
     
     // ========== SECCIÓN 3: TOP 10 LEERLINGEN ==========
     if (topStudents.length > 0) {
+      checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text('3. Top 10 Leerlingen met Meeste Nablijven', margin, yPos);
-      yPos += 10;
+      yPos += 12;
       
       const studentsTableData = topStudents.map((s, idx) => [
         (idx + 1).toString(),
@@ -301,16 +313,16 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
-      checkPageBreak(50);
+      updateYPosAfterTable(15);
     }
     
     // ========== SECCIÓN 4: TOP 10 LEERKRACHTEN ==========
     if (topTeachers.length > 0) {
+      checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text('4. Top 10 Leerkrachten met Meeste Nablijven', margin, yPos);
-      yPos += 10;
+      yPos += 12;
       
       const teachersTableData = topTeachers.map((t, idx) => [
         (idx + 1).toString(),
@@ -332,16 +344,16 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
-      checkPageBreak(50);
+      updateYPosAfterTable(15);
     }
     
     // ========== SECCIÓN 5: TOP 10 REDENEN ==========
     if (topReasons.length > 0) {
+      checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text('5. Top 10 Meest Voorkomende Redenen', margin, yPos);
-      yPos += 10;
+      yPos += 12;
       
       const reasonsTableData = topReasons.map((r, idx) => [
         (idx + 1).toString(),
@@ -363,16 +375,16 @@ export default function StatisticsPage() {
         margin: { left: margin, right: margin },
       });
       
-      yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
-      checkPageBreak(50);
+      updateYPosAfterTable(15);
     }
     
     // ========== SECCIÓN 6: GEDETAILLEERDE LIJST ==========
     if (filteredDetentions.length > 0) {
+      checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text('6. Gedetailleerde Lijst van Alle Nablijven', margin, yPos);
-      yPos += 10;
+      yPos += 12;
       
       const detailedTableData = filteredDetentions.map(d => [
         d.number.toString(),
@@ -405,7 +417,7 @@ export default function StatisticsPage() {
         alternateRowStyles: { fillColor: [249, 250, 251] },
       });
       
-      yPos = (doc as any).lastAutoTable.finalY + 10;
+      updateYPosAfterTable(10);
     }
     
     // ========== NOTA FINAL ==========
