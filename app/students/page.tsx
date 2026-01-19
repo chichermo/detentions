@@ -73,28 +73,28 @@ export default function StudentsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => router.push('/')}
               className="btn-ghost p-2"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
-                <Users className="h-5 w-5 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Leerlingen Beheer</h1>
-                <p className="text-slate-400 text-sm mt-1">Beheer lijsten van leerlingen per dag</p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight">Leerlingen Beheer</h1>
+                <p className="text-slate-400 text-xs sm:text-sm mt-1 hidden sm:block">Beheer lijsten van leerlingen per dag</p>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Day Selector */}
         <div className="mb-8 flex gap-3">
           {DAYS.map((day) => (

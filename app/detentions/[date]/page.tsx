@@ -169,9 +169,9 @@ export default function DetentionSessionPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50 print:hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={() => router.push('/')}
                 className="btn-ghost p-2"
@@ -179,10 +179,10 @@ export default function DetentionSessionPage() {
                 <ArrowLeft className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-3xl font-bold text-slate-100 tracking-tight">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight">
                   Nablijven Sessie
                 </h1>
-                <p className="text-slate-400 mt-1 text-sm">
+                <p className="text-slate-400 mt-1 text-xs sm:text-sm">
                   {format(parseISO(date), "EEEE d MMMM yyyy", { locale: nl })}
                 </p>
               </div>
@@ -191,10 +191,11 @@ export default function DetentionSessionPage() {
               {!showAddForm && (
                 <button
                   onClick={handleAddNew}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
                 >
-                  <Plus className="h-5 w-5" />
-                  Nieuwe Toevoegen
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Nieuwe Toevoegen</span>
+                  <span className="sm:hidden">Nieuw</span>
                 </button>
               )}
             </div>
@@ -202,7 +203,7 @@ export default function DetentionSessionPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="card p-8 mb-8 print:shadow-none">
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
