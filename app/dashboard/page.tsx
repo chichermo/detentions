@@ -278,11 +278,11 @@ export default function DashboardPage() {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="count"
-                  style={{
+                  labelStyle={{
                     fontSize: '12px',
                     fontWeight: 'bold',
                     fill: '#f1f5f9',
-                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8), 1px -1px 2px rgba(0, 0, 0, 0.8), -1px 1px 2px rgba(0, 0, 0, 0.8)'
                   }}
                 >
                   {dayDistribution.map((entry, index) => (
