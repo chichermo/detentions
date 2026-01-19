@@ -26,16 +26,6 @@ export default function DetentionSessionPage() {
   const [showAuditHistory, setShowAuditHistory] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDetentions();
-  }, [date]);
-
-  useEffect(() => {
-    if (detentions.length > 0) {
-      fetchStudents(detentions[0].dayOfWeek);
-    }
-  }, [detentions]);
-
   const fetchDetentions = async () => {
     try {
       const response = await fetch(`/api/detentions?date=${date}`);
@@ -57,6 +47,16 @@ export default function DetentionSessionPage() {
       console.error('Error fetching students:', error);
     }
   };
+
+  useEffect(() => {
+    fetchDetentions();
+  }, [date]);
+
+  useEffect(() => {
+    if (detentions.length > 0) {
+      fetchStudents(detentions[0].dayOfWeek);
+    }
+  }, [detentions]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit nablijven wilt verwijderen?')) return;
