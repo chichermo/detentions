@@ -11,19 +11,6 @@ import PeriodComparison from '@/app/components/PeriodComparison';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 
-// Precargar jspdf-autotable cuando el componente se monte
-let autotablePreloaded = false;
-if (typeof window !== 'undefined' && !autotablePreloaded) {
-  import('jspdf-autotable')
-    .then(() => {
-      autotablePreloaded = true;
-      console.log('jspdf-autotable precargado correctamente');
-    })
-    .catch(err => {
-      console.warn('No se pudo precargar jspdf-autotable:', err);
-    });
-}
-
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
@@ -506,9 +493,8 @@ export default function StatisticsPage() {
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={exportToPDF}
-                disabled={!pdfReady}
-                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={!pdfReady ? 'Cargando módulo PDF...' : 'Exporteer naar PDF'}
+                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
+                title="Exporteer naar PDF"
               >
                 <FileText className="h-4 w-4" />
                 <span className="hidden sm:inline">Exporteer PDF</span>

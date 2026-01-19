@@ -61,6 +61,10 @@ async function loadAutoTablePlugin(): Promise<void> {
 }
 
 export async function createPDF(): Promise<jsPDF> {
+  if (typeof window === 'undefined') {
+    throw new Error('PDF export is only available in the browser');
+  }
+
   // Asegurar que el plugin esté cargado
   await loadAutoTablePlugin();
   
@@ -71,19 +75,14 @@ export async function createPDF(): Promise<jsPDF> {
   // @ts-ignore
   if (typeof (doc as any).autoTable !== 'function') {
     // Esperar un poco más y verificar de nuevo
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // @ts-ignore
     if (typeof (doc as any).autoTable !== 'function') {
-      // Último intento: cargar explícitamente
+      // Último intento: cargar explícitamente y esperar más tiempo
       try {
-        // @ts-ignore
-        const autotable = await import('jspdf-autotable');
-        // Forzar la extensión del prototipo
-        if (autotable.default) {
-          // @ts-ignore
-          jsPDF.API.autoTable = autotable.default;
-        }
+        await import('jspdf-autotable');
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (e) {
         console.error('Final attempt to load autotable failed:', e);
       }
