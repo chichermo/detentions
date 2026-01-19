@@ -47,3 +47,19 @@ CREATE TRIGGER update_students_updated_at BEFORE UPDATE ON students
 
 CREATE TRIGGER update_detentions_updated_at BEFORE UPDATE ON detentions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Políticas de Row Level Security (RLS)
+-- Desactivar RLS temporalmente para permitir acceso público
+-- En producción, deberías configurar políticas más restrictivas
+ALTER TABLE students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE detentions DISABLE ROW LEVEL SECURITY;
+
+-- Alternativamente, si quieres habilitar RLS con políticas permisivas:
+-- ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE detentions ENABLE ROW LEVEL SECURITY;
+
+-- CREATE POLICY "Allow all operations on students" ON students
+--   FOR ALL USING (true) WITH CHECK (true);
+
+-- CREATE POLICY "Allow all operations on detentions" ON detentions
+--   FOR ALL USING (true) WITH CHECK (true);
