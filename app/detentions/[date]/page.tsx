@@ -25,8 +25,6 @@ export default function DetentionSessionPage() {
   const [newDetention, setNewDetention] = useState<Partial<Detention> | null>(null);
   const [showAuditHistory, setShowAuditHistory] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
-  const [showAuditHistory, setShowAuditHistory] = useState(false);
-  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDetentions();
