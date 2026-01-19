@@ -19,21 +19,41 @@ async function loadAutoTablePlugin(): Promise<void> {
     }
 
     try {
-      // Usar importación dinámica para cargar el plugin
-      await import('jspdf-autotable');
-      autoTablePlugin = true;
-      resolve();
-    } catch (error) {
-      console.error('Error loading jspdf-autotable:', error);
-      // Intentar con require como fallback
+      // En Next.js, necesitamos usar una estrategia diferente
+      // El plugin debe estar disponible globalmente después de importarlo
+      
+      // Método 1: Importación dinámica
       try {
+        await import('jspdf-autotable');
+        // Dar tiempo para que el plugin se registre
+        await new Promise(res => setTimeout(res, 100));
+        
+        // Verificar si se registró correctamente
+        const testDoc = new jsPDF();
         // @ts-ignore
-        require('jspdf-autotable');
+        if (typeof (testDoc as any).autoTable === 'function') {
+          autoTablePlugin = true;
+          resolve();
+          return;
+        }
+      } catch (e) {
+        console.log('Dynamic import failed:', e);
+      }
+
+      // Método 2: Verificar si ya está disponible
+      const testDoc = new jsPDF();
+      // @ts-ignore
+      if (typeof (testDoc as any).autoTable === 'function') {
         autoTablePlugin = true;
         resolve();
-      } catch (requireError) {
-        reject(requireError);
+        return;
       }
+
+      // Si llegamos aquí, el plugin no se cargó
+      throw new Error('jspdf-autotable plugin could not be loaded');
+    } catch (error) {
+      console.error('Error loading jspdf-autotable:', error);
+      reject(error);
     }
   });
 
@@ -42,13 +62,39 @@ async function loadAutoTablePlugin(): Promise<void> {
 
 export async function createPDF(): Promise<jsPDF> {
   await loadAutoTablePlugin();
-  return new jsPDF();
+  const doc = new jsPDF();
+  
+  // Verificar que autoTable esté disponible después de crear el PDF
+  // @ts-ignore
+  if (typeof (doc as any).autoTable !== 'function') {
+    // Intentar cargar de nuevo
+    await loadAutoTablePlugin();
+    // @ts-ignore
+    if (typeof (doc as any).autoTable !== 'function') {
+      throw new Error('jspdf-autotable no está disponible. Por favor, recarga la página e intenta de nuevo.');
+    }
+  }
+  
+  return doc;
 }
 
 export function autoTable(doc: jsPDF, options: any) {
   // @ts-ignore
   if (typeof (doc as any).autoTable !== 'function') {
-    throw new Error('jspdf-autotable no está cargado. Por favor, recarga la página.');
+    // Intentar cargar el plugin una vez más
+    if (typeof window !== 'undefined') {
+      try {
+        // @ts-ignore
+        require('jspdf-autotable');
+      } catch (e) {
+        // Ignorar error
+      }
+    }
+    
+    // @ts-ignore
+    if (typeof (doc as any).autoTable !== 'function') {
+      throw new Error('jspdf-autotable no está cargado. Por favor, recarga la página.');
+    }
   }
   // @ts-ignore
   return (doc as any).autoTable(options);

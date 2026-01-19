@@ -11,6 +11,13 @@ import PeriodComparison from '@/app/components/PeriodComparison';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 
+// Importar jspdf-autotable al inicio para que esté disponible
+if (typeof window !== 'undefined') {
+  import('jspdf-autotable').catch(err => {
+    console.warn('Could not preload jspdf-autotable:', err);
+  });
+}
+
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
