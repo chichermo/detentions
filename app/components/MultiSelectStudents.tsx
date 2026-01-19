@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Check, X, Search } from 'lucide-react';
+import { Check, X, Search, ChevronDown } from 'lucide-react';
 import { Student } from '@/types';
 
 interface MultiSelectStudentsProps {
