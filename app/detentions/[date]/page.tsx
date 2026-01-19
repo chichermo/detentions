@@ -315,8 +315,15 @@ export default function DetentionSessionPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-slate-800/30 divide-y divide-slate-700">
-                  {detentions.map((detention) => (
-                    <tr key={detention.id} className="hover:bg-slate-700/30 transition-colors">
+                  <DragDropDetentions
+                    detentions={detentions}
+                    onReorder={handleReorder}
+                  >
+                    {(detention, index, isDragging) => (
+                      <tr 
+                        key={detention.id} 
+                        className={`hover:bg-slate-700/30 transition-colors ${isDragging ? 'opacity-50' : ''}`}
+                      >
                         <td className="px-4 py-4 whitespace-nowrap print:hidden cursor-move">
                           <GripVertical className="h-5 w-5 text-slate-500 hover:text-indigo-400" />
                         </td>
@@ -421,26 +428,25 @@ export default function DetentionSessionPage() {
             </div>
           </div>
 
-            {showAuditHistory && selectedRecordId && (
-              <div className="mt-6">
-                <AuditHistory
-                  tableName="detentions"
-                  recordId={selectedRecordId}
-                />
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => {
-                      setShowAuditHistory(false);
-                      setSelectedRecordId(null);
-                    }}
-                    className="btn-secondary"
-                  >
-                    Sluiten
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
+        {showAuditHistory && selectedRecordId && (
+          <div className="mt-6">
+            <AuditHistory
+              tableName="detentions"
+              recordId={selectedRecordId}
+            />
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowAuditHistory(false);
+                  setSelectedRecordId(null);
+                }}
+                className="btn-secondary"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+        )}
         )}
       </main>
     </div>
@@ -463,6 +469,7 @@ function EditRow({
 }) {
   return (
     <>
+      <td className="px-4 py-4 whitespace-nowrap print:hidden"></td>
       <td className="px-4 py-4 whitespace-nowrap">
         <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
           {detention.number}
