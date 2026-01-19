@@ -234,7 +234,7 @@ export default function StatisticsPage() {
       ['Percentage met chromebook', stats.total > 0 ? ((stats.withChromebook / stats.total) * 100).toFixed(1) + '%' : '0%'],
     ];
     
-    autoTable(doc, {
+    await autoTable(doc, {
       startY: yPos,
       head: [['Statistiek', 'Waarde']],
       body: summaryData,
@@ -257,7 +257,7 @@ export default function StatisticsPage() {
       const dayTableData = dayChartData.map(day => [day.name, day.count.toString()]);
       dayTableData.push(['TOTAAL', stats.total.toString()]);
       
-      autoTable(doc, {
+      await autoTable(doc, {
         startY: yPos,
         head: [['Dag', 'Aantal Nablijven']],
         body: dayTableData,
@@ -287,7 +287,7 @@ export default function StatisticsPage() {
         s.count.toString()
       ]);
       
-      autoTable(doc, {
+      await autoTable(doc, {
         startY: yPos,
         head: [['#', 'Leerling', 'Aantal']],
         body: studentsTableData,
@@ -318,7 +318,7 @@ export default function StatisticsPage() {
         t.count.toString()
       ]);
       
-      autoTable(doc, {
+      await autoTable(doc, {
         startY: yPos,
         head: [['#', 'Leerkracht', 'Aantal']],
         body: teachersTableData,
@@ -349,7 +349,7 @@ export default function StatisticsPage() {
         r.count.toString()
       ]);
       
-      autoTable(doc, {
+      await autoTable(doc, {
         startY: yPos,
         head: [['#', 'Reden', 'Aantal']],
         body: reasonsTableData,
@@ -385,7 +385,7 @@ export default function StatisticsPage() {
         d.canUseChromebook ? 'Ja' : 'Nee'
       ]);
       
-      autoTable(doc, {
+      await autoTable(doc, {
         startY: yPos,
         head: [['#', 'Datum', 'Dag', 'Leerling', 'Leerkracht', 'Reden', 'Print', 'Chromebook']],
         body: detailedTableData,
