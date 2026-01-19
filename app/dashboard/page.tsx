@@ -293,14 +293,6 @@ export default function DashboardPage() {
                   labelStyle={{ color: '#f1f5f9', fontWeight: 'bold' }}
                 />
               </PieChart>
-              <style jsx global>{`
-                .recharts-pie-label-text {
-                  font-size: 12px !important;
-                  font-weight: bold !important;
-                  fill: #f1f5f9 !important;
-                  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8), 1px -1px 2px rgba(0, 0, 0, 0.8), -1px 1px 2px rgba(0, 0, 0, 0.8) !important;
-                }
-              `}</style>
             </ResponsiveContainer>
           </div>
         </div>

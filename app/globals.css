@@ -150,3 +150,11 @@ html {
     padding-right: max(0px, env(safe-area-inset-right));
   }
 }
+
+/* Estilos para labels del pie chart de Recharts */
+.recharts-pie-label-text {
+  font-size: 12px !important;
+  font-weight: bold !important;
+  fill: #f1f5f9 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8), 1px -1px 2px rgba(0, 0, 0, 0.8), -1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
