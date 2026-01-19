@@ -87,47 +87,31 @@ export async function createPDF(): Promise<jsPDF> {
   // Crear el documento
   const doc = new jsPDF();
   
-  // Verificar que autoTable esté disponible
-  // @ts-ignore
-  if (typeof (doc as any).autoTable !== 'function') {
-    // Esperar un poco más y verificar de nuevo
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // @ts-ignore
-    if (typeof (doc as any).autoTable !== 'function') {
-      // Último intento: cargar explícitamente y esperar más tiempo
-      try {
-        await import('jspdf-autotable');
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (e) {
-        console.error('Final attempt to load autotable failed:', e);
-      }
-      
-      // Verificar una última vez
-      // @ts-ignore
-      if (typeof (doc as any).autoTable !== 'function') {
-        throw new Error('jspdf-autotable no está disponible. Por favor, recarga la página e intenta de nuevo.');
-      }
-    }
-  }
+  // No verificar aquí - dejar que autoTable() maneje la verificación
+  // Esto permite que funcione incluso si el prototipo no se ha extendido completamente
   
   return doc;
 }
 
 export function autoTable(doc: jsPDF, options: any) {
+  // Función helper para intentar ejecutar autoTable
+  const tryAutoTable = (target: any): any => {
+    // @ts-ignore
+    if (typeof target?.autoTable === 'function') {
+      // @ts-ignore
+      return target.autoTable(options);
+    }
+    return null;
+  };
+
   // Intentar múltiples formas de acceder a autoTable
-  // @ts-ignore
-  if (typeof (doc as any).autoTable === 'function') {
-    // @ts-ignore
-    return (doc as any).autoTable(options);
-  }
+  let result = tryAutoTable(doc);
+  if (result !== null) return result;
   
-  // Intentar acceder a través del constructor
+  // Intentar acceder a través del prototipo
   // @ts-ignore
-  if (typeof jsPDF.prototype.autoTable === 'function') {
-    // @ts-ignore
-    return jsPDF.prototype.autoTable.call(doc, options);
-  }
+  result = tryAutoTable(jsPDF.prototype);
+  if (result !== null) return result;
   
   // Intentar acceder directamente al método interno
   // @ts-ignore
@@ -140,29 +124,69 @@ export function autoTable(doc: jsPDF, options: any) {
   if (typeof window !== 'undefined') {
     // @ts-ignore
     const jspdf = (window as any).jspdf || (window as any).jsPDF;
-    if (jspdf && typeof jspdf.prototype?.autoTable === 'function') {
-      // @ts-ignore
-      return jspdf.prototype.autoTable.call(doc, options);
+    if (jspdf) {
+      result = tryAutoTable(jspdf.prototype);
+      if (result !== null) return result;
     }
     
     // Intentar acceder directamente desde el módulo importado
     try {
       // @ts-ignore
       const autotableModule = (window as any).__jspdf_autotable__;
-      if (autotableModule && typeof autotableModule === 'function') {
-        return autotableModule(doc, options);
+      if (autotableModule) {
+        // El módulo puede ser un objeto con un método default o puede ser la función directamente
+        if (typeof autotableModule === 'function') {
+          return autotableModule(doc, options);
+        }
+        // @ts-ignore
+        if (autotableModule.default && typeof autotableModule.default === 'function') {
+          // @ts-ignore
+          return autotableModule.default(doc, options);
+        }
       }
     } catch (e) {
       // Ignorar error
     }
   }
   
-  // Si nada funciona, crear un nuevo documento y verificar de nuevo
-  const testDoc = new jsPDF();
-  // @ts-ignore
-  if (typeof (testDoc as any).autoTable === 'function') {
-    // @ts-ignore
-    return (testDoc as any).autoTable(options);
+  // Último intento: forzar la carga y esperar
+  if (typeof window !== 'undefined') {
+    return new Promise((resolve, reject) => {
+      import('jspdf-autotable')
+        .then((module) => {
+          // Guardar referencia
+          // @ts-ignore
+          (window as any).__jspdf_autotable__ = module;
+          
+          // Esperar un momento para que se registre
+          setTimeout(() => {
+            // Intentar de nuevo con todas las estrategias
+            let finalResult = tryAutoTable(doc);
+            if (finalResult !== null) {
+              resolve(finalResult);
+              return;
+            }
+            
+            // @ts-ignore
+            finalResult = tryAutoTable(jsPDF.prototype);
+            if (finalResult !== null) {
+              resolve(finalResult);
+              return;
+            }
+            
+            // Si el módulo tiene un método default
+            // @ts-ignore
+            if (module.default && typeof module.default === 'function') {
+              // @ts-ignore
+              resolve(module.default(doc, options));
+              return;
+            }
+            
+            reject(new Error('jspdf-autotable no está disponible después de cargar. Por favor, recarga la página.'));
+          }, 1000);
+        })
+        .catch(reject);
+    });
   }
   
   throw new Error('jspdf-autotable no está disponible. Por favor, recarga la página e intenta de nuevo.');

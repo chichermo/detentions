@@ -155,8 +155,8 @@ export default function StatisticsPage() {
       if (typeof window !== 'undefined') {
         try {
           await import('jspdf-autotable');
-          // Esperar a que se registre
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Esperar más tiempo para que se registre completamente
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (err) {
           console.warn('No se pudo precargar jspdf-autotable:', err);
         }
