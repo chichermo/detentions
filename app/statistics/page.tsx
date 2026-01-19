@@ -173,13 +173,9 @@ export default function StatisticsPage() {
     .map(([name, count]) => ({ name, count }));
 
   // Exportar a PDF
-  const exportToPDF = () => {
-    // Asegurar que autoTable esté cargado antes de crear el PDF
-    if (typeof window !== 'undefined') {
-      loadAutoTable();
-    }
-    
-    const doc = new jsPDF();
+  const exportToPDF = async () => {
+    try {
+      const doc = await createPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 14;
