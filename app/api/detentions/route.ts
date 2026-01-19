@@ -24,6 +24,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const detention: Detention = await request.json();
+    await saveDetention(detention);
+    return NextResponse.json({ success: true, detention });
+  } catch (error) {
+    console.error('Error updating detention:', error);
+    return NextResponse.json(
+      { success: false, error: 'Error al actualizar detención' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

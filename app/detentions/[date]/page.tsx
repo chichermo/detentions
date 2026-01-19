@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History } from 'lucide-react';
+import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History, GripVertical } from 'lucide-react';
 import DuplicateSession from '@/app/components/DuplicateSession';
 import DragDropDetentions from '@/app/components/DragDropDetentions';
 import AuditHistory from '@/app/components/AuditHistory';
@@ -274,20 +274,17 @@ export default function DetentionSessionPage() {
             </button>
           </div>
         ) : (
-          <>
-            <DragDropDetentions
-              detentions={detentions}
-              onReorder={handleReorder}
-            >
-              {(detention, index, isDragging) => (
-                <div className="card overflow-hidden print:shadow-none">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-700">
-                      <thead className="bg-slate-800/50 print:bg-slate-800">
-                        <tr>
-                          <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16">
-                            #
-                          </th>
+          <div className="card overflow-hidden print:shadow-none">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-700">
+                <thead className="bg-slate-800/50 print:bg-slate-800">
+                  <tr>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16 print:hidden">
+                      <GripVertical className="h-4 w-4 text-slate-500" />
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16">
+                      #
+                    </th>
                     <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
                       Leerling
                     </th>
@@ -320,17 +317,20 @@ export default function DetentionSessionPage() {
                 <tbody className="bg-slate-800/30 divide-y divide-slate-700">
                   {detentions.map((detention) => (
                     <tr key={detention.id} className="hover:bg-slate-700/30 transition-colors">
-                      {editingId === detention.id && editingDetention ? (
-                        <EditRow
-                          detention={editingDetention}
-                          students={students}
-                          onSave={handleSaveEdit}
-                          onCancel={handleCancelEdit}
-                          onChange={(field, value) => setEditingDetention({ ...editingDetention, [field]: value })}
-                        />
-                      ) : (
-                        <>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4 whitespace-nowrap print:hidden cursor-move">
+                          <GripVertical className="h-5 w-5 text-slate-500 hover:text-indigo-400" />
+                        </td>
+                        {editingId === detention.id && editingDetention ? (
+                          <EditRow
+                            detention={editingDetention}
+                            students={students}
+                            onSave={handleSaveEdit}
+                            onCancel={handleCancelEdit}
+                            onChange={(field, value) => setEditingDetention({ ...editingDetention, [field]: value })}
+                          />
+                        ) : (
+                          <>
+                            <td className="px-4 py-4 whitespace-nowrap">
                             <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
                               {detention.number}
                             </div>
@@ -413,14 +413,13 @@ export default function DetentionSessionPage() {
                           </td>
                         </>
                       )}
-                    </tr>
-                  ))}
+                      </tr>
+                    )}
+                  </DragDropDetentions>
                 </tbody>
               </table>
             </div>
           </div>
-              )}
-            </DragDropDetentions>
 
             {showAuditHistory && selectedRecordId && (
               <div className="mt-6">

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { GripVertical } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { Detention } from '@/types';
 
 interface DragDropDetentionsProps {
@@ -17,13 +16,18 @@ export default function DragDropDetentions({
 }: DragDropDetentionsProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const draggedIdRef = useRef<string | null>(null);
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
+    draggedIdRef.current = detentions[index].id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', '');
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
     setDragOverIndex(index);
   };
 
@@ -33,10 +37,12 @@ export default function DragDropDetentions({
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
+    e.stopPropagation();
     
-    if (draggedIndex === null || draggedIndex === dropIndex) {
+    if (draggedIndex === null || draggedIndex === dropIndex || draggedIdRef.current === null) {
       setDraggedIndex(null);
       setDragOverIndex(null);
+      draggedIdRef.current = null;
       return;
     }
 
@@ -57,36 +63,35 @@ export default function DragDropDetentions({
     onReorder(newDetentions);
     setDraggedIndex(null);
     setDragOverIndex(null);
+    draggedIdRef.current = null;
   };
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
     setDragOverIndex(null);
+    draggedIdRef.current = null;
   };
 
   return (
-    <div className="space-y-2">
-      {detentions.map((detention, index) => (
-        <div
-          key={detention.id}
-          draggable
-          onDragStart={() => handleDragStart(index)}
-          onDragOver={(e) => handleDragOver(e, index)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, index)}
-          onDragEnd={handleDragEnd}
-          className={`
-            relative transition-all duration-200
-            ${draggedIndex === index ? 'opacity-50 scale-95' : ''}
-            ${dragOverIndex === index ? 'scale-105 border-indigo-500' : ''}
-          `}
-        >
-          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-full pr-2 cursor-move text-slate-500 hover:text-indigo-400">
-            <GripVertical className="h-5 w-5" />
+    <>
+      {detentions.map((detention, index) => {
+        const isDragging = draggedIndex === index;
+        
+        return (
+          <div
+            key={detention.id}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            style={{ display: 'contents' }}
+          >
+            {children(detention, index, isDragging)}
           </div>
-          {children(detention, index, draggedIndex === index)}
-        </div>
-      ))}
-    </div>
+        );
+      })}
+    </>
   );
 }
