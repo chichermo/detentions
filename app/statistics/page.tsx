@@ -10,14 +10,29 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
-// Importar jspdf-autotable - debe importarse después de jsPDF
+// Importar jspdf-autotable dinámicamente
 // @ts-ignore
-import 'jspdf-autotable';
+let autoTableLoaded = false;
 
-// autoTable se agrega al prototipo de jsPDF, así que lo usamos directamente
+const loadAutoTable = () => {
+  if (!autoTableLoaded && typeof window !== 'undefined') {
+    // @ts-ignore
+    require('jspdf-autotable');
+    autoTableLoaded = true;
+  }
+};
+
+// Función wrapper para autoTable
 const autoTable = (doc: jsPDF, options: any) => {
+  loadAutoTable();
   // @ts-ignore
-  return (doc as any).autoTable(options);
+  if (typeof (doc as any).autoTable === 'function') {
+    // @ts-ignore
+    return (doc as any).autoTable(options);
+  } else {
+    console.error('jspdf-autotable no está disponible');
+    throw new Error('jspdf-autotable no está cargado correctamente');
+  }
 };
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
