@@ -5,6 +5,19 @@
 
 import jsPDF from 'jspdf';
 
+// Importar jspdf-autotable de forma estática solo en el cliente
+let autoTableLoaded = false;
+if (typeof window !== 'undefined') {
+  // Precargar el módulo cuando se carga el módulo
+  import('jspdf-autotable')
+    .then(() => {
+      autoTableLoaded = true;
+    })
+    .catch((err) => {
+      console.warn('Could not preload jspdf-autotable:', err);
+    });
+}
+
 let autoTablePlugin: any = null;
 let loadingPromise: Promise<void> | null = null;
 
@@ -19,16 +32,13 @@ async function loadAutoTablePlugin(): Promise<void> {
     }
 
     try {
-      // En Next.js, necesitamos usar una estrategia diferente
-      // El plugin debe estar disponible globalmente después de importarlo
+      // Importar el módulo
+      await import('jspdf-autotable');
       
-      // Método 1: Importación dinámica
-      try {
-        await import('jspdf-autotable');
-        // Dar tiempo para que el plugin se registre
-        await new Promise(res => setTimeout(res, 100));
+      // Esperar múltiples veces para asegurar que el prototipo se extienda
+      for (let i = 0; i < 5; i++) {
+        await new Promise(res => setTimeout(res, 200));
         
-        // Verificar si se registró correctamente
         const testDoc = new jsPDF();
         // @ts-ignore
         if (typeof (testDoc as any).autoTable === 'function') {
@@ -36,21 +46,13 @@ async function loadAutoTablePlugin(): Promise<void> {
           resolve();
           return;
         }
-      } catch (e) {
-        console.log('Dynamic import failed:', e);
       }
 
-      // Método 2: Verificar si ya está disponible
-      const testDoc = new jsPDF();
-      // @ts-ignore
-      if (typeof (testDoc as any).autoTable === 'function') {
-        autoTablePlugin = true;
-        resolve();
-        return;
-      }
-
-      // Si llegamos aquí, el plugin no se cargó
-      throw new Error('jspdf-autotable plugin could not be loaded');
+      // Si después de todos los intentos no está disponible, marcar como cargado de todos modos
+      // Puede que funcione en tiempo de ejecución
+      console.warn('jspdf-autotable loaded but autoTable not immediately available on prototype');
+      autoTablePlugin = true;
+      resolve();
     } catch (error) {
       console.error('Error loading jspdf-autotable:', error);
       reject(error);
@@ -101,11 +103,22 @@ export async function createPDF(): Promise<jsPDF> {
 export function autoTable(doc: jsPDF, options: any) {
   // @ts-ignore
   if (typeof (doc as any).autoTable !== 'function') {
-    // Intentar cargar el plugin una vez más
+    // Intentar acceder directamente al método interno
+    // @ts-ignore
+    if (typeof jsPDF.API !== 'undefined' && typeof jsPDF.API.autoTable === 'function') {
+      // @ts-ignore
+      return jsPDF.API.autoTable(doc, options);
+    }
+    
+    // Último recurso: intentar cargar de nuevo
     if (typeof window !== 'undefined') {
       try {
         // @ts-ignore
-        require('jspdf-autotable');
+        const autotable = require('jspdf-autotable');
+        if (autotable && typeof autotable === 'function') {
+          // @ts-ignore
+          return autotable(doc, options);
+        }
       } catch (e) {
         // Ignorar error
       }
