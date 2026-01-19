@@ -466,7 +466,6 @@ export default function DetentionSessionPage() {
             </div>
           </div>
         )}
-        )}
       </main>
     </div>
   );
