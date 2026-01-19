@@ -7,49 +7,8 @@ import { Detention, Student } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-
-// Importar jspdf-autotable dinámicamente solo en el cliente
-let autoTableLoaded = false;
-
-const loadAutoTable = () => {
-  if (typeof window === 'undefined') return;
-  if (autoTableLoaded) return;
-  
-  try {
-    // @ts-ignore
-    require('jspdf-autotable');
-    autoTableLoaded = true;
-  } catch (e) {
-    console.error('Error loading jspdf-autotable:', e);
-  }
-};
-
-// Función wrapper para autoTable
-const autoTable = (doc: jsPDF, options: any) => {
-  // Cargar el plugin si no está cargado
-  loadAutoTable();
-  
-  // @ts-ignore - autoTable se agrega al prototipo de jsPDF por jspdf-autotable
-  if (typeof (doc as any).autoTable === 'function') {
-    // @ts-ignore
-    return (doc as any).autoTable(options);
-  }
-  
-  // Si aún no está disponible, intentar cargar de nuevo
-  if (typeof window !== 'undefined') {
-    // @ts-ignore
-    const autotable = require('jspdf-autotable');
-    // @ts-ignore
-    if (typeof (doc as any).autoTable === 'function') {
-      // @ts-ignore
-      return (doc as any).autoTable(options);
-    }
-  }
-  
-  throw new Error('jspdf-autotable no está disponible. Por favor, recarga la página.');
-};
+import { createPDF, autoTable } from '@/lib/pdf-export';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
@@ -433,6 +392,10 @@ export default function StatisticsPage() {
     
     // Guardar PDF
     doc.save(`nablijven-rapport-${filterType}-${Date.now()}.pdf`);
+    } catch (error: any) {
+      console.error('Error exporting to PDF:', error);
+      alert('Fout bij exporteren naar PDF. Zorg ervoor dat jspdf-autotable correct is geladen.');
+    }
   };
 
   // Exportar a Excel
