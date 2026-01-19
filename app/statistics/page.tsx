@@ -158,8 +158,6 @@ export default function StatisticsPage() {
 
   // Exportar a PDF
   const exportToPDF = () => {
-    // Cargar autoTable antes de usarlo
-    const autoTable = loadAutoTable();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
