@@ -387,7 +387,8 @@ export default function StatisticsPage() {
     doc.setTextColor(128, 128, 128);
     doc.text('Dit rapport is automatisch gegenereerd door het Nablijven Systeem.', pageWidth / 2, yPos, { align: 'center' });
     yPos += 5;
-    doc.text(`Totaal aantal pagina's: ${doc.getNumberOfPages()}`, pageWidth / 2, yPos, { align: 'center' });
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    doc.text(`Totaal aantal pagina's: ${totalPages}`, pageWidth / 2, yPos, { align: 'center' });
     
     // Guardar PDF
     doc.save(`nablijven-rapport-${filterType}-${Date.now()}.pdf`);
