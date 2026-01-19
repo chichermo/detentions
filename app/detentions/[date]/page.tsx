@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History, GripVertical } from 'lucide-react';
 import DuplicateSession from '@/app/components/DuplicateSession';
@@ -26,7 +26,7 @@ export default function DetentionSessionPage() {
   const [showAuditHistory, setShowAuditHistory] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
-  const fetchDetentions = async () => {
+  const fetchDetentions = useCallback(async () => {
     try {
       const response = await fetch(`/api/detentions?date=${date}`);
       const data = await response.json();
@@ -36,9 +36,9 @@ export default function DetentionSessionPage() {
     } catch (error) {
       console.error('Error fetching detentions:', error);
     }
-  };
+  }, [date]);
 
-  const fetchStudents = async (day: DayOfWeek) => {
+  const fetchStudents = useCallback(async (day: DayOfWeek) => {
     try {
       const response = await fetch(`/api/students?day=${day}`);
       const data = await response.json();
@@ -46,21 +46,19 @@ export default function DetentionSessionPage() {
     } catch (error) {
       console.error('Error fetching students:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (date) {
       fetchDetentions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date]);
+  }, [date, fetchDetentions]);
 
   useEffect(() => {
     if (detentions.length > 0) {
       fetchStudents(detentions[0].dayOfWeek);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detentions]);
+  }, [detentions, fetchStudents]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit nablijven wilt verwijderen?')) return;
