@@ -57,7 +57,7 @@ export default function AdvancedSearch({ onSearch, placeholder = "Zoeken..." }: 
             value={filters.text}
             onChange={(e) => handleFilterChange('text', e.target.value)}
             placeholder={placeholder}
-            className="input-field pl-10"
+            className="input-field pl-12"
           />
           {filters.text && (
             <button

@@ -102,7 +102,7 @@ export default function MultiSelectStudents({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Zoek leerlingen..."
-                  className="input-field pl-10"
+                  className="input-field pl-12"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>

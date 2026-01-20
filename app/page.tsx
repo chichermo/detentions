@@ -210,7 +210,7 @@ export default function Home() {
                 placeholder="Zoeken naar leerling, reden of leerkracht..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-11"
+                className="input-field pl-14"
               />
             </div>
           </div>
