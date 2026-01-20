@@ -132,7 +132,7 @@ export default function CalendarPage() {
                     if (session) {
                       router.push(`/detentions/${format(day, 'yyyy-MM-dd')}`);
                     } else if (isCurrentMonth) {
-                      setSelectedDate(format(day, 'yyyy-MM-dd'));
+                      router.push(`/detentions/new?date=${format(day, 'yyyy-MM-dd')}`);
                     }
                   }}
                   className={`
