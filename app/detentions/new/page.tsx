@@ -13,18 +13,15 @@ const getDayOfWeekFromDate = (dateStr: string): DayOfWeek => {
   const date = parseISO(dateStr);
   const dayOfWeek = getDay(date); // 0 = domingo, 1 = lunes, etc.
   
-  // Convertir a nuestro formato: lunes=1, martes=2, miércoles=3, jueves=4, viernes=5, sábado=6, domingo=0
-  // Nuestros días: MAANDAG, DINSDAG, DONDERDAG
+  // Convertir a nuestro formato: lunes=1, martes=2, jueves=4
+  // Nuestros días válidos: MAANDAG, DINSDAG, DONDERDAG
   const dayMap: { [key: number]: DayOfWeek } = {
     1: 'MAANDAG',  // Lunes
     2: 'DINSDAG',  // Martes
-    3: 'WOENSDAG', // Miércoles (no usado pero por completitud)
     4: 'DONDERDAG', // Jueves
-    5: 'VRIJDAG',  // Viernes (no usado pero por completitud)
-    6: 'ZATERDAG', // Sábado (no usado pero por completitud)
-    0: 'ZONDAG',   // Domingo (no usado pero por completitud)
   };
   
+  // Si el día no es uno de los válidos, devolver MAANDAG por defecto
   return dayMap[dayOfWeek] || 'MAANDAG';
 };
 
