@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DetentionSession } from '@/types';
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
 export default function CalendarPage() {
@@ -36,6 +36,12 @@ export default function CalendarPage() {
   const getSessionsForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return sessions.find(s => s.date === dateStr);
+  };
+
+  // Verificar si un día es clickeable (solo lunes, martes y jueves)
+  const isClickableDay = (date: Date): boolean => {
+    const dayOfWeek = getDay(date); // 0 = domingo, 1 = lunes, 2 = martes, 3 = miércoles, 4 = jueves, 5 = viernes, 6 = sábado
+    return dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 4; // Lunes, Martes, Jueves
   };
 
   const goToPreviousMonth = () => {
@@ -124,27 +130,30 @@ export default function CalendarPage() {
               const isToday = isSameDay(day, new Date());
               const isSelected = selectedDate === format(day, 'yyyy-MM-dd');
               const isCurrentMonth = isSameMonth(day, currentDate);
+              const clickable = isClickableDay(day) && isCurrentMonth;
 
               return (
                 <button
                   key={day.toISOString()}
                   onClick={() => {
+                    if (!clickable) return;
                     if (session) {
                       router.push(`/detentions/${format(day, 'yyyy-MM-dd')}`);
-                    } else if (isCurrentMonth) {
+                    } else {
                       router.push(`/detentions/new?date=${format(day, 'yyyy-MM-dd')}`);
                     }
                   }}
+                  disabled={!clickable && !session}
                   className={`
                     aspect-square p-2 rounded-xl border-2 transition-all duration-200
-                    ${isToday ? 'border-indigo-500 bg-indigo-500/20 shadow-lg shadow-indigo-500/30' : 'border-slate-700'}
+                    ${isToday && clickable ? 'border-indigo-500 bg-indigo-500/20 shadow-lg shadow-indigo-500/30' : isToday ? 'border-slate-600 bg-slate-800/50' : 'border-slate-700'}
                     ${isSelected && !session ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-800' : ''}
-                    ${session ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/50' : 'hover:bg-slate-800'}
+                    ${session ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/50 cursor-pointer' : ''}
+                    ${!clickable && !session ? 'opacity-30 cursor-not-allowed bg-slate-900/50' : clickable && !session ? 'hover:bg-slate-800 cursor-pointer' : ''}
                     ${!isCurrentMonth ? 'opacity-40' : ''}
-                    ${!isCurrentMonth && !session ? 'cursor-default' : 'cursor-pointer'}
                   `}
                 >
-                  <div className={`text-sm font-bold mb-1 ${isToday ? 'text-indigo-300' : 'text-slate-200'}`}>
+                  <div className={`text-sm font-bold mb-1 ${isToday && clickable ? 'text-indigo-300' : !clickable && !session ? 'text-slate-500' : 'text-slate-200'}`}>
                     {format(day, 'd')}
                   </div>
                   {session && (
