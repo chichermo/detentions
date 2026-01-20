@@ -55,7 +55,12 @@ export default function StudentsPage() {
     return filtered;
   };
 
-  const filteredStudents = getFilteredStudents();
+  const filteredStudents = getFilteredStudents().sort((a, b) => {
+    // Ordenar por clase (grade)
+    const gradeA = a.grade || '';
+    const gradeB = b.grade || '';
+    return gradeA.localeCompare(gradeB);
+  });
 
   const handleImportStudents = async (importedStudents: Student[]) => {
     // Los estudiantes ya se importaron en el componente MassImport
@@ -201,7 +206,7 @@ export default function StudentsPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
-                  Graad/Klas
+                  Klas
                 </label>
                 <input
                   type="text"
@@ -274,7 +279,7 @@ export default function StudentsPage() {
                       Naam
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
-                      Graad/Klas
+                      Klas
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-bold text-slate-300 uppercase tracking-wider">
                       Acties

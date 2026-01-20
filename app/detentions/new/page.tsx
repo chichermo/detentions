@@ -1,17 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X, Calendar as CalendarIcon } from 'lucide-react';
 import { Student, Detention, DayOfWeek } from '@/types';
-import { format } from 'date-fns';
+import { format, parseISO, getDay } from 'date-fns';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
+
+// Función para obtener el día de la semana desde una fecha
+const getDayOfWeekFromDate = (dateStr: string): DayOfWeek => {
+  const date = parseISO(dateStr);
+  const dayOfWeek = getDay(date); // 0 = domingo, 1 = lunes, etc.
+  
+  // Convertir a nuestro formato: lunes=1, martes=2, miércoles=3, jueves=4, viernes=5, sábado=6, domingo=0
+  // Nuestros días: MAANDAG, DINSDAG, DONDERDAG
+  const dayMap: { [key: number]: DayOfWeek } = {
+    1: 'MAANDAG',  // Lunes
+    2: 'DINSDAG',  // Martes
+    3: 'WOENSDAG', // Miércoles (no usado pero por completitud)
+    4: 'DONDERDAG', // Jueves
+    5: 'VRIJDAG',  // Viernes (no usado pero por completitud)
+    6: 'ZATERDAG', // Sábado (no usado pero por completitud)
+    0: 'ZONDAG',   // Domingo (no usado pero por completitud)
+  };
+  
+  return dayMap[dayOfWeek] || 'MAANDAG';
+};
 
 export default function NewDetentionPage() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
-  const [selectedDay, setSelectedDay] = useState<DayOfWeek>('MAANDAG');
   const [date, setDate] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -20,9 +39,15 @@ export default function NewDetentionPage() {
     return format(new Date(), 'yyyy-MM-dd');
   });
   const [detentions, setDetentions] = useState<Partial<Detention>[]>([]);
+  
+  // Calcular el día de la semana automáticamente desde la fecha
+  const selectedDay = useMemo(() => getDayOfWeekFromDate(date), [date]);
 
   useEffect(() => {
-    fetchStudents();
+    if (selectedDay) {
+      fetchStudents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDay]);
 
   useEffect(() => {
@@ -32,6 +57,7 @@ export default function NewDetentionPage() {
   }, []);
 
   const fetchStudents = async () => {
+    if (!selectedDay) return;
     try {
       const response = await fetch(`/api/students?day=${selectedDay}`);
       const data = await response.json();
@@ -142,7 +168,7 @@ export default function NewDetentionPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Session Info */}
         <div className="card p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">
                 Datum
@@ -156,25 +182,9 @@ export default function NewDetentionPage() {
                   className="input-field pl-10"
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Dag van de Week
-              </label>
-              <select
-                value={selectedDay}
-                onChange={(e) => {
-                  setSelectedDay(e.target.value as DayOfWeek);
-                  fetchStudents();
-                }}
-                className="input-field"
-              >
-                {DAYS.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
+              <p className="text-sm text-slate-400 mt-2">
+                Dag: {selectedDay}
+              </p>
             </div>
             <div className="flex items-end">
               <button
