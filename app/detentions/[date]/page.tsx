@@ -31,8 +31,18 @@ export default function DetentionSessionPage() {
       const response = await fetch(`/api/detentions?date=${date}`);
       const data = await response.json();
       // Ordenar por número para asegurar que aparezcan en orden
-      const sorted = data.sort((a: Detention, b: Detention) => a.number - b.number);
-      setDetentions(sorted);
+      // Asegurar que todos los números sean válidos (>= 1)
+      const validData = data.map((d: Detention) => ({
+        ...d,
+        number: d.number && d.number > 0 ? d.number : 1
+      }));
+      const sorted = validData.sort((a: Detention, b: Detention) => a.number - b.number);
+      // Re-numerar si hay números duplicados o faltantes
+      const renumbered = sorted.map((d: Detention, index: number) => ({
+        ...d,
+        number: index + 1
+      }));
+      setDetentions(renumbered);
     } catch (error) {
       console.error('Error fetching detentions:', error);
     }

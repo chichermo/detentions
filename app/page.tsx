@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, Users, Plus, Search, Clock, ArrowRight, BarChart3, LayoutDashboard, Download } from 'lucide-react';
+import { Calendar, Users, Search, Clock, ArrowRight, BarChart3, Plus, Download } from 'lucide-react';
 import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -82,7 +82,7 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8 sm:mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8 sm:mb-12">
           <Link
             href="/students"
             className="card-hover p-6 group relative overflow-hidden"
@@ -106,28 +106,6 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/detentions/new"
-            className="card-hover p-6 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300">
-                <Plus className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Nieuw Nablijven</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Registreer een nieuwe nablijven sessie
-                </p>
-                <div className="mt-3 flex items-center text-emerald-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Aanmaken</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          <Link
             href="/calendar"
             className="card-hover p-6 group relative overflow-hidden"
           >
@@ -142,28 +120,6 @@ export default function Home() {
                   Bekijk alle nablijven sessies
                 </p>
                 <div className="mt-3 flex items-center text-purple-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Bekijken</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="card-hover p-6 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition-transform duration-300">
-                <LayoutDashboard className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Dashboard</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Overzicht en KPIs in real-time
-                </p>
-                <div className="mt-3 flex items-center text-cyan-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                   <span>Bekijken</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </div>
