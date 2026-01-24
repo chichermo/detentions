@@ -317,13 +317,16 @@ export default function NewDetentionPage() {
                     <div className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 transition-colors border border-purple-500/50">
                       <input
                         type="checkbox"
-                        checked={detention.isDoublePeriod || false}
+                        checked={!!detention.isDoublePeriod}
                         onChange={(e) => {
                           const isChecked = e.target.checked;
+                          console.log('Strafstudie checkbox clicked:', isChecked);
+                          console.log('Before:', detention.isDoublePeriod);
                           updateDetention(index, 'isDoublePeriod', isChecked);
                           if (!isChecked) {
                             updateDetention(index, 'timePeriod', undefined);
                           }
+                          console.log('After updateDetention called');
                         }}
                         className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
                       />
