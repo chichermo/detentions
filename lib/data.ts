@@ -115,6 +115,8 @@ export async function getDetentions(date?: string): Promise<Detention[]> {
         shouldPrint: d.should_print || false,
         canUseChromebook: d.can_use_chromebook || false,
         extraNotes: d.extra_notes || undefined,
+        isDoublePeriod: d.is_double_period || false,
+        timePeriod: d.time_period || undefined,
       }));
     }
     
@@ -154,6 +156,8 @@ export async function getDetentionsByDateRange(startDate: string, endDate: strin
         shouldPrint: d.should_print || false,
         canUseChromebook: d.can_use_chromebook || false,
         extraNotes: d.extra_notes || undefined,
+        isDoublePeriod: d.is_double_period || false,
+        timePeriod: d.time_period || undefined,
       }));
     }
     
@@ -182,6 +186,8 @@ export async function saveDetention(detention: Detention): Promise<void> {
           should_print: detention.shouldPrint,
           can_use_chromebook: detention.canUseChromebook,
           extra_notes: detention.extraNotes || null,
+          is_double_period: detention.isDoublePeriod || false,
+          time_period: detention.timePeriod || null,
         }, {
           onConflict: 'id'
         });

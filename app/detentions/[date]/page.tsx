@@ -199,6 +199,8 @@ export default function DetentionSessionPage() {
   };
 
   const currentDayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : 'MAANDAG';
+  const hasDoublePeriod = detentions.some(d => d.isDoublePeriod);
+  const isMonday = currentDayOfWeek === 'MAANDAG';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
@@ -245,10 +247,11 @@ export default function DetentionSessionPage() {
             </div>
             <div>
               <h2 className="section-title">
-                Nablijven (van 16u tot 16u50)
+                Nablijven {hasDoublePeriod ? '(Dubbele periode: 16u tot 17u40)' : '(van 16u tot 16u50)'}
               </h2>
               <p className="section-subtitle">
                 {detentions.length} nablijven geregistreerd
+                {hasDoublePeriod && ' • Dubbele nablijven actief'}
               </p>
             </div>
           </div>
@@ -333,6 +336,16 @@ export default function DetentionSessionPage() {
                     <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-20">
                       Chromebook
                     </th>
+                    {isMonday && (
+                      <>
+                        <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-24">
+                          Dubbel
+                        </th>
+                        <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-32">
+                          Tijdvak
+                        </th>
+                      </>
+                    )}
                     <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
                       Opmerkingen
                     </th>
@@ -361,6 +374,7 @@ export default function DetentionSessionPage() {
                             onSave={handleSaveEdit}
                             onCancel={handleCancelEdit}
                             onChange={(field, value) => setEditingDetention({ ...editingDetention, [field]: value })}
+                            isMonday={isMonday}
                           />
                         ) : (
                           <>
@@ -412,6 +426,24 @@ export default function DetentionSessionPage() {
                               <span className="text-slate-600">-</span>
                             )}
                           </td>
+                          {isMonday && (
+                            <>
+                              <td className="px-2 py-4 whitespace-nowrap text-center">
+                                {detention.isDoublePeriod ? (
+                                  <span className="inline-flex items-center justify-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-bold border border-purple-500/30">
+                                    2x
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-600">-</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="text-xs text-slate-400">
+                                  {detention.timePeriod || '-'}
+                                </div>
+                              </td>
+                            </>
+                          )}
                           <td className="px-4 py-4">
                             <div className="text-sm text-slate-400 max-w-xs">
                               {detention.extraNotes || '-'}
@@ -491,13 +523,17 @@ function EditRow({
   onSave,
   onCancel,
   onChange,
+  isMonday,
 }: {
   detention: Partial<Detention>;
   students: Student[];
   onSave: () => void;
   onCancel: () => void;
   onChange: (field: keyof Detention, value: any) => void;
+  isMonday?: boolean;
 }) {
+  const timePeriods = ['16:00-16:15', '16:15-16:30', '16:30-16:45', '16:45-17:00', '17:00-17:15', '17:15-17:30', '17:30-17:40'];
+  
   return (
     <>
       <td className="px-4 py-4 whitespace-nowrap print:hidden"></td>
@@ -568,6 +604,33 @@ function EditRow({
           className="h-5 w-5 text-indigo-600 rounded border-slate-500 bg-slate-700"
         />
       </td>
+      {isMonday && (
+        <>
+          <td className="px-2 py-4 text-center">
+            <input
+              type="checkbox"
+              checked={detention.isDoublePeriod || false}
+              onChange={(e) => onChange('isDoublePeriod', e.target.checked)}
+              className="h-5 w-5 text-purple-600 rounded border-slate-500 bg-slate-700"
+            />
+          </td>
+          <td className="px-4 py-4">
+            <select
+              value={detention.timePeriod || ''}
+              onChange={(e) => onChange('timePeriod', e.target.value)}
+              className="input-field text-sm py-2"
+              disabled={!detention.isDoublePeriod}
+            >
+              <option value="">Selecteer tijdvak...</option>
+              {timePeriods.map((period) => (
+                <option key={period} value={period}>
+                  {period}
+                </option>
+              ))}
+            </select>
+          </td>
+        </>
+      )}
       <td className="px-4 py-4">
         <textarea
           value={detention.extraNotes || ''}
@@ -609,6 +672,9 @@ function DetentionForm({
   students: Student[];
   onChange: (field: keyof Detention, value: any) => void;
 }) {
+  const isMonday = detention.dayOfWeek === 'MAANDAG';
+  const timePeriods = ['16:00-16:15', '16:15-16:30', '16:30-16:45', '16:45-17:00', '17:00-17:15', '17:15-17:30', '17:30-17:40'];
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
@@ -700,7 +766,48 @@ function DetentionForm({
           />
           <span className="text-sm font-medium text-slate-300">Mag chromebook gebruiken?</span>
         </label>
+        {isMonday && (
+          <label className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 cursor-pointer transition-colors border border-purple-500/50">
+            <input
+              type="checkbox"
+              checked={detention.isDoublePeriod || false}
+              onChange={(e) => {
+                onChange('isDoublePeriod', e.target.checked);
+                if (!e.target.checked) {
+                  onChange('timePeriod', undefined);
+                }
+              }}
+              className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700"
+            />
+            <div className="flex-1">
+              <span className="text-sm font-bold text-purple-200">Dubbele nablijven (16:00-17:40)</span>
+              <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
+            </div>
+          </label>
+        )}
       </div>
+
+      {isMonday && detention.isDoublePeriod && (
+        <div>
+          <label className="block text-sm font-semibold text-slate-300 mb-2">
+            Tijdvak *
+          </label>
+          <select
+            required={detention.isDoublePeriod}
+            value={detention.timePeriod || ''}
+            onChange={(e) => onChange('timePeriod', e.target.value)}
+            className="input-field"
+          >
+            <option value="">Selecteer tijdvak...</option>
+            {timePeriods.map((period) => (
+              <option key={period} value={period}>
+                {period}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-slate-400 mt-1.5">Kies een tijdvak van 15 minuten binnen de dubbele periode</p>
+        </div>
+      )}
 
       <div className="md:col-span-2">
         <label className="block text-sm font-semibold text-slate-300 mb-2">

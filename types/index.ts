@@ -20,6 +20,8 @@ export interface Detention {
   shouldPrint: boolean;
   canUseChromebook: boolean;
   extraNotes?: string;
+  isDoublePeriod?: boolean; // Dubbele nablijven (alleen maandag)
+  timePeriod?: '16:00-16:15' | '16:15-16:30' | '16:30-16:45' | '16:45-17:00' | '17:00-17:15' | '17:15-17:30' | '17:30-17:40'; // Tijdvak voor dubbele nablijven
 }
 
 export interface DetentionSession {

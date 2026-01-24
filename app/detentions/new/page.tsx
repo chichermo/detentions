@@ -74,6 +74,8 @@ export default function NewDetentionPage() {
     shouldPrint: false,
     canUseChromebook: false,
     extraNotes: '',
+    isDoublePeriod: false,
+    timePeriod: undefined,
   });
 
   const addDetention = () => {
@@ -116,6 +118,8 @@ export default function NewDetentionPage() {
         shouldPrint: d.shouldPrint || false,
         canUseChromebook: d.canUseChromebook || false,
         extraNotes: d.extraNotes || '',
+        isDoublePeriod: d.isDoublePeriod || false,
+        timePeriod: d.timePeriod,
       }));
 
     if (detentionsToSave.length === 0) {
@@ -309,9 +313,52 @@ export default function NewDetentionPage() {
                     />
                     <span className="text-sm font-medium text-slate-300">Mag chromebook gebruiken?</span>
                   </label>
+                  {selectedDay === 'MAANDAG' && (
+                    <label className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 cursor-pointer transition-colors border border-purple-500/50">
+                      <input
+                        type="checkbox"
+                        checked={detention.isDoublePeriod || false}
+                        onChange={(e) => {
+                          updateDetention(index, 'isDoublePeriod', e.target.checked);
+                          if (!e.target.checked) {
+                            updateDetention(index, 'timePeriod', undefined);
+                          }
+                        }}
+                        className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700"
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm font-bold text-purple-200">Dubbele nablijven (16:00-17:40)</span>
+                        <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
 
-                <div className="md:col-span-2">
+                {selectedDay === 'MAANDAG' && detention.isDoublePeriod && (
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">
+                      Tijdvak *
+                    </label>
+                    <select
+                      required={detention.isDoublePeriod}
+                      value={detention.timePeriod || ''}
+                      onChange={(e) => updateDetention(index, 'timePeriod', e.target.value)}
+                      className="input-field"
+                    >
+                      <option value="">Selecteer tijdvak...</option>
+                      <option value="16:00-16:15">16:00-16:15</option>
+                      <option value="16:15-16:30">16:15-16:30</option>
+                      <option value="16:30-16:45">16:30-16:45</option>
+                      <option value="16:45-17:00">16:45-17:00</option>
+                      <option value="17:00-17:15">17:00-17:15</option>
+                      <option value="17:15-17:30">17:15-17:30</option>
+                      <option value="17:30-17:40">17:30-17:40</option>
+                    </select>
+                    <p className="text-xs text-slate-400 mt-1.5">Kies een tijdvak van 15 minuten binnen de dubbele periode</p>
+                  </div>
+                )}
+
+                <div className={`${selectedDay === 'MAANDAG' && detention.isDoublePeriod ? '' : 'md:col-span-2'}`}>
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Extra Opmerking
                   </label>
