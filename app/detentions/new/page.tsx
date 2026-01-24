@@ -319,15 +319,16 @@ export default function NewDetentionPage() {
                         type="checkbox"
                         checked={detention.isDoublePeriod || false}
                         onChange={(e) => {
-                          updateDetention(index, 'isDoublePeriod', e.target.checked);
-                          if (!e.target.checked) {
+                          const isChecked = e.target.checked;
+                          updateDetention(index, 'isDoublePeriod', isChecked);
+                          if (!isChecked) {
                             updateDetention(index, 'timePeriod', undefined);
                           }
                         }}
                         className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700"
                       />
                       <div className="flex-1">
-                        <span className="text-sm font-bold text-purple-200">Dubbele nablijven (16:00-17:40)</span>
+                        <span className="text-sm font-bold text-purple-200">Strafstudie (16:00-17:40)</span>
                         <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
                       </div>
                     </label>
@@ -337,7 +338,7 @@ export default function NewDetentionPage() {
                 {selectedDay === 'MAANDAG' && detention.isDoublePeriod && (
                   <div>
                     <label className="block text-sm font-semibold text-slate-300 mb-2">
-                      Tijdvak *
+                      Periode *
                     </label>
                     <select
                       required={detention.isDoublePeriod}
@@ -345,16 +346,11 @@ export default function NewDetentionPage() {
                       onChange={(e) => updateDetention(index, 'timePeriod', e.target.value)}
                       className="input-field"
                     >
-                      <option value="">Selecteer tijdvak...</option>
-                      <option value="16:00-16:15">16:00-16:15</option>
-                      <option value="16:15-16:30">16:15-16:30</option>
-                      <option value="16:30-16:45">16:30-16:45</option>
-                      <option value="16:45-17:00">16:45-17:00</option>
-                      <option value="17:00-17:15">17:00-17:15</option>
-                      <option value="17:15-17:30">17:15-17:30</option>
-                      <option value="17:30-17:40">17:30-17:40</option>
+                      <option value="">Selecteer periode...</option>
+                      <option value="16:00-16:50">16:00-16:50</option>
+                      <option value="16:50-17:40">16:50-17:40</option>
                     </select>
-                    <p className="text-xs text-slate-400 mt-1.5">Kies een tijdvak van 15 minuten binnen de dubbele periode</p>
+                    <p className="text-xs text-slate-400 mt-1.5">Kies een periode van 50 minuten (2 periodes beschikbaar)</p>
                   </div>
                 )}
 

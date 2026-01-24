@@ -247,11 +247,11 @@ export default function DetentionSessionPage() {
             </div>
             <div>
               <h2 className="section-title">
-                Nablijven {hasDoublePeriod ? '(Dubbele periode: 16u tot 17u40)' : '(van 16u tot 16u50)'}
+                Nablijven {hasDoublePeriod ? '(Strafstudie: 16u tot 17u40)' : '(van 16u tot 16u50)'}
               </h2>
               <p className="section-subtitle">
                 {detentions.length} nablijven geregistreerd
-                {hasDoublePeriod && ' • Dubbele nablijven actief'}
+                {hasDoublePeriod && ' • Strafstudie actief'}
               </p>
             </div>
           </div>
@@ -339,10 +339,10 @@ export default function DetentionSessionPage() {
                     {isMonday && (
                       <>
                         <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-24">
-                          Dubbel
+                          Straf
                         </th>
                         <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-32">
-                          Tijdvak
+                          Periode
                         </th>
                       </>
                     )}
@@ -532,7 +532,7 @@ function EditRow({
   onChange: (field: keyof Detention, value: any) => void;
   isMonday?: boolean;
 }) {
-  const timePeriods = ['16:00-16:15', '16:15-16:30', '16:30-16:45', '16:45-17:00', '17:00-17:15', '17:15-17:30', '17:30-17:40'];
+  const timePeriods = ['16:00-16:50', '16:50-17:40'];
   
   return (
     <>
@@ -621,7 +621,7 @@ function EditRow({
               className="input-field text-sm py-2"
               disabled={!detention.isDoublePeriod}
             >
-              <option value="">Selecteer tijdvak...</option>
+              <option value="">Selecteer periode...</option>
               {timePeriods.map((period) => (
                 <option key={period} value={period}>
                   {period}
@@ -673,7 +673,7 @@ function DetentionForm({
   onChange: (field: keyof Detention, value: any) => void;
 }) {
   const isMonday = detention.dayOfWeek === 'MAANDAG';
-  const timePeriods = ['16:00-16:15', '16:15-16:30', '16:30-16:45', '16:45-17:00', '17:00-17:15', '17:15-17:30', '17:30-17:40'];
+  const timePeriods = ['16:00-16:50', '16:50-17:40'];
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -772,15 +772,16 @@ function DetentionForm({
               type="checkbox"
               checked={detention.isDoublePeriod || false}
               onChange={(e) => {
-                onChange('isDoublePeriod', e.target.checked);
-                if (!e.target.checked) {
+                const isChecked = e.target.checked;
+                onChange('isDoublePeriod', isChecked);
+                if (!isChecked) {
                   onChange('timePeriod', undefined);
                 }
               }}
               className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700"
             />
             <div className="flex-1">
-              <span className="text-sm font-bold text-purple-200">Dubbele nablijven (16:00-17:40)</span>
+              <span className="text-sm font-bold text-purple-200">Strafstudie (16:00-17:40)</span>
               <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
             </div>
           </label>
@@ -790,7 +791,7 @@ function DetentionForm({
       {isMonday && detention.isDoublePeriod && (
         <div>
           <label className="block text-sm font-semibold text-slate-300 mb-2">
-            Tijdvak *
+            Periode *
           </label>
           <select
             required={detention.isDoublePeriod}
@@ -798,14 +799,14 @@ function DetentionForm({
             onChange={(e) => onChange('timePeriod', e.target.value)}
             className="input-field"
           >
-            <option value="">Selecteer tijdvak...</option>
+            <option value="">Selecteer periode...</option>
             {timePeriods.map((period) => (
               <option key={period} value={period}>
                 {period}
               </option>
             ))}
           </select>
-          <p className="text-xs text-slate-400 mt-1.5">Kies een tijdvak van 15 minuten binnen de dubbele periode</p>
+          <p className="text-xs text-slate-400 mt-1.5">Kies een periode van 50 minuten (2 periodes beschikbaar)</p>
         </div>
       )}
 
