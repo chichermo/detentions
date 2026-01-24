@@ -767,7 +767,7 @@ function DetentionForm({
           <span className="text-sm font-medium text-slate-300">Mag chromebook gebruiken?</span>
         </label>
         {isMonday && (
-          <label className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 cursor-pointer transition-colors border border-purple-500/50">
+          <div className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 transition-colors border border-purple-500/50">
             <input
               type="checkbox"
               checked={detention.isDoublePeriod || false}
@@ -778,13 +778,13 @@ function DetentionForm({
                   onChange('timePeriod', undefined);
                 }
               }}
-              className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700"
+              className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
             />
             <div className="flex-1">
               <span className="text-sm font-bold text-purple-200">Strafstudie (16:00-17:40)</span>
               <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
             </div>
-          </label>
+          </div>
         )}
       </div>
 
