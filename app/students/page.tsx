@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Edit, ArrowLeft, Users, Check, Upload } from 'lucide-react';
+import { Plus, Trash2, Edit, ArrowLeft, Users, Check, Upload, X } from 'lucide-react';
 import { Student, DayOfWeek } from '@/types';
 import AdvancedSearch, { SearchFilters } from '@/app/components/AdvancedSearch';
 import EnhancedTable from '@/app/components/EnhancedTable';
@@ -68,8 +68,7 @@ export default function StudentsPage() {
     setShowImport(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doSaveStudent = async () => {
     const student: Student = {
       id: editingStudent?.id || `student-${Date.now()}`,
       name: formData.name,
@@ -92,6 +91,11 @@ export default function StudentsPage() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await doSaveStudent();
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je deze leerling wilt verwijderen?')) return;
     
@@ -106,7 +110,6 @@ export default function StudentsPage() {
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
     setFormData({ name: student.name, grade: student.grade });
-    setShowForm(true);
   };
 
   return (
@@ -184,11 +187,11 @@ export default function StudentsPage() {
           ))}
         </div>
 
-        {/* Add/Edit Form */}
-        {showForm && (
+        {/* Add New Form (edit is inline in the table) */}
+        {showForm && !editingStudent && (
           <div className="card p-8 mb-8">
             <h2 className="section-title mb-6">
-              {editingStudent ? 'Leerling Bewerken' : 'Nieuwe Leerling'}
+              Nieuwe Leerling
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -249,7 +252,7 @@ export default function StudentsPage() {
                 Leerlingen - {selectedDay}
               </h2>
               <p className="section-subtitle">
-                {students.length} leerling{students.length !== 1 ? 'en' : ''} geregistreerd
+                {filteredStudents.length} van {students.length} leerling{students.length !== 1 ? 'en' : ''}
               </p>
             </div>
             {!showForm && (
@@ -287,36 +290,84 @@ export default function StudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-slate-800/30 divide-y divide-slate-700">
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <tr key={student.id} className="hover:bg-slate-700/30 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-slate-100">
-                          {student.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-slate-400">
-                          {student.grade}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(student)}
-                            className="text-indigo-400 hover:text-indigo-300 p-2 hover:bg-indigo-500/20 rounded-lg transition-all"
-                            title="Bewerken"
-                          >
-                            <Edit className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(student.id)}
-                            className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all"
-                            title="Verwijderen"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </td>
+                      {editingStudent?.id === student.id ? (
+                        <>
+                          <td className="px-6 py-3 whitespace-nowrap">
+                            <input
+                              type="text"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              className="input-field text-sm py-2 w-full"
+                              placeholder="Naam"
+                            />
+                          </td>
+                          <td className="px-6 py-3 whitespace-nowrap">
+                            <input
+                              type="text"
+                              value={formData.grade}
+                              onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                              className="input-field text-sm py-2 w-full"
+                              placeholder="Klas"
+                            />
+                          </td>
+                          <td className="px-6 py-3 whitespace-nowrap text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => doSaveStudent()}
+                                className="text-emerald-400 hover:text-emerald-300 p-2 hover:bg-emerald-500/20 rounded-lg transition-all"
+                                title="Opslaan"
+                              >
+                                <Check className="h-5 w-5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingStudent(null);
+                                  setFormData({ name: '', grade: '' });
+                                }}
+                                className="text-slate-400 hover:text-slate-300 p-2 hover:bg-slate-500/20 rounded-lg transition-all"
+                                title="Annuleren"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-semibold text-slate-100">
+                              {student.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-slate-400">
+                              {student.grade}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleEdit(student)}
+                                className="text-indigo-400 hover:text-indigo-300 p-2 hover:bg-indigo-500/20 rounded-lg transition-all"
+                                title="Bewerken"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(student.id)}
+                                className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all"
+                                title="Verwijderen"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>

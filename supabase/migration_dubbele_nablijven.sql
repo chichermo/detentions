@@ -9,6 +9,10 @@ ADD COLUMN IF NOT EXISTS time_period TEXT CHECK (
   time_period IN ('16:00-16:50', '16:50-17:40')
 );
 
+-- Nablijven geweigerd (leerling heeft nablijven geweigerd)
+ALTER TABLE detentions 
+ADD COLUMN IF NOT EXISTS nablijven_geweigerd BOOLEAN DEFAULT FALSE;
+
 -- Crear índice para mejorar búsquedas por período doble
 CREATE INDEX IF NOT EXISTS idx_detentions_is_double_period ON detentions(is_double_period);
 CREATE INDEX IF NOT EXISTS idx_detentions_time_period ON detentions(time_period);

@@ -22,6 +22,7 @@ export interface Detention {
   extraNotes?: string;
   isDoublePeriod?: boolean; // Strafstudie (alleen maandag)
   timePeriod?: '16:00-16:50' | '16:50-17:40'; // Tijdvak voor strafstudie (2 periodes van 50 minuten)
+  nablijvenGeweigerd?: boolean; // Leerling heeft nablijven geweigerd
 }
 
 export interface DetentionSession {

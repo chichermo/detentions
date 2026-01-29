@@ -117,6 +117,7 @@ export async function getDetentions(date?: string): Promise<Detention[]> {
         extraNotes: d.extra_notes || undefined,
         isDoublePeriod: d.is_double_period || false,
         timePeriod: d.time_period || undefined,
+        nablijvenGeweigerd: d.nablijven_geweigerd || false,
       }));
     }
     
@@ -158,6 +159,7 @@ export async function getDetentionsByDateRange(startDate: string, endDate: strin
         extraNotes: d.extra_notes || undefined,
         isDoublePeriod: d.is_double_period || false,
         timePeriod: d.time_period || undefined,
+        nablijvenGeweigerd: d.nablijven_geweigerd || false,
       }));
     }
     
@@ -188,6 +190,7 @@ export async function saveDetention(detention: Detention): Promise<void> {
           extra_notes: detention.extraNotes || null,
           is_double_period: detention.isDoublePeriod || false,
           time_period: detention.timePeriod || null,
+          nablijven_geweigerd: detention.nablijvenGeweigerd || false,
         }, {
           onConflict: 'id'
         });

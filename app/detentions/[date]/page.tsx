@@ -156,6 +156,7 @@ export default function DetentionSessionPage() {
       extraNotes: '',
       isDoublePeriod: false,
       timePeriod: undefined,
+      nablijvenGeweigerd: false,
     });
     setShowAddForm(true);
     if (detentions.length > 0) {
@@ -186,6 +187,7 @@ export default function DetentionSessionPage() {
       extraNotes: newDetention.extraNotes || '',
       isDoublePeriod: newDetention.isDoublePeriod || false,
       timePeriod: newDetention.timePeriod,
+      nablijvenGeweigerd: newDetention.nablijvenGeweigerd || false,
     };
 
     try {
@@ -340,6 +342,9 @@ export default function DetentionSessionPage() {
                     <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-20">
                       Chromebook
                     </th>
+                    <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-24">
+                      Geweigerd
+                    </th>
                     {isMonday && (
                       <>
                         <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-24">
@@ -430,11 +435,20 @@ export default function DetentionSessionPage() {
                               <span className="text-slate-600">-</span>
                             )}
                           </td>
+                          <td className="px-2 py-4 whitespace-nowrap text-center">
+                            {detention.nablijvenGeweigerd ? (
+                              <span className="inline-flex items-center justify-center px-2 py-1 bg-red-500/20 text-red-300 rounded-full text-xs font-bold border border-red-500/30">
+                                Ja
+                              </span>
+                            ) : (
+                              <span className="text-slate-600">-</span>
+                            )}
+                          </td>
                           {isMonday && (
                             <>
                               <td className="px-2 py-4 whitespace-nowrap text-center">
                                 {detention.isDoublePeriod ? (
-                                  <span className="inline-flex items-center justify-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-bold border border-purple-500/30">
+                                  <span className="inline-flex items-center justify-center px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
                                     2x
                                   </span>
                                 ) : (
@@ -608,6 +622,14 @@ function EditRow({
           className="h-5 w-5 text-indigo-600 rounded border-slate-500 bg-slate-700"
         />
       </td>
+      <td className="px-2 py-4 text-center">
+        <input
+          type="checkbox"
+          checked={detention.nablijvenGeweigerd || false}
+          onChange={(e) => onChange('nablijvenGeweigerd', e.target.checked)}
+          className="h-5 w-5 text-red-600 rounded border-slate-500 bg-slate-700"
+        />
+      </td>
       {isMonday && (
         <>
           <td className="px-2 py-4 text-center">
@@ -615,7 +637,7 @@ function EditRow({
               type="checkbox"
               checked={detention.isDoublePeriod || false}
               onChange={(e) => onChange('isDoublePeriod', e.target.checked)}
-              className="h-5 w-5 text-purple-600 rounded border-slate-500 bg-slate-700"
+              className="h-5 w-5 text-amber-600 rounded border-slate-500 bg-slate-700"
             />
           </td>
           <td className="px-4 py-4">
@@ -770,26 +792,32 @@ function DetentionForm({
           />
           <span className="text-sm font-medium text-slate-300">Mag chromebook gebruiken?</span>
         </label>
+        <label className="flex items-center gap-3 p-4 bg-red-600/20 rounded-xl hover:bg-red-600/30 cursor-pointer transition-colors border border-red-500/50">
+          <input
+            type="checkbox"
+            checked={detention.nablijvenGeweigerd || false}
+            onChange={(e) => onChange('nablijvenGeweigerd', e.target.checked)}
+            className="h-5 w-5 text-red-600 focus:ring-red-500 rounded border-slate-500 bg-slate-700"
+          />
+          <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
+        </label>
         {isMonday && (
-          <div className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 transition-colors border border-purple-500/50">
+          <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">
             <input
               type="checkbox"
               checked={!!detention.isDoublePeriod}
               onChange={(e) => {
                 const isChecked = e.target.checked;
-                console.log('Strafstudie checkbox clicked:', isChecked);
-                console.log('Before:', detention.isDoublePeriod);
                 onChange('isDoublePeriod', isChecked);
                 if (!isChecked) {
                   onChange('timePeriod', undefined);
                 }
-                console.log('After onChange called');
               }}
-              className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
+              className="h-5 w-5 text-amber-600 focus:ring-amber-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
             />
             <div className="flex-1">
-              <span className="text-sm font-bold text-purple-200">Strafstudie (16:00-17:40)</span>
-              <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
+              <span className="text-sm font-bold text-amber-200">Strafstudie (16:00-17:40)</span>
+              <p className="text-xs text-amber-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
             </div>
           </div>
         )}

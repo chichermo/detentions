@@ -76,6 +76,7 @@ export default function NewDetentionPage() {
     extraNotes: '',
     isDoublePeriod: false,
     timePeriod: undefined,
+    nablijvenGeweigerd: false,
   });
 
   const addDetention = () => {
@@ -120,6 +121,7 @@ export default function NewDetentionPage() {
         extraNotes: d.extraNotes || '',
         isDoublePeriod: d.isDoublePeriod || false,
         timePeriod: d.timePeriod,
+        nablijvenGeweigerd: d.nablijvenGeweigerd || false,
       }));
 
     if (detentionsToSave.length === 0) {
@@ -313,26 +315,32 @@ export default function NewDetentionPage() {
                     />
                     <span className="text-sm font-medium text-slate-300">Mag chromebook gebruiken?</span>
                   </label>
+                  <label className="flex items-center gap-3 p-4 bg-red-600/20 rounded-xl hover:bg-red-600/30 cursor-pointer transition-colors border border-red-500/50">
+                    <input
+                      type="checkbox"
+                      checked={detention.nablijvenGeweigerd || false}
+                      onChange={(e) => updateDetention(index, 'nablijvenGeweigerd', e.target.checked)}
+                      className="h-5 w-5 text-red-600 focus:ring-red-500 rounded border-slate-500 bg-slate-700"
+                    />
+                    <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
+                  </label>
                   {selectedDay === 'MAANDAG' && (
-                    <div className="flex items-center gap-3 p-4 bg-purple-600/20 rounded-xl hover:bg-purple-600/30 transition-colors border border-purple-500/50">
+                    <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">
                       <input
                         type="checkbox"
                         checked={!!detention.isDoublePeriod}
                         onChange={(e) => {
                           const isChecked = e.target.checked;
-                          console.log('Strafstudie checkbox clicked:', isChecked);
-                          console.log('Before:', detention.isDoublePeriod);
                           updateDetention(index, 'isDoublePeriod', isChecked);
                           if (!isChecked) {
                             updateDetention(index, 'timePeriod', undefined);
                           }
-                          console.log('After updateDetention called');
                         }}
-                        className="h-5 w-5 text-purple-600 focus:ring-purple-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
+                        className="h-5 w-5 text-amber-600 focus:ring-amber-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
                       />
                       <div className="flex-1">
-                        <span className="text-sm font-bold text-purple-200">Strafstudie (16:00-17:40)</span>
-                        <p className="text-xs text-purple-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
+                        <span className="text-sm font-bold text-amber-200">Strafstudie (16:00-17:40)</span>
+                        <p className="text-xs text-amber-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
                       </div>
                     </div>
                   )}
