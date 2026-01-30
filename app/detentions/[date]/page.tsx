@@ -8,10 +8,25 @@ import DragDropDetentions from '@/app/components/DragDropDetentions';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
 import { Detention, Student, DayOfWeek } from '@/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
+
+function getDayOfWeekFromDate(dateStr: string): DayOfWeek {
+  try {
+    const d = parseISO(dateStr);
+    const dayNum = getDay(d);
+    const dayMap: Record<number, DayOfWeek> = {
+      1: 'MAANDAG',
+      2: 'DINSDAG',
+      4: 'DONDERDAG',
+    };
+    return dayMap[dayNum] ?? 'MAANDAG';
+  } catch {
+    return 'MAANDAG';
+  }
+}
 
 export default function DetentionSessionPage() {
   const router = useRouter();
@@ -67,8 +82,10 @@ export default function DetentionSessionPage() {
   useEffect(() => {
     if (detentions.length > 0) {
       fetchStudents(detentions[0].dayOfWeek);
+    } else if (date) {
+      fetchStudents(getDayOfWeekFromDate(date));
     }
-  }, [detentions, fetchStudents]);
+  }, [date, detentions, fetchStudents]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit nablijven wilt verwijderen?')) return;
@@ -141,7 +158,7 @@ export default function DetentionSessionPage() {
   };
 
   const handleAddNew = () => {
-    const dayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : 'MAANDAG';
+    const dayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : getDayOfWeekFromDate(date);
     setNewDetention({
       number: detentions.length + 1,
       date,
@@ -159,13 +176,16 @@ export default function DetentionSessionPage() {
       nablijvenGeweigerd: false,
     });
     setShowAddForm(true);
-    if (detentions.length > 0) {
-      fetchStudents(detentions[0].dayOfWeek);
-    }
+    fetchStudents(dayOfWeek);
   };
 
   const handleSaveNew = async () => {
     if (!newDetention) return;
+
+    if (!newDetention.student || String(newDetention.student).trim() === '') {
+      alert('Selecteer een leerling.');
+      return;
+    }
 
     const student = students.find(s => s.name === newDetention.student);
     const studentDisplayName = student 
@@ -191,16 +211,22 @@ export default function DetentionSessionPage() {
     };
 
     try {
-      await fetch('/api/detentions', {
+      const response = await fetch('/api/detentions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(detentionToSave),
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        alert(data?.error || 'Fout bij opslaan. Probeer het opnieuw.');
+        return;
+      }
       setShowAddForm(false);
       setNewDetention(null);
       fetchDetentions();
     } catch (error) {
       console.error('Error saving new detention:', error);
+      alert('Fout bij opslaan. Controleer je verbinding en probeer het opnieuw.');
     }
   };
 

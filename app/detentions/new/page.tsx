@@ -131,16 +131,21 @@ export default function NewDetentionPage() {
 
     try {
       for (const detention of detentionsToSave) {
-        await fetch('/api/detentions', {
+        const response = await fetch('/api/detentions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(detention),
         });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          alert(data?.error || 'Fout bij opslaan. Probeer het opnieuw.');
+          return;
+        }
       }
       router.push(`/detentions/${date}`);
     } catch (error) {
       console.error('Error saving detentions:', error);
-      alert('Fout bij het opslaan van de nablijven.');
+      alert('Fout bij het opslaan van de nablijven. Controleer je verbinding.');
     }
   };
 
