@@ -49,17 +49,14 @@ CREATE TRIGGER update_detentions_updated_at BEFORE UPDATE ON detentions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Políticas de Row Level Security (RLS)
--- Desactivar RLS temporalmente para permitir acceso público
--- En producción, deberías configurar políticas más restrictivas
-ALTER TABLE students DISABLE ROW LEVEL SECURITY;
-ALTER TABLE detentions DISABLE ROW LEVEL SECURITY;
+-- RLS debe estar habilitado (requerido por Supabase Security Advisor).
+-- Ejecutar también supabase/enable_rls.sql para crear las políticas.
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE detentions ENABLE ROW LEVEL SECURITY;
 
--- Alternativamente, si quieres habilitar RLS con políticas permisivas:
--- ALTER TABLE students ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE detentions ENABLE ROW LEVEL SECURITY;
+-- Políticas para acceso con anon key (app sin auth)
+CREATE POLICY "Allow anon all on students"
+  ON students FOR ALL TO anon USING (true) WITH CHECK (true);
 
--- CREATE POLICY "Allow all operations on students" ON students
---   FOR ALL USING (true) WITH CHECK (true);
-
--- CREATE POLICY "Allow all operations on detentions" ON detentions
---   FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all on detentions"
+  ON detentions FOR ALL TO anon USING (true) WITH CHECK (true);
