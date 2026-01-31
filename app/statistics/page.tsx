@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, BarChart3, Download, FileSpreadsheet, FileText, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { ArrowLeft, BarChart3, Download, FileSpreadsheet, FileText, Calendar as CalendarIcon, Filter, RefreshCw } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -17,6 +17,7 @@ const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'
 
 export default function StatisticsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [detentions, setDetentions] = useState<Detention[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [filterType, setFilterType] = useState<FilterType>('month');
@@ -42,24 +43,36 @@ export default function StatisticsPage() {
   const [customStartDate, setCustomStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     try {
       const [detentionsRes, studentsRes] = await Promise.all([
-        fetch('/api/detentions'),
-        fetch('/api/students')
+        fetch('/api/detentions', { cache: 'no-store' }),
+        fetch('/api/students', { cache: 'no-store' })
       ]);
       const detentionsData = await detentionsRes.json();
       const studentsData = await studentsRes.json();
-      setDetentions(detentionsData);
-      setStudents(studentsData);
+      setDetentions(Array.isArray(detentionsData) ? detentionsData : []);
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
+
+  // Cargar datos al montar y cada vez que se entra en esta página (navegación)
+  useEffect(() => {
+    fetchData();
+  }, [pathname]);
+
+  // Refrescar datos al volver a la pestaña para que las estadísticas estén al día
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
 
   const getFilteredDetentions = () => {
     let filtered = [...detentions];
@@ -516,6 +529,14 @@ export default function StatisticsPage() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={fetchData}
+                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
+                title="Gegevens vernieuwen"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="hidden sm:inline">Vernieuwen</span>
+              </button>
               <button
                 onClick={exportToPDF}
                 className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"

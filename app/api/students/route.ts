@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStudents, saveStudent, deleteStudent } from '@/lib/data';
 import { Student, DayOfWeek } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const day = searchParams.get('day') as DayOfWeek | null;
   
   const students = await getStudents(day || undefined);
-  return NextResponse.json(students);
+  return NextResponse.json(students, {
+    headers: { 'Cache-Control': 'no-store, must-revalidate' },
+  });
 }
 
 export async function POST(request: NextRequest) {

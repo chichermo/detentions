@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDetentions, saveDetention, deleteDetention } from '@/lib/data';
 import { Detention } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const date = searchParams.get('date');
   
   const detentions = await getDetentions(date || undefined);
-  return NextResponse.json(detentions);
+  return NextResponse.json(detentions, {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {
