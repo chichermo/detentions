@@ -98,6 +98,8 @@ export default function StatisticsPage() {
   };
 
   const filteredDetentions = getFilteredDetentions();
+  const geweigerdDetentions = filteredDetentions.filter(d => d.nablijvenGeweigerd);
+  const strafstudieDetentions = filteredDetentions.filter(d => d.isDoublePeriod);
 
   // Estadísticas calculadas
   const stats = {
@@ -765,6 +767,64 @@ export default function StatisticsPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Overzicht Nablijven geweigerd */}
+        <div className="card p-6 mb-8">
+          <h3 className="text-lg font-bold text-slate-100 mb-4">Nablijven geweigerd ({geweigerdDetentions.length})</h3>
+          <div className="overflow-x-auto">
+            {geweigerdDetentions.length === 0 ? (
+              <p className="text-slate-400 py-4">Geen nablijven geweigerd in de geselecteerde periode.</p>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Datum</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerling</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Reden</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {geweigerdDetentions.map((d) => (
+                    <tr key={d.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+                      <td className="py-3 px-4 text-slate-200">{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                      <td className="py-3 px-4 text-slate-200">{d.student}</td>
+                      <td className="py-3 px-4 text-slate-200">{d.reason || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* Overzicht Strafstudies */}
+        <div className="card p-6 mb-8">
+          <h3 className="text-lg font-bold text-slate-100 mb-4">Strafstudies ({strafstudieDetentions.length})</h3>
+          <div className="overflow-x-auto">
+            {strafstudieDetentions.length === 0 ? (
+              <p className="text-slate-400 py-4">Geen strafstudies in de geselecteerde periode.</p>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Datum</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerling</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Periode</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {strafstudieDetentions.map((d) => (
+                    <tr key={d.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+                      <td className="py-3 px-4 text-slate-200">{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                      <td className="py-3 px-4 text-slate-200">{d.student}</td>
+                      <td className="py-3 px-4 text-slate-200">{d.timePeriod || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
 
         {/* Tabla Completa de Nablijven */}

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error saving detention:', error);
     return NextResponse.json(
-      { success: false, error: 'Error al guardar detención' },
+      { success: false, error: 'Fout bij opslaan van nablijven' },
       { status: 500 }
     );
   }
@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Error updating detention:', error);
     return NextResponse.json(
-      { success: false, error: 'Error al actualizar detención' },
+      { success: false, error: 'Fout bij bijwerken van nablijven' },
       { status: 500 }
     );
   }

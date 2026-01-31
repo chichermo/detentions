@@ -351,26 +351,7 @@ export default function NewDetentionPage() {
                   )}
                 </div>
 
-                {selectedDay === 'MAANDAG' && detention.isDoublePeriod && (
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-2">
-                      Periode *
-                    </label>
-                    <select
-                      required={detention.isDoublePeriod}
-                      value={detention.timePeriod || ''}
-                      onChange={(e) => updateDetention(index, 'timePeriod', e.target.value)}
-                      className="input-field"
-                    >
-                      <option value="">Selecteer periode...</option>
-                      <option value="16:00-16:50">16:00-16:50</option>
-                      <option value="16:50-17:40">16:50-17:40</option>
-                    </select>
-                    <p className="text-xs text-slate-400 mt-1.5">Kies een periode van 50 minuten (2 periodes beschikbaar)</p>
-                  </div>
-                )}
-
-                <div className={`${selectedDay === 'MAANDAG' && detention.isDoublePeriod ? '' : 'md:col-span-2'}`}>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Extra Opmerking
                   </label>

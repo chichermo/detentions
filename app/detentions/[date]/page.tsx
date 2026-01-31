@@ -372,14 +372,9 @@ export default function DetentionSessionPage() {
                       Geweigerd
                     </th>
                     {isMonday && (
-                      <>
-                        <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-24">
-                          Straf
-                        </th>
-                        <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-32">
-                          Periode
-                        </th>
-                      </>
+                      <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-24">
+                        Straf
+                      </th>
                     )}
                     <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
                       Opmerkingen
@@ -471,22 +466,15 @@ export default function DetentionSessionPage() {
                             )}
                           </td>
                           {isMonday && (
-                            <>
-                              <td className="px-2 py-4 whitespace-nowrap text-center">
-                                {detention.isDoublePeriod ? (
-                                  <span className="inline-flex items-center justify-center px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
-                                    2x
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-600">-</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap">
-                                <div className="text-xs text-slate-400">
-                                  {detention.timePeriod || '-'}
-                                </div>
-                              </td>
-                            </>
+                            <td className="px-2 py-4 whitespace-nowrap text-center">
+                              {detention.isDoublePeriod ? (
+                                <span className="inline-flex items-center justify-center px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
+                                  2x
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
                           )}
                           <td className="px-4 py-4">
                             <div className="text-sm text-slate-400 max-w-xs">
@@ -576,8 +564,6 @@ function EditRow({
   onChange: (field: keyof Detention, value: any) => void;
   isMonday?: boolean;
 }) {
-  const timePeriods = ['16:00-16:50', '16:50-17:40'];
-  
   return (
     <>
       <td className="px-4 py-4 whitespace-nowrap print:hidden"></td>
@@ -657,31 +643,14 @@ function EditRow({
         />
       </td>
       {isMonday && (
-        <>
-          <td className="px-2 py-4 text-center">
-            <input
-              type="checkbox"
-              checked={detention.isDoublePeriod || false}
-              onChange={(e) => onChange('isDoublePeriod', e.target.checked)}
-              className="h-5 w-5 text-amber-600 rounded border-slate-500 bg-slate-700"
-            />
-          </td>
-          <td className="px-4 py-4">
-            <select
-              value={detention.timePeriod || ''}
-              onChange={(e) => onChange('timePeriod', e.target.value)}
-              className="input-field text-sm py-2"
-              disabled={!detention.isDoublePeriod}
-            >
-              <option value="">Selecteer periode...</option>
-              {timePeriods.map((period) => (
-                <option key={period} value={period}>
-                  {period}
-                </option>
-              ))}
-            </select>
-          </td>
-        </>
+        <td className="px-2 py-4 text-center">
+          <input
+            type="checkbox"
+            checked={detention.isDoublePeriod || false}
+            onChange={(e) => onChange('isDoublePeriod', e.target.checked)}
+            className="h-5 w-5 text-amber-600 rounded border-slate-500 bg-slate-700"
+          />
+        </td>
       )}
       <td className="px-4 py-4">
         <textarea
@@ -725,7 +694,6 @@ function DetentionForm({
   onChange: (field: keyof Detention, value: any) => void;
 }) {
   const isMonday = detention.dayOfWeek === 'MAANDAG';
-  const timePeriods = ['16:00-16:50', '16:50-17:40'];
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -849,27 +817,6 @@ function DetentionForm({
         )}
       </div>
 
-      {isMonday && detention.isDoublePeriod && (
-        <div>
-          <label className="block text-sm font-semibold text-slate-300 mb-2">
-            Periode *
-          </label>
-          <select
-            required={detention.isDoublePeriod}
-            value={detention.timePeriod || ''}
-            onChange={(e) => onChange('timePeriod', e.target.value)}
-            className="input-field"
-          >
-            <option value="">Selecteer periode...</option>
-            {timePeriods.map((period) => (
-              <option key={period} value={period}>
-                {period}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-400 mt-1.5">Kies een periode van 50 minuten (2 periodes beschikbaar)</p>
-        </div>
-      )}
 
       <div className="md:col-span-2">
         <label className="block text-sm font-semibold text-slate-300 mb-2">
