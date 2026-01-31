@@ -15,10 +15,11 @@ export async function POST(request: NextRequest) {
     const detention: Detention = await request.json();
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Fout bij opslaan van nablijven';
     console.error('Error saving detention:', error);
     return NextResponse.json(
-      { success: false, error: 'Fout bij opslaan van nablijven' },
+      { success: false, error: 'Fout bij opslaan van nablijven', details: message },
       { status: 500 }
     );
   }
@@ -29,10 +30,11 @@ export async function PUT(request: NextRequest) {
     const detention: Detention = await request.json();
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Fout bij bijwerken van nablijven';
     console.error('Error updating detention:', error);
     return NextResponse.json(
-      { success: false, error: 'Fout bij bijwerken van nablijven' },
+      { success: false, error: 'Fout bij bijwerken van nablijven', details: message },
       { status: 500 }
     );
   }

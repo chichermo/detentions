@@ -138,7 +138,8 @@ export default function NewDetentionPage() {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          alert(data?.error || 'Fout bij opslaan. Probeer het opnieuw.');
+          const msg = data?.details || data?.error || 'Fout bij opslaan. Probeer het opnieuw.';
+          alert(msg);
           return;
         }
       }

@@ -218,7 +218,7 @@ export default function DetentionSessionPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        alert(data?.error || 'Fout bij opslaan. Probeer het opnieuw.');
+        alert(data?.details || data?.error || 'Fout bij opslaan. Probeer het opnieuw.');
         return;
       }
       setShowAddForm(false);
@@ -230,7 +230,7 @@ export default function DetentionSessionPage() {
     }
   };
 
-  const currentDayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : 'MAANDAG';
+  const currentDayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : getDayOfWeekFromDate(date);
   const hasDoublePeriod = detentions.some(d => d.isDoublePeriod);
   const isMonday = currentDayOfWeek === 'MAANDAG';
 
@@ -337,9 +337,9 @@ export default function DetentionSessionPage() {
           </div>
         ) : (
           <div className="card overflow-hidden print:shadow-none">
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-16rem)]">
               <table className="min-w-full divide-y divide-slate-700">
-                <thead className="bg-slate-800/50 print:bg-slate-800">
+                <thead className="sticky top-0 z-20 bg-slate-800 shadow-[0_1px_0_0_rgba(148,163,184,0.1)] print:bg-slate-800 print:static">
                   <tr>
                     <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16 print:hidden">
                       <GripVertical className="h-4 w-4 text-slate-500" />
@@ -347,19 +347,19 @@ export default function DetentionSessionPage() {
                     <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-16">
                       #
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider min-w-[120px]">
                       Leerling
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider min-w-[100px]">
                       Leerkracht
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider min-w-[100px]">
                       Reden
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider min-w-[100px]">
                       Opdracht
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider w-28">
                       Datum LVS
                     </th>
                     <th className="px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider w-20">
@@ -376,10 +376,10 @@ export default function DetentionSessionPage() {
                         Straf
                       </th>
                     )}
-                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider min-w-[80px]">
                       Opmerkingen
                     </th>
-                    <th className="px-4 py-4 text-right text-xs font-bold text-slate-300 uppercase tracking-wider print:hidden w-24">
+                    <th className="sticky right-0 z-10 px-4 py-4 text-right text-xs font-bold text-slate-300 uppercase tracking-wider print:hidden w-28 bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.3)]">
                       Acties
                     </th>
                   </tr>
@@ -481,7 +481,7 @@ export default function DetentionSessionPage() {
                               {detention.extraNotes || '-'}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right print:hidden">
+                          <td className="sticky right-0 z-10 px-4 py-4 whitespace-nowrap text-right print:hidden bg-slate-800/30 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.2)]">
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => {
@@ -661,7 +661,7 @@ function EditRow({
           placeholder="Opmerkingen..."
         />
       </td>
-      <td className="px-4 py-4 text-right">
+      <td className="sticky right-0 z-10 px-4 py-4 text-right bg-slate-800/50 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.2)]">
         <div className="flex justify-end gap-2">
           <button
             onClick={onSave}
