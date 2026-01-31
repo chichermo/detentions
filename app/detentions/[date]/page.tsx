@@ -304,11 +304,21 @@ export default function DetentionSessionPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <DetentionForm
-              detention={newDetention}
-              students={students}
-              onChange={(field, value) => setNewDetention({ ...newDetention, [field]: value })}
-            />
+            {(() => {
+              const availableStudents = students.filter(s => !detentions.some(d => (d.student.split(' - ')[0] || d.student).trim() === s.name));
+              return (
+                <>
+                  {availableStudents.length === 0 && (
+                    <p className="text-amber-400 text-sm mb-4">Alle leerlingen voor deze sessie zijn al toegevoegd.</p>
+                  )}
+                  <DetentionForm
+                    detention={newDetention}
+                    students={availableStudents}
+                    onChange={(field, value) => setNewDetention({ ...newDetention, [field]: value })}
+                  />
+                </>
+              );
+            })()}
             <div className="flex gap-3 mt-6">
               <button onClick={handleSaveNew} className="btn-primary flex items-center gap-2">
                 <Save className="h-5 w-5" />
@@ -372,8 +382,8 @@ export default function DetentionSessionPage() {
                       Geweigerd
                     </th>
                     {isMonday && (
-                      <th className="w-20 min-w-[4rem] max-w-[4rem] px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
-                        Straf
+                      <th className="w-28 min-w-[6.5rem] max-w-[6.5rem] px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                        Strafstudie
                       </th>
                     )}
                     <th className="w-[10%] min-w-[4rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
@@ -466,10 +476,10 @@ export default function DetentionSessionPage() {
                             )}
                           </td>
                           {isMonday && (
-                            <td className="w-20 min-w-[4rem] max-w-[4rem] px-2 py-4 whitespace-nowrap text-center align-top">
+                            <td className="w-28 min-w-[6.5rem] max-w-[6.5rem] px-2 py-4 whitespace-nowrap text-center align-top">
                               {detention.isDoublePeriod ? (
-                                <span className="inline-flex items-center justify-center px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
-                                  2x
+                                <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
+                                  ✓
                                 </span>
                               ) : (
                                 <span className="text-slate-600">-</span>
@@ -643,7 +653,7 @@ function EditRow({
         />
       </td>
       {isMonday && (
-        <td className="w-20 min-w-[4rem] max-w-[4rem] px-2 py-3 text-center align-top">
+        <td className="w-28 min-w-[6.5rem] max-w-[6.5rem] px-2 py-3 text-center align-top">
           <input
             type="checkbox"
             checked={detention.isDoublePeriod || false}

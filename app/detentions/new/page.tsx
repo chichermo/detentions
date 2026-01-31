@@ -243,11 +243,13 @@ export default function NewDetentionPage() {
                     className="input-field"
                   >
                     <option value="">Selecteer leerling...</option>
-                    {students.map((student) => (
-                      <option key={student.id} value={student.name}>
-                        {student.name} - {student.grade}
-                      </option>
-                    ))}
+                    {students
+                      .filter(s => !detentions.some((d, j) => j !== index && (d.student || '').trim() === s.name))
+                      .map((student) => (
+                        <option key={student.id} value={student.name}>
+                          {student.name} - {student.grade}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
