@@ -1,17 +1,33 @@
 // Service Worker para PWA - Nablijven Systeem
-const CACHE_NAME = 'nablijven-v1';
-const STATIC_CACHE = 'nablijven-static-v1';
+const CACHE_NAME = 'nablijven-v2';
+const STATIC_CACHE = 'nablijven-static-v2';
+
+/** Solo se pueden cachear peticiones http/https del mismo origen (no chrome-extension, blob, etc.) */
+function isCacheableRequest(request) {
+  try {
+    const url = new URL(request.url);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return false;
+    }
+    if (url.origin !== self.location.origin) {
+      return false;
+    }
+    if (url.pathname.startsWith('/api/')) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // Instalación
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      console.log('[SW] Precaching static assets');
-      return cache.addAll([
-        '/',
-        '/manifest.json',
-      ]);
+      return cache.addAll(['/', '/manifest.json']).catch(() => {
+        // Ignorar fallos de precache en entornos restrictivos
+      });
     })
   );
   self.skipWaiting();
@@ -19,13 +35,11 @@ self.addEventListener('install', (event) => {
 
 // Activación
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE) {
-            console.log('[SW] Removing old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -37,43 +51,42 @@ self.addEventListener('activate', (event) => {
 
 // Fetch - Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Solo cachear requests GET
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // No cachear requests a la API (siempre necesitan datos frescos)
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(JSON.stringify({ error: 'Offline' }), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      })
-    );
+  // Extensiones del navegador, analytics externos, etc.: pasar sin cachear
+  if (!isCacheableRequest(event.request)) {
+    if (event.request.url.includes('/api/')) {
+      event.respondWith(
+        fetch(event.request).catch(() => {
+          return new Response(JSON.stringify({ error: 'Offline' }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        })
+      );
+    }
     return;
   }
 
-  // Para otros recursos, usar network first
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Solo cachear respuestas exitosas
-        if (response.status === 200) {
+        if (response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
+            cache.put(event.request, responseToCache).catch(() => {
+              // Ignorar errores de cache (p. ej. esquemas no soportados)
+            });
           });
         }
         return response;
       })
       .catch(() => {
-        // Si falla, buscar en cache
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          // Si no hay cache y es una navegación, devolver página offline
           if (event.request.mode === 'navigate') {
             return caches.match('/');
           }
