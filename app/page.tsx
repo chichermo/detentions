@@ -19,6 +19,7 @@ import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import InstallPrompt from '@/app/components/InstallPrompt';
+import BackupRestore from '@/app/components/BackupRestore';
 
 const NAV_ITEMS = [
   {
@@ -144,6 +145,7 @@ export default function Home() {
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Backup</span>
               </button>
+              <BackupRestore />
               <Link href="/detentions/new" className="btn-primary flex items-center gap-2 text-sm">
                 <Plus className="h-4 w-4" />
                 <span>Nieuwe sessie</span>
@@ -218,9 +220,9 @@ export default function Home() {
                         <h3 className="font-display font-bold text-primary text-base mb-2 group-hover:text-[var(--accent-hover)] transition-colors">
                           {format(new Date(session.date), 'EEEE d MMMM yyyy', { locale: nl })}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-secondary">
                           <span className="flex items-center gap-1.5">
-                            <Users className="h-4 w-4 opacity-60" />
+                            <Users className="h-4 w-4 text-muted" />
                             <span className="font-semibold text-secondary">{session.detentions.length}</span>
                             nablijven
                           </span>

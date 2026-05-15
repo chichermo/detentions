@@ -21,10 +21,10 @@
   --border-default: rgba(244, 239, 230, 0.11);
   --border-strong: rgba(244, 239, 230, 0.18);
 
-  --text-primary: #f4efe6;
-  --text-secondary: rgba(244, 239, 230, 0.68);
-  --text-muted: rgba(244, 239, 230, 0.42);
-  --text-faint: rgba(244, 239, 230, 0.28);
+  --text-primary: #f6f1e8;
+  --text-secondary: rgba(246, 241, 232, 0.82);
+  --text-muted: rgba(246, 241, 232, 0.62);
+  --text-faint: rgba(246, 241, 232, 0.48);
 
   --accent: #e8953a;
   --accent-hover: #f0a84a;
@@ -324,29 +324,34 @@ body {
   .badge-primary {
     @apply badge;
     background: var(--accent-muted);
-    color: #f0c078;
-    border-color: rgba(232, 149, 58, 0.25);
+    color: #ffd9a8;
+    border-color: rgba(232, 149, 58, 0.35);
   }
 
   .badge-success {
     @apply badge;
     background: var(--mint-muted);
-    color: #8ef0d8;
-    border-color: rgba(94, 234, 212, 0.22);
+    color: #b8f5e8;
+    border-color: rgba(94, 234, 212, 0.32);
   }
 
   .badge-warning {
     @apply badge;
-    background: rgba(255, 180, 80, 0.12);
-    color: #ffc878;
-    border-color: rgba(255, 180, 80, 0.25);
+    background: rgba(255, 180, 80, 0.18);
+    color: #ffe0a8;
+    border-color: rgba(255, 180, 80, 0.35);
   }
 
   .badge-danger {
     @apply badge;
     background: var(--coral-muted);
-    color: #ffb4ae;
-    border-color: rgba(255, 123, 114, 0.25);
+    color: #ffd0cc;
+    border-color: rgba(255, 123, 114, 0.35);
+  }
+
+  .form-label {
+    @apply block text-sm font-semibold mb-2;
+    color: var(--text-secondary);
   }
 
   .section-title {
@@ -531,4 +536,99 @@ body {
 .recharts-text {
   fill: var(--text-muted) !important;
   font-family: var(--font-sans) !important;
+}
+
+/* Mapeo slate/indigo heredado → tema Nablijven (contraste legible) */
+@layer utilities {
+  .text-slate-50,
+  .text-slate-100,
+  .text-slate-200 {
+    color: var(--text-primary) !important;
+  }
+
+  .text-slate-300 {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-slate-400 {
+    color: var(--text-muted) !important;
+  }
+
+  .text-slate-500,
+  .text-slate-600 {
+    color: var(--text-faint) !important;
+  }
+
+  .text-indigo-300,
+  .text-indigo-400 {
+    color: #f0c078 !important;
+  }
+
+  .text-emerald-300,
+  .text-emerald-400 {
+    color: #b8f5e8 !important;
+  }
+
+  .text-amber-400 {
+    color: #ffe0a8 !important;
+  }
+
+  .text-red-300,
+  .text-red-400 {
+    color: #ffd0cc !important;
+  }
+
+  .bg-slate-800,
+  .bg-slate-800\/30,
+  .bg-slate-800\/50 {
+    background-color: var(--surface-card) !important;
+  }
+
+  .bg-slate-700,
+  .bg-slate-700\/30,
+  .bg-slate-700\/40,
+  .bg-slate-700\/50,
+  .bg-slate-700\/60 {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .border-slate-600,
+  .border-slate-700,
+  .border-slate-800 {
+    border-color: var(--border-default) !important;
+  }
+
+  .ring-indigo-500\/30 {
+    --tw-ring-color: rgba(232, 149, 58, 0.35) !important;
+  }
+
+  .bg-indigo-500\/10,
+  .bg-indigo-500\/20 {
+    background-color: var(--accent-muted) !important;
+  }
+}
+
+@media print {
+  .app-page {
+    background: white !important;
+  }
+
+  .app-page::before {
+    display: none !important;
+  }
+
+  .card,
+  .table-data thead,
+  .table-data td {
+    background: white !important;
+    color: black !important;
+    border-color: #ccc !important;
+  }
+
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300,
+  .text-primary {
+    color: black !important;
+  }
 }

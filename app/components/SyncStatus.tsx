@@ -88,7 +88,7 @@ export default function SyncStatus() {
               <WifiOff className="h-5 w-5 text-red-400" />
               <div>
                 <p className="text-sm font-medium text-slate-200">Offline</p>
-                <p className="text-xs text-slate-400">Wijzigingen worden lokaal opgeslagen</p>
+                <p className="text-xs text-muted">Geen verbinding met de server</p>
               </div>
             </>
           )}

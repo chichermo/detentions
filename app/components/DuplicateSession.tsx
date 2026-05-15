@@ -43,19 +43,19 @@ export default function DuplicateSession({ detentions, currentDate, onDuplicate 
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="card p-6 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-indigo-500/20 rounded-lg">
-                <Copy className="h-5 w-5 text-indigo-400" />
+              <div className="p-2 rounded-xl bg-[var(--accent-muted)]">
+                <Copy className="h-5 w-5 text-[#f0c078]" />
               </div>
-              <h3 className="text-lg font-bold text-slate-100">Sessie Dupliceren</h3>
+              <h3 className="font-display text-lg font-bold text-primary">Sessie dupliceren</h3>
             </div>
 
-            <p className="text-slate-300 mb-4">
+            <p className="text-secondary mb-4">
               Deze sessie heeft <strong>{detentions.length}</strong> nablijven. 
               Selecteer een nieuwe datum om de sessie te dupliceren.
             </p>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="form-label">
                 Nieuwe Datum
               </label>
               <input

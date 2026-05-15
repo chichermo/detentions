@@ -137,10 +137,11 @@ export default function CalendarPage() {
                   key={day.toISOString()}
                   onClick={() => {
                     if (!clickable) return;
+                    const dateStr = format(day, 'yyyy-MM-dd');
                     if (session) {
-                      router.push(`/detentions/${format(day, 'yyyy-MM-dd')}`);
+                      router.push(`/detentions/${dateStr}`);
                     } else {
-                      router.push(`/detentions/new?date=${format(day, 'yyyy-MM-dd')}`);
+                      setSelectedDate(dateStr);
                     }
                   }}
                   disabled={!clickable && !session}

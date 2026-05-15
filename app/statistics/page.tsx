@@ -11,6 +11,7 @@ import ChartCard from '@/app/components/charts/ChartCard';
 import NablijvenBarChart from '@/app/components/charts/NablijvenBarChart';
 import KpiCard from '@/app/components/ui/KpiCard';
 import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
+import StatisticsSavedFilters, { StatisticsFilterState } from '@/app/components/StatisticsSavedFilters';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 
@@ -540,7 +541,8 @@ export default function StatisticsPage() {
               </button>
               <button
                 onClick={exportToPDF}
-                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
+                disabled={!pdfReady}
+                className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Exporteer naar PDF"
               >
                 <FileText className="h-4 w-4" />
@@ -593,6 +595,27 @@ export default function StatisticsPage() {
             >
               Aangepast
             </button>
+          </div>
+
+          <div className="mb-4">
+            <StatisticsSavedFilters
+              current={{
+                filterType,
+                selectedDate,
+                selectedMonth,
+                selectedYear,
+                customStartDate,
+                customEndDate,
+              }}
+              onLoad={(f) => {
+                setFilterType(f.filterType);
+                setSelectedDate(f.selectedDate);
+                setSelectedMonth(f.selectedMonth);
+                setSelectedYear(f.selectedYear);
+                setCustomStartDate(f.customStartDate);
+                setCustomEndDate(f.customEndDate);
+              }}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

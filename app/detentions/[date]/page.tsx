@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History, GripVertical } from 'lucide-react';
+import { ArrowLeft, Trash2, FileText, Edit, Plus, Save, X, Copy, History, GripVertical, Printer } from 'lucide-react';
 import DuplicateSession from '@/app/components/DuplicateSession';
+import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import DragDropDetentions from '@/app/components/DragDropDetentions';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
@@ -242,6 +243,28 @@ export default function DetentionSessionPage() {
   const hasDoublePeriod = detentions.some(d => d.isDoublePeriod);
   const isMonday = currentDayOfWeek === 'MAANDAG';
 
+  const handleDuplicateSession = async (newDate: string, duplicated: Detention[]) => {
+    try {
+      for (const detention of duplicated) {
+        const { id: _id, ...payload } = detention;
+        const response = await fetch('/api/detentions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, date: newDate }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          alert(data?.details || data?.error || 'Fout bij dupliceren.');
+          return;
+        }
+      }
+      router.push(`/detentions/${newDate}`);
+    } catch (error) {
+      console.error('Error duplicating session:', error);
+      alert('Fout bij dupliceren van sessie.');
+    }
+  };
+
   return (
     <div className="app-page">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50 print:hidden">
@@ -263,7 +286,23 @@ export default function DetentionSessionPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn-secondary flex items-center gap-2 text-sm px-3 py-2"
+                title="Afdrukken"
+              >
+                <Printer className="h-4 w-4" />
+                <span className="hidden sm:inline">Afdrukken</span>
+              </button>
+              {detentions.length > 0 && (
+                <DuplicateSession
+                  detentions={detentions}
+                  currentDate={date}
+                  onDuplicate={handleDuplicateSession}
+                />
+              )}
               {!showAddForm && (
                 <button
                   onClick={handleAddNew}
@@ -300,17 +339,26 @@ export default function DetentionSessionPage() {
         {/* Add New Form */}
         {showAddForm && newDetention && (
           <div className="card p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-100">Nieuwe Nablijven Toevoegen</h3>
-              <button
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewDetention(null);
-                }}
-                className="btn-ghost p-2"
-              >
-                <X className="h-5 w-5" />
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+              <h3 className="text-lg font-bold text-primary">Nieuwe nablijven toevoegen</h3>
+              <div className="flex items-center gap-2">
+                <DetentionTemplateManager
+                  currentDetention={newDetention}
+                  onSelectTemplate={(template) =>
+                    setNewDetention((prev) => (prev ? { ...prev, ...template } : prev))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setNewDetention(null);
+                  }}
+                  className="btn-ghost p-2"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             {(() => {
               const availableStudents = students.filter(s => !detentions.some(d => (d.student.split(' - ')[0] || d.student).trim() === s.name));

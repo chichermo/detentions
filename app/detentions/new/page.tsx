@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X, Calendar as CalendarIcon } from 'lucide-react';
+import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { format, parseISO, getDay } from 'date-fns';
 
@@ -208,6 +209,24 @@ export default function NewDetentionPage() {
         </div>
 
         {/* Detentions */}
+        <div className="flex justify-end mb-4">
+          <DetentionTemplateManager
+            currentDetention={detentions[0]}
+            onSelectTemplate={(template) => {
+              setDetentions((prev) =>
+                prev.map((d) => ({
+                  ...d,
+                  teacher: template.teacher ?? d.teacher,
+                  reason: template.reason ?? d.reason,
+                  task: template.task ?? d.task,
+                  shouldPrint: template.shouldPrint ?? d.shouldPrint,
+                  canUseChromebook: template.canUseChromebook ?? d.canUseChromebook,
+                  extraNotes: template.extraNotes ?? d.extraNotes,
+                }))
+              );
+            }}
+          />
+        </div>
         <div className="space-y-6">
           {detentions.map((detention, index) => (
             <div key={index} className="card p-8">
