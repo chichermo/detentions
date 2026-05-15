@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import SyncStatus from '@/app/components/SyncStatus'
+import DataHealthBanner from '@/app/components/DataHealthBanner'
 import Script from 'next/script'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -51,6 +52,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="font-sans antialiased">
+        <DataHealthBanner />
         {children}
         <SyncStatus />
       </body>

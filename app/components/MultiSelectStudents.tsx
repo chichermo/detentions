@@ -46,18 +46,20 @@ export default function MultiSelectStudents({
   return (
     <div className="relative">
       <div
+        role="combobox"
+        aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="input-field cursor-pointer flex items-center justify-between"
+        className="select-field cursor-pointer flex items-center justify-between gap-2"
       >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {selected.length === 0 ? (
-            <span className="text-slate-400">{placeholder}</span>
+            <span className="text-muted">{placeholder}</span>
           ) : (
             <div className="flex items-center gap-1 flex-wrap">
               {selectedStudents.slice(0, 3).map(student => (
                 <span
                   key={student.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-500/20 text-indigo-300 rounded text-sm"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--accent-muted)] text-[var(--accent-hover)] rounded text-sm"
                 >
                   {student.name}
                   <button
@@ -65,21 +67,21 @@ export default function MultiSelectStudents({
                       e.stopPropagation();
                       removeStudent(student.id);
                     }}
-                    className="hover:text-indigo-100"
+                    className="hover:text-primary"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
               {selected.length > 3 && (
-                <span className="text-slate-400 text-sm">
+                <span className="text-muted text-sm">
                   +{selected.length - 3} meer
                 </span>
               )}
             </div>
           )}
         </div>
-        <div className="text-slate-400">
+        <div className="text-muted shrink-0 flex items-center">
           {selected.length > 0 && (
             <span className="text-sm mr-2">{selected.length} geselecteerd</span>
           )}
@@ -89,14 +91,16 @@ export default function MultiSelectStudents({
 
       {isOpen && (
         <>
-          <div
-            className="fixed inset-0 z-40"
+          <button
+            type="button"
+            className="dropdown-backdrop"
+            aria-label="Sluiten"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute z-50 w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-xl max-h-80 overflow-hidden">
-            <div className="p-3 border-b border-slate-700">
+          <div className="dropdown-menu left-0 right-0 w-full max-h-80 overflow-hidden p-0 mt-2">
+            <div className="p-3 border-b border-[var(--border-subtle)]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
                 <input
                   type="text"
                   value={searchTerm}
@@ -109,7 +113,7 @@ export default function MultiSelectStudents({
             </div>
             <div className="overflow-y-auto max-h-64">
               {filteredStudents.length === 0 ? (
-                <div className="p-4 text-center text-slate-400 text-sm">
+                <div className="p-4 text-center text-muted text-sm">
                   Geen leerlingen gevonden
                 </div>
               ) : (
@@ -119,19 +123,19 @@ export default function MultiSelectStudents({
                     <div
                       key={student.id}
                       onClick={() => toggleStudent(student.id)}
-                      className="flex items-center gap-3 p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-b-0"
+                      className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer border-b border-[var(--border-subtle)] last:border-b-0"
                     >
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                         isSelected
-                          ? 'bg-indigo-500 border-indigo-500'
-                          : 'border-slate-600'
+                          ? 'bg-[var(--accent)] border-[var(--accent)]'
+                          : 'border-[var(--border-strong)]'
                       }`}>
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                        {isSelected && <Check className="h-3 w-3 text-[#1a1208]" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-slate-200 font-medium">{student.name}</div>
+                        <div className="text-primary font-medium">{student.name}</div>
                         {student.grade && (
-                          <div className="text-slate-400 text-sm">{student.grade}</div>
+                          <div className="text-muted text-sm">{student.grade}</div>
                         )}
                       </div>
                     </div>

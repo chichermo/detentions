@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X, Calendar as CalendarIcon } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import { Student, Detention, DayOfWeek } from '@/types';
+import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { format, parseISO, getDay } from 'date-fns';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
@@ -57,7 +58,7 @@ export default function NewDetentionPage() {
   const fetchStudents = async () => {
     if (!selectedDay) return;
     try {
-      const response = await fetch(`/api/students?day=${selectedDay}`);
+      const response = await apiFetch(`/api/students?day=${selectedDay}`);
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -132,7 +133,7 @@ export default function NewDetentionPage() {
 
     try {
       for (const detention of detentionsToSave) {
-        const response = await fetch('/api/detentions', {
+        const response = await apiFetch('/api/detentions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(detention),
@@ -146,6 +147,11 @@ export default function NewDetentionPage() {
       }
       router.push(`/detentions/${date}`);
     } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        alert(error.message);
+        router.push(`/detentions/${date}`);
+        return;
+      }
       console.error('Error saving detentions:', error);
       alert('Fout bij het opslaan van de nablijven. Controleer je verbinding.');
     }
@@ -180,16 +186,16 @@ export default function NewDetentionPage() {
         <div className="card p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label className="form-label">
                 Datum
               </label>
               <div className="relative">
-                <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 pointer-events-none" />
+                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted pointer-events-none z-[1]" />
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="input-field pl-10"
+                  className="input-field date-field w-full pl-10"
                 />
               </div>
               <p className="text-sm text-slate-400 mt-2">
@@ -252,14 +258,14 @@ export default function NewDetentionPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="form-label">
                     Leerling *
                   </label>
                   <select
                     required
                     value={detention.student || ''}
                     onChange={(e) => updateDetention(index, 'student', e.target.value)}
-                    className="input-field"
+                    className="select-field w-full"
                   >
                     <option value="">Selecteer leerling...</option>
                     {students
@@ -312,14 +318,14 @@ export default function NewDetentionPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="form-label">
                     Datum LVS
                   </label>
                   <input
                     type="date"
                     value={detention.lvsDate || ''}
                     onChange={(e) => updateDetention(index, 'lvsDate', e.target.value)}
-                    className="input-field"
+                    className="input-field date-field w-full"
                   />
                 </div>
 

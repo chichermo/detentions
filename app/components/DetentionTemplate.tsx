@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, FileText, Trash2, ChevronDown } from 'lucide-react';
 import { Detention } from '@/types';
+import Modal from '@/app/components/ui/Modal';
 
 interface DetentionTemplate {
   id: string;
@@ -103,26 +104,23 @@ export default function DetentionTemplateManager({
             <ChevronDown className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
           {menuOpen && (
-            <ul
-              className="absolute right-0 mt-2 z-40 min-w-[220px] max-h-64 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1"
-              role="listbox"
-            >
+            <ul className="dropdown-menu right-0 left-auto min-w-[220px]" role="listbox">
               {templates.map((template) => (
-                <li key={template.id} className="group flex items-center hover:bg-slate-700/80">
+                <li key={template.id} className="group flex items-center">
                   <button
                     type="button"
                     onClick={() => {
                       onSelectTemplate(template.template);
                       setMenuOpen(false);
                     }}
-                    className="flex-1 text-left px-3 py-2.5 text-sm text-slate-200 hover:text-indigo-300 truncate"
+                    className="dropdown-item flex-1"
                   >
                     {template.name}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleDelete(template.id, e)}
-                    className="p-2 text-red-400 hover:text-red-300 opacity-70 group-hover:opacity-100 focus-visible:opacity-100"
+                    className="p-2 text-[var(--coral)] opacity-70 group-hover:opacity-100 shrink-0"
                     aria-label={`Template ${template.name} verwijderen`}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -137,7 +135,10 @@ export default function DetentionTemplateManager({
       {currentDetention && (
         <button
           type="button"
-          onClick={() => setShowSaveDialog(true)}
+          onClick={() => {
+            setMenuOpen(false);
+            setShowSaveDialog(true);
+          }}
           className="btn-secondary text-sm px-3 py-2 flex items-center gap-2"
         >
           <Save className="h-4 w-4" aria-hidden />
@@ -145,47 +146,46 @@ export default function DetentionTemplateManager({
         </button>
       )}
 
-      {showSaveDialog && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="template-dialog-title"
-        >
-          <div className="card p-6 max-w-md w-full">
-            <h3 id="template-dialog-title" className="text-lg font-bold text-slate-100 mb-1">
-              Template opslaan
-            </h3>
-            <p className="text-sm text-slate-400 mb-4">
-              Sla huidige velden op als herbruikbare template (lokaal op dit apparaat).
-            </p>
-            <input
-              type="text"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Naam van de template"
-              className="input-field mb-4"
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-              autoFocus
-            />
-            <div className="flex gap-3">
-              <button type="button" onClick={handleSave} className="btn-primary flex-1">
-                Opslaan
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSaveDialog(false);
-                  setTemplateName('');
-                }}
-                className="btn-secondary"
-              >
-                Annuleren
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={showSaveDialog}
+        onClose={() => {
+          setShowSaveDialog(false);
+          setTemplateName('');
+        }}
+        title="Template opslaan"
+        description="Sla huidige velden op als herbruikbare template (lokaal op dit apparaat)."
+        footer={
+          <>
+            <button type="button" onClick={handleSave} className="btn-primary flex-1">
+              Opslaan
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSaveDialog(false);
+                setTemplateName('');
+              }}
+              className="btn-secondary flex-1"
+            >
+              Annuleren
+            </button>
+          </>
+        }
+      >
+        <label className="form-label" htmlFor="template-name">
+          Naam
+        </label>
+        <input
+          id="template-name"
+          type="text"
+          value={templateName}
+          onChange={(e) => setTemplateName(e.target.value)}
+          placeholder="Naam van de template"
+          className="input-field w-full"
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          autoFocus
+        />
+      </Modal>
     </div>
   );
 }

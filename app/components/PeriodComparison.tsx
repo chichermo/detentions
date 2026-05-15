@@ -130,12 +130,12 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
       {/* Period Selectors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Periode 1</label>
-          <div className="flex gap-2">
+          <label className="form-label">Periode 1</label>
+          <div className="flex gap-2 items-stretch">
             <select
               value={period1Type}
               onChange={(e) => setPeriod1Type(e.target.value as 'month' | 'year')}
-              className="input-field flex-1"
+              className="select-field flex-1 min-w-0"
             >
               <option value="month">Maand</option>
               <option value="year">Jaar</option>
@@ -145,7 +145,7 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
                 type="month"
                 value={period1Value}
                 onChange={(e) => setPeriod1Value(e.target.value)}
-                className="input-field flex-1"
+                className="input-field date-field flex-1 min-w-0"
               />
             ) : (
               <input
@@ -154,23 +154,23 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
                 onChange={(e) => setPeriod1Value(e.target.value)}
                 min="2020"
                 max="2030"
-                className="input-field flex-1"
+                className="input-field flex-1 min-w-0"
                 placeholder="Jaar"
               />
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-muted mt-1">
             {formatPeriodLabel(period1Type, period1Value)}
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Periode 2</label>
-          <div className="flex gap-2">
+          <label className="form-label">Periode 2</label>
+          <div className="flex gap-2 items-stretch">
             <select
               value={period2Type}
               onChange={(e) => setPeriod2Type(e.target.value as 'month' | 'year')}
-              className="input-field flex-1"
+              className="select-field flex-1 min-w-0"
             >
               <option value="month">Maand</option>
               <option value="year">Jaar</option>
@@ -180,7 +180,7 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
                 type="month"
                 value={period2Value}
                 onChange={(e) => setPeriod2Value(e.target.value)}
-                className="input-field flex-1"
+                className="input-field date-field flex-1 min-w-0"
               />
             ) : (
               <input
@@ -189,12 +189,12 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
                 onChange={(e) => setPeriod2Value(e.target.value)}
                 min="2020"
                 max="2030"
-                className="input-field flex-1"
+                className="input-field flex-1 min-w-0"
                 placeholder="Jaar"
               />
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-muted mt-1">
             {formatPeriodLabel(period2Type, period2Value)}
           </p>
         </div>

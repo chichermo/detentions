@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Edit, ArrowLeft, Users, Check, Upload, X } from 'lucide-react';
 import { Student, DayOfWeek } from '@/types';
+import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import AdvancedSearch, { SearchFilters } from '@/app/components/AdvancedSearch';
 import EnhancedTable from '@/app/components/EnhancedTable';
 import MassImport from '@/app/components/MassImport';
@@ -28,7 +29,7 @@ export default function StudentsPage() {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch(`/api/students?day=${selectedDay}`);
+      const response = await apiFetch(`/api/students?day=${selectedDay}`);
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -77,7 +78,7 @@ export default function StudentsPage() {
     };
 
     try {
-      await fetch('/api/students', {
+      await apiFetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(student),
@@ -87,6 +88,13 @@ export default function StudentsPage() {
       setEditingStudent(null);
       fetchStudents();
     } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        alert(error.message);
+        setFormData({ name: '', grade: '' });
+        setShowForm(false);
+        setEditingStudent(null);
+        return;
+      }
       console.error('Error saving student:', error);
     }
   };
@@ -100,9 +108,13 @@ export default function StudentsPage() {
     if (!confirm('Weet je zeker dat je deze leerling wilt verwijderen?')) return;
     
     try {
-      await fetch(`/api/students?id=${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/students?id=${id}`, { method: 'DELETE' });
       fetchStudents();
     } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        alert(error.message);
+        return;
+      }
       console.error('Error deleting student:', error);
     }
   };

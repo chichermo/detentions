@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import InstallPrompt from '@/app/components/InstallPrompt';
 import BackupRestore from '@/app/components/BackupRestore';
+import { apiFetch } from '@/lib/apiClient';
 
 const NAV_ITEMS = [
   {
@@ -71,7 +72,7 @@ export default function Home() {
 
   const fetchSessions = async () => {
     try {
-      const response = await fetch('/api/detentions/sessions', { cache: 'no-store' });
+      const response = await apiFetch('/api/detentions/sessions', { cache: 'no-store' });
       const data = await response.json();
       setSessions(Array.isArray(data) ? data : []);
     } catch (error) {

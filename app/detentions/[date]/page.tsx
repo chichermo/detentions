@@ -9,6 +9,7 @@ import DragDropDetentions from '@/app/components/DragDropDetentions';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
 import { Detention, Student, DayOfWeek } from '@/types';
+import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
@@ -44,7 +45,7 @@ export default function DetentionSessionPage() {
 
   const fetchDetentions = useCallback(async () => {
     try {
-      const response = await fetch(`/api/detentions?date=${date}`);
+      const response = await apiFetch(`/api/detentions?date=${date}`);
       const data = await response.json();
       // Ordenar por número para asegurar que aparezcan en orden
       // Asegurar que todos los números sean válidos (>= 1)
@@ -66,7 +67,7 @@ export default function DetentionSessionPage() {
 
   const fetchStudents = useCallback(async (day: DayOfWeek) => {
     try {
-      const response = await fetch(`/api/students?day=${day}`);
+      const response = await apiFetch(`/api/students?day=${day}`);
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -92,9 +93,13 @@ export default function DetentionSessionPage() {
     if (!confirm('Weet je zeker dat je dit nablijven wilt verwijderen?')) return;
     
     try {
-      await fetch(`/api/detentions?id=${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/detentions?id=${id}`, { method: 'DELETE' });
       fetchDetentions();
     } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        alert(error.message);
+        return;
+      }
       console.error('Error deleting detention:', error);
     }
   };
@@ -103,7 +108,7 @@ export default function DetentionSessionPage() {
     try {
       // Update all detentions with new numbers
       for (const detention of reorderedDetentions) {
-        await fetch('/api/detentions', {
+        await apiFetch('/api/detentions', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(detention),
@@ -140,7 +145,7 @@ export default function DetentionSessionPage() {
     };
 
     try {
-      await fetch('/api/detentions', {
+      await apiFetch('/api/detentions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedDetention),
@@ -220,7 +225,7 @@ export default function DetentionSessionPage() {
     };
 
     try {
-      const response = await fetch('/api/detentions', {
+      const response = await apiFetch('/api/detentions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(detentionToSave),
@@ -247,7 +252,7 @@ export default function DetentionSessionPage() {
     try {
       for (const detention of duplicated) {
         const { id: _id, ...payload } = detention;
-        const response = await fetch('/api/detentions', {
+        const response = await apiFetch('/api/detentions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, date: newDate }),
@@ -406,61 +411,61 @@ export default function DetentionSessionPage() {
             <div className="overflow-auto max-h-[calc(100vh-16rem)]">
               <table className="table-data">
                 <colgroup>
-                  <col className="w-10 print:hidden" />
-                  <col className="w-10" />
-                  <col className="w-[11%]" />
-                  <col className="w-[9%]" />
-                  <col className="w-[9%]" />
-                  <col className="w-[9%]" />
-                  <col className="w-[8%]" />
-                  <col className="w-20" />
-                  <col className="w-24" />
-                  <col className="w-24" />
-                  {isMonday && <col className="w-28" />}
-                  <col className="w-[10%]" />
-                  <col className="w-28 print:hidden" />
+                  <col className="print:hidden w-12 shrink-0" />
+                  <col className="w-14 shrink-0" />
+                  <col style={{ minWidth: '11rem' }} />
+                  <col style={{ minWidth: '7rem' }} />
+                  <col style={{ minWidth: '7rem' }} />
+                  <col style={{ minWidth: '7rem' }} />
+                  <col style={{ minWidth: '7rem' }} />
+                  <col style={{ width: '5.25rem', minWidth: '5.25rem' }} />
+                  <col style={{ width: '6.75rem', minWidth: '6.75rem' }} />
+                  <col style={{ width: '6.75rem', minWidth: '6.75rem' }} />
+                  {isMonday && <col style={{ width: '7rem', minWidth: '7rem' }} />}
+                  <col style={{ minWidth: '12rem' }} />
+                  <col className="print:hidden w-[8rem] shrink-0" />
                 </colgroup>
                 <thead className="shadow-[0_1px_0_0_rgba(148,163,184,0.1)] print:static">
                   <tr>
-                    <th className="w-10 min-w-[2.5rem] max-w-[2.5rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap print:hidden">
-                      <GripVertical className="h-4 w-4 text-slate-500" />
+                    <th className="w-12 min-w-[2.75rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap print:hidden align-middle">
+                      <GripVertical className="h-4 w-4 text-muted shrink-0" />
                     </th>
-                    <th className="w-10 min-w-[2.5rem] max-w-[2.5rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="w-14 min-w-[2.75rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       #
                     </th>
-                    <th className="w-[11%] min-w-[5rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="min-w-[11rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       Leerling
                     </th>
-                    <th className="w-[9%] min-w-[4rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="min-w-[7rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       Leerkracht
                     </th>
-                    <th className="w-[9%] min-w-[4rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="min-w-[7rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       Reden
                     </th>
-                    <th className="w-[9%] min-w-[4rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="min-w-[7rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       Opdracht
                     </th>
-                    <th className="w-[8%] min-w-[4.5rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="min-w-[7rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       Datum LVS
                     </th>
-                    <th className="w-20 min-w-[5rem] max-w-[5rem] px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="w-[5.25rem] min-w-[5.25rem] max-w-[5.25rem] px-1 py-4 text-center text-xs font-bold text-muted uppercase tracking-normal whitespace-normal align-middle leading-tight">
                       Afdrukken
                     </th>
-                    <th className="w-24 min-w-[5.5rem] max-w-[5.5rem] px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="w-[6.75rem] min-w-[6.75rem] max-w-[6.75rem] px-1 py-4 text-center text-xs font-bold text-muted uppercase tracking-normal whitespace-normal align-middle leading-tight">
                       Chromebook
                     </th>
-                    <th className="w-24 min-w-[5.5rem] max-w-[5.5rem] px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="w-[6.75rem] min-w-[6.75rem] max-w-[6.75rem] px-1 py-4 text-center text-xs font-bold text-muted uppercase tracking-normal whitespace-normal align-middle leading-tight">
                       Geweigerd
                     </th>
                     {isMonday && (
-                      <th className="w-28 min-w-[6.5rem] max-w-[6.5rem] px-2 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                      <th className="w-28 min-w-[7rem] max-w-[7rem] px-1 py-4 text-center text-xs font-bold text-muted uppercase tracking-normal whitespace-normal align-middle leading-tight">
                         Strafstudie
                       </th>
                     )}
-                    <th className="w-[10%] min-w-[4rem] px-2 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                    <th className="min-w-[12rem] px-2 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap align-middle">
                       Opmerkingen
                     </th>
-                    <th className="sticky right-0 z-20 w-28 min-w-[7rem] max-w-[7rem] px-3 py-4 text-right text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap print:hidden bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.3)]">
+                    <th className="sticky right-0 z-20 w-36 min-w-[9rem] max-w-[9rem] px-2 py-4 text-right text-xs font-bold text-muted uppercase tracking-wider whitespace-nowrap print:hidden bg-[rgba(14,15,22,0.95)] backdrop-blur-sm shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] align-middle">
                       Acties
                     </th>
                   </tr>
@@ -519,71 +524,71 @@ export default function DetentionSessionPage() {
                               {detention.lvsDate ? format(parseISO(detention.lvsDate), 'dd/MM/yyyy') : '-'}
                             </div>
                           </td>
-                          <td className="w-20 min-w-[5rem] max-w-[5rem] px-2 py-4 whitespace-nowrap text-center align-top">
+                          <td className="w-[5.25rem] min-w-[5.25rem] max-w-[5.25rem] px-1 py-4 whitespace-nowrap text-center align-middle">
                             {detention.shouldPrint ? (
-                              <span className="inline-flex items-center justify-center w-6 h-6 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-bold border border-emerald-500/30">
+                              <span className="inline-flex items-center justify-center w-6 h-6 mx-auto bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-bold border border-emerald-500/30">
                                 ✓
                               </span>
                             ) : (
-                              <span className="text-slate-600">-</span>
+                              <span className="text-slate-600 inline-block min-h-[1.5rem] leading-[1.5rem]">—</span>
                             )}
                           </td>
-                          <td className="w-24 min-w-[5.5rem] max-w-[5.5rem] px-2 py-4 whitespace-nowrap text-center align-top">
+                          <td className="w-[6.75rem] min-w-[6.75rem] max-w-[6.75rem] px-1 py-4 whitespace-nowrap text-center align-middle">
                             {detention.canUseChromebook ? (
-                              <span className="inline-flex items-center justify-center w-6 h-6 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-bold border border-emerald-500/30">
+                              <span className="inline-flex items-center justify-center w-6 h-6 mx-auto bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-bold border border-emerald-500/30">
                                 ✓
                               </span>
                             ) : (
-                              <span className="text-slate-600">-</span>
+                              <span className="text-slate-600 inline-block min-h-[1.5rem] leading-[1.5rem]">—</span>
                             )}
                           </td>
-                          <td className="w-24 min-w-[5.5rem] max-w-[5.5rem] px-2 py-4 whitespace-nowrap text-center align-top">
+                          <td className="w-[6.75rem] min-w-[6.75rem] max-w-[6.75rem] px-1 py-4 whitespace-nowrap text-center align-middle">
                             {detention.nablijvenGeweigerd ? (
-                              <span className="inline-flex items-center justify-center px-2 py-1 bg-red-500/20 text-red-300 rounded-full text-xs font-bold border border-red-500/30">
+                              <span className="inline-flex items-center justify-center px-2 py-1 mx-auto bg-red-500/20 text-red-300 rounded-full text-xs font-bold border border-red-500/30">
                                 Ja
                               </span>
                             ) : (
-                              <span className="text-slate-600">-</span>
+                              <span className="text-slate-600 inline-block min-h-[1.5rem] leading-[1.5rem]">—</span>
                             )}
                           </td>
                           {isMonday && (
-                            <td className="w-28 min-w-[6.5rem] max-w-[6.5rem] px-2 py-4 whitespace-nowrap text-center align-top">
+                            <td className="w-28 min-w-[7rem] max-w-[7rem] px-1 py-4 whitespace-nowrap text-center align-middle">
                               {detention.isDoublePeriod ? (
-                                <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
+                                <span className="inline-flex items-center justify-center w-6 h-6 mx-auto bg-amber-500/20 text-amber-300 rounded-full text-xs font-bold border border-amber-500/30">
                                   ✓
                                 </span>
                               ) : (
-                                <span className="text-slate-600">-</span>
+                                <span className="text-slate-600 inline-block min-h-[1.5rem] leading-[1.5rem]">—</span>
                               )}
                             </td>
                           )}
-                          <td className="px-2 py-4 max-w-0 overflow-hidden align-top">
-                            <div className="text-sm text-slate-400 truncate" title={detention.extraNotes || '-'}>
+                          <td className="min-w-[12rem] px-2 py-4 max-w-xs align-middle">
+                            <div className="text-sm text-slate-400 line-clamp-2 break-words" title={detention.extraNotes || '-'}>
                               {detention.extraNotes || '-'}
                             </div>
                           </td>
-                          <td className="sticky right-0 z-20 text-right print:hidden bg-slate-800/30 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.2)]">
-                            <div className="flex justify-end gap-2">
+                          <td className="sticky right-0 z-20 w-36 min-w-[9rem] max-w-[9rem] text-right print:hidden bg-[rgba(20,22,32,0.92)] backdrop-blur-sm shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] align-middle px-2 py-3">
+                            <div className="flex justify-end gap-1 flex-nowrap shrink-0">
                               <button
                                 onClick={() => {
                                   setSelectedRecordId(detention.id);
                                   setShowAuditHistory(true);
                                 }}
-                                className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-500/20 rounded-lg transition-all"
+                                className="text-slate-400 hover:text-slate-200 p-1.5 hover:bg-slate-500/20 rounded-lg transition-all shrink-0"
                                 title="Geschiedenis"
                               >
                                 <History className="h-5 w-5" />
                               </button>
                               <button
                                 onClick={() => handleEdit(detention)}
-                                className="text-indigo-400 hover:text-indigo-300 p-2 hover:bg-indigo-500/20 rounded-lg transition-all"
+                                className="text-indigo-400 hover:text-indigo-300 p-1.5 hover:bg-indigo-500/20 rounded-lg transition-all shrink-0"
                                 title="Bewerken"
                               >
                                 <Edit className="h-5 w-5" />
                               </button>
                               <button
                                 onClick={() => handleDelete(detention.id)}
-                                className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all"
+                                className="text-red-400 hover:text-red-300 p-1.5 hover:bg-red-500/20 rounded-lg transition-all shrink-0"
                                 title="Verwijderen"
                               >
                                 <Trash2 className="h-5 w-5" />
@@ -647,16 +652,16 @@ function EditRow({
 }) {
   return (
     <>
-      <td className="whitespace-nowrap">
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+      <td className="whitespace-nowrap align-middle px-2 py-3">
+        <div className="w-8 h-8 mx-auto bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
           {detention.number}
         </div>
       </td>
-      <td className="max-w-0 overflow-hidden">
+      <td className="min-w-[11rem] max-w-[18rem] px-2 py-3 align-middle">
         <select
           value={detention.student || ''}
           onChange={(e) => onChange('student', e.target.value)}
-          className="input-field-table block"
+          className="select-field-compact w-full block"
         >
           <option value="">Selecteer...</option>
           {students.map((s) => (
@@ -666,82 +671,90 @@ function EditRow({
           ))}
         </select>
       </td>
-      <td className="max-w-0 overflow-hidden">
+      <td className="min-w-[7rem] max-w-[12rem] px-2 py-3 align-middle">
         <input
           type="text"
           value={detention.teacher || ''}
           onChange={(e) => onChange('teacher', e.target.value)}
-          className="input-field-table"
+          className="input-field-table w-full"
         />
       </td>
-      <td className="max-w-0 overflow-hidden">
+      <td className="min-w-[7rem] max-w-[14rem] px-2 py-3 align-middle">
         <input
           type="text"
           value={detention.reason || ''}
           onChange={(e) => onChange('reason', e.target.value)}
-          className="input-field-table"
+          className="input-field-table w-full"
         />
       </td>
-      <td className="max-w-0 overflow-hidden">
+      <td className="min-w-[7rem] max-w-[14rem] px-2 py-3 align-middle">
         <input
           type="text"
           value={detention.task || ''}
           onChange={(e) => onChange('task', e.target.value)}
-          className="input-field-table"
+          className="input-field-table w-full"
         />
       </td>
-      <td className="max-w-0 overflow-hidden">
+      <td className="min-w-[7rem] w-[8rem] px-2 py-3 align-middle">
         <input
           type="date"
           value={detention.lvsDate || ''}
           onChange={(e) => onChange('lvsDate', e.target.value)}
-          className="input-field-table"
+          className="input-field-table date-field w-full min-h-[2.25rem]"
         />
       </td>
-      <td className="text-center">
-        <input
-          type="checkbox"
-          checked={detention.shouldPrint || false}
-          onChange={(e) => onChange('shouldPrint', e.target.checked)}
-          className="h-5 w-5 text-indigo-600 rounded border-slate-500 bg-slate-700"
-        />
-      </td>
-      <td className="text-center">
-        <input
-          type="checkbox"
-          checked={detention.canUseChromebook || false}
-          onChange={(e) => onChange('canUseChromebook', e.target.checked)}
-          className="h-5 w-5 text-indigo-600 rounded border-slate-500 bg-slate-700"
-        />
-      </td>
-      <td className="text-center">
-        <input
-          type="checkbox"
-          checked={detention.nablijvenGeweigerd || false}
-          onChange={(e) => onChange('nablijvenGeweigerd', e.target.checked)}
-          className="h-5 w-5 text-red-600 rounded border-slate-500 bg-slate-700"
-        />
-      </td>
-      {isMonday && (
-        <td className="text-center">
+      <td className="w-[5.25rem] min-w-[5.25rem] max-w-[5.25rem] px-1 py-3 align-middle">
+        <div className="flex justify-center items-center min-h-[2rem]">
           <input
             type="checkbox"
-            checked={detention.isDoublePeriod || false}
-            onChange={(e) => onChange('isDoublePeriod', e.target.checked)}
-            className="h-5 w-5 text-amber-600 rounded border-slate-500 bg-slate-700"
+            checked={detention.shouldPrint || false}
+            onChange={(e) => onChange('shouldPrint', e.target.checked)}
+            className="h-5 w-5 shrink-0 rounded border border-[var(--border-default)] bg-black/30 accent-[var(--accent)]"
           />
+        </div>
+      </td>
+      <td className="w-[6.75rem] min-w-[6.75rem] max-w-[6.75rem] px-1 py-3 align-middle">
+        <div className="flex justify-center items-center min-h-[2rem]">
+          <input
+            type="checkbox"
+            checked={detention.canUseChromebook || false}
+            onChange={(e) => onChange('canUseChromebook', e.target.checked)}
+            className="h-5 w-5 shrink-0 rounded border border-[var(--border-default)] bg-black/30 accent-[var(--accent)]"
+          />
+        </div>
+      </td>
+      <td className="w-[6.75rem] min-w-[6.75rem] max-w-[6.75rem] px-1 py-3 align-middle">
+        <div className="flex justify-center items-center min-h-[2rem]">
+          <input
+            type="checkbox"
+            checked={detention.nablijvenGeweigerd || false}
+            onChange={(e) => onChange('nablijvenGeweigerd', e.target.checked)}
+            className="h-5 w-5 shrink-0 rounded border border-[var(--border-default)] bg-black/30 accent-[var(--coral)]"
+          />
+        </div>
+      </td>
+      {isMonday && (
+        <td className="w-28 min-w-[7rem] max-w-[7rem] px-1 py-3 align-middle">
+          <div className="flex justify-center items-center min-h-[2rem]">
+            <input
+              type="checkbox"
+              checked={detention.isDoublePeriod || false}
+              onChange={(e) => onChange('isDoublePeriod', e.target.checked)}
+              className="h-5 w-5 shrink-0 rounded border border-[var(--border-default)] bg-black/30 accent-amber-500"
+            />
+          </div>
         </td>
       )}
-      <td className="max-w-0 overflow-hidden">
+      <td className="min-w-[12rem] max-w-[20rem] px-2 py-3 align-middle">
         <textarea
           value={detention.extraNotes || ''}
           onChange={(e) => onChange('extraNotes', e.target.value)}
           rows={1}
-          className="input-field-table resize-none"
+          className="input-field-table resize-none w-full min-h-[2.25rem]"
           placeholder="Opmerkingen..."
         />
       </td>
-      <td className="sticky right-0 z-20 text-right print:hidden bg-slate-800/30 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.2)]">
+      <td className="sticky right-0 z-20 w-36 min-w-[9rem] max-w-[9rem] text-right print:hidden bg-[rgba(20,22,32,0.92)] backdrop-blur-sm shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] px-2 py-3 align-middle">
         <div className="flex justify-end gap-1">
           <button
             type="button"
@@ -780,14 +793,14 @@ function DetentionForm({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="form-label">
           Leerling *
         </label>
         <select
           required
           value={detention.student || ''}
           onChange={(e) => onChange('student', e.target.value)}
-          className="input-field"
+          className="select-field w-full"
         >
           <option value="">Selecteer leerling...</option>
           {students.map((student) => (
@@ -799,7 +812,7 @@ function DetentionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="form-label">
           Leerkracht
         </label>
         <input
@@ -812,7 +825,7 @@ function DetentionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="form-label">
           Reden
         </label>
         <input
@@ -825,7 +838,7 @@ function DetentionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="form-label">
           Opdracht
         </label>
         <input
@@ -838,14 +851,14 @@ function DetentionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="form-label">
           Datum LVS
         </label>
         <input
           type="date"
           value={detention.lvsDate || ''}
           onChange={(e) => onChange('lvsDate', e.target.value)}
-          className="input-field"
+          className="input-field date-field w-full"
         />
       </div>
 

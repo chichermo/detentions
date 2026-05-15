@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from '
 import { DetentionSession } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
+import { apiFetch } from '@/lib/apiClient';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function CalendarPage() {
 
   const fetchSessions = async () => {
     try {
-      const response = await fetch('/api/detentions/sessions');
+      const response = await apiFetch('/api/detentions/sessions');
       const data = await response.json();
       setSessions(data);
     } catch (error) {

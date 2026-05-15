@@ -240,6 +240,117 @@ body {
     box-shadow: 0 0 0 3px var(--accent-muted);
   }
 
+  /* Selects — altura fija, flecha custom, sin desalineación */
+  select.input-field,
+  select.input-field-table,
+  .select-field {
+    @apply w-full px-4 py-3 text-sm transition-all duration-200;
+    min-height: 2.75rem;
+    line-height: 1.4;
+    background-color: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f0c078' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+
+  select.input-field-table,
+  .select-field-compact {
+    @apply px-2 py-1.5 text-sm;
+    min-height: 2.25rem;
+    padding-right: 2rem;
+    background-position: right 0.5rem center;
+  }
+
+  select.input-field option,
+  select.input-field-table option,
+  .select-field option {
+    background-color: #14161e;
+    color: var(--text-primary);
+    padding: 0.5rem;
+  }
+
+  select.input-field:focus,
+  .select-field:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+
+  /* Fechas / mes — color-scheme oscuro coherente */
+  input[type='date'].input-field,
+  input[type='month'].input-field,
+  input[type='datetime-local'].input-field,
+  .date-field {
+    min-height: 2.75rem;
+    line-height: 1.4;
+    color-scheme: dark;
+    font-family: var(--font-sans);
+  }
+
+  input[type='date'].input-field::-webkit-calendar-picker-indicator,
+  input[type='month'].input-field::-webkit-calendar-picker-indicator {
+    filter: invert(0.85) sepia(0.4) saturate(4) hue-rotate(5deg);
+    cursor: pointer;
+    opacity: 0.9;
+  }
+
+  /* Modales y menús — capas fijas sin solapamiento */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-panel {
+    @apply card w-full max-h-[min(90vh,640px)] flex flex-col overflow-hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  }
+
+  .modal-header {
+    @apply flex items-start justify-between gap-3 p-5 sm:p-6 border-b shrink-0;
+    border-color: var(--border-subtle);
+  }
+
+  .modal-body {
+    @apply p-5 sm:p-6 overflow-y-auto flex-1 min-h-0;
+  }
+
+  .modal-footer {
+    @apply flex flex-wrap gap-3 p-5 sm:p-6 border-t shrink-0;
+    border-color: var(--border-subtle);
+  }
+
+  .dropdown-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 34;
+    background: transparent;
+  }
+
+  .dropdown-menu {
+    @apply absolute mt-2 z-[35] min-w-[12rem] max-h-64 overflow-y-auto rounded-xl py-1;
+    background: rgba(14, 15, 22, 0.98);
+    border: 1px solid var(--border-default);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  .dropdown-item {
+    @apply w-full text-left px-3 py-2.5 text-sm text-primary hover:bg-white/5 transition-colors truncate;
+  }
+
   .input-field-table {
     @apply w-full min-w-0 px-2 py-1.5 text-sm transition-all duration-200;
     background: rgba(0, 0, 0, 0.3);
@@ -259,7 +370,9 @@ body {
   }
 
   .table-data {
-    @apply w-full table-fixed;
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
   }

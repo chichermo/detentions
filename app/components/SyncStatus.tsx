@@ -57,7 +57,7 @@ export default function SyncStatus() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-[60]">
       <div className="card p-3 sm:p-4 shadow-xl">
         <div className="flex items-center gap-3">
           {isOnline ? (

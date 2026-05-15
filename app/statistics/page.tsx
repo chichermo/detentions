@@ -621,31 +621,31 @@ export default function StatisticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {filterType === 'day' && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Datum</label>
+                <label className="form-label">Datum</label>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="input-field"
+                  className="input-field date-field w-full"
                 />
               </div>
             )}
             
             {filterType === 'month' && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Maand</label>
+                <label className="form-label">Maand</label>
                 <input
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="input-field"
+                  className="input-field date-field w-full"
                 />
               </div>
             )}
             
             {filterType === 'year' && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Jaar</label>
+                <label className="form-label">Jaar</label>
                 <input
                   type="number"
                   value={selectedYear}
@@ -660,21 +660,21 @@ export default function StatisticsPage() {
             {filterType === 'custom' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Van</label>
+                  <label className="form-label">Van</label>
                   <input
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="input-field"
+                    className="input-field date-field w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Tot</label>
+                  <label className="form-label">Tot</label>
                   <input
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="input-field"
+                    className="input-field date-field w-full"
                   />
                 </div>
               </>

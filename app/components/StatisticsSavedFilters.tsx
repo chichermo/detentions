@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FolderOpen, X } from 'lucide-react';
+import { Save, Trash2, FolderOpen } from 'lucide-react';
+import Modal from '@/app/components/ui/Modal';
 
 export type StatisticsFilterState = {
   filterType: 'day' | 'month' | 'year' | 'custom';
@@ -86,68 +87,84 @@ export default function StatisticsSavedFilters({ current, onLoad }: StatisticsSa
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
             className="btn-secondary text-sm px-3 py-2 flex items-center gap-2"
+            aria-expanded={menuOpen}
           >
             <FolderOpen className="h-4 w-4" />
             Opgeslagen ({saved.length})
           </button>
           {menuOpen && (
-            <ul className="absolute left-0 mt-2 z-40 min-w-[220px] max-h-56 overflow-y-auto card p-1 shadow-xl">
-              {saved.map((f) => (
-                <li key={f.id} className="flex items-center gap-1 group">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onLoad(f.filters);
-                      setMenuOpen(false);
-                    }}
-                    className="flex-1 text-left px-3 py-2 text-sm text-primary hover:text-[var(--accent-hover)] truncate"
-                  >
-                    {f.name}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(f.id)}
-                    className="p-2 text-[var(--coral)] opacity-70 group-hover:opacity-100"
-                    aria-label="Verwijderen"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <>
+              <button
+                type="button"
+                className="dropdown-backdrop"
+                aria-label="Menu sluiten"
+                onClick={() => setMenuOpen(false)}
+              />
+              <ul className="dropdown-menu left-0 min-w-[220px]">
+                {saved.map((f) => (
+                  <li key={f.id} className="flex items-center gap-1 group px-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onLoad(f.filters);
+                        setMenuOpen(false);
+                      }}
+                      className="dropdown-item flex-1"
+                    >
+                      {f.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(f.id)}
+                      className="p-2 text-[var(--coral)] opacity-70 group-hover:opacity-100 shrink-0"
+                      aria-label="Verwijderen"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </div>
       )}
 
-      {showSave && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4" role="dialog" aria-modal="true">
-          <div className="card p-6 max-w-md w-full">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-lg font-bold text-primary">Filter opslaan</h3>
-              <button type="button" onClick={() => setShowSave(false)} className="btn-ghost p-2" aria-label="Sluiten">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Naam (bijv. Q1 2026)"
-              className="input-field mb-4"
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-              autoFocus
-            />
-            <div className="flex gap-3">
-              <button type="button" onClick={handleSave} className="btn-primary flex-1">
-                Opslaan
-              </button>
-              <button type="button" onClick={() => setShowSave(false)} className="btn-secondary">
-                Annuleren
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={showSave}
+        onClose={() => {
+          setShowSave(false);
+          setName('');
+        }}
+        title="Filter opslaan"
+        maxWidth="md"
+        footer={
+          <>
+            <button type="button" onClick={handleSave} className="btn-primary flex-1">
+              Opslaan
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSave(false);
+                setName('');
+              }}
+              className="btn-secondary"
+            >
+              Annuleren
+            </button>
+          </>
+        }
+      >
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Naam (bijv. Q1 2026)"
+          className="input-field w-full"
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          autoFocus
+        />
+      </Modal>
     </div>
   );
 }

@@ -127,8 +127,9 @@ export async function syncPendingOperations(): Promise<void> {
           method: 'DELETE',
         });
       } else if (operation.type === 'update') {
+        const method = operation.entity === 'student' ? 'POST' : 'PUT';
         response = await fetch(endpoint, {
-          method: 'PUT',
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(operation.data),
         });
