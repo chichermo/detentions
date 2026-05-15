@@ -135,6 +135,32 @@ body {
   .section-subtitle {
     @apply text-sm text-slate-400 mt-1;
   }
+
+  .kpi-card {
+    @apply card p-4 sm:p-6 motion-safe:hover:-translate-y-0.5 motion-safe:transition-transform duration-200;
+  }
+
+  .skeleton {
+    @apply bg-slate-700/60 animate-pulse border border-slate-700/40;
+  }
+
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 px-6 text-center rounded-2xl border border-dashed border-slate-600/50 bg-slate-800/30;
+  }
+
+  .rank-row {
+    @apply flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-700/40 border border-slate-700/50 hover:bg-slate-700/60 transition-colors;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-hover:hover {
+    transform: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Smooth scrolling */

@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { ArrowLeft, BarChart3, Download, FileSpreadsheet, FileText, Calendar as CalendarIcon, Filter, RefreshCw } from 'lucide-react';
+import { ArrowLeft, BarChart3, Download, FileSpreadsheet, FileText, Calendar as CalendarIcon, Filter, RefreshCw, Users, XCircle, BookOpen } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse } from 'date-fns';
 import nl from 'date-fns/locale/nl';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import PeriodComparison from '@/app/components/PeriodComparison';
+import ChartCard from '@/app/components/charts/ChartCard';
+import NablijvenBarChart from '@/app/components/charts/NablijvenBarChart';
+import KpiCard from '@/app/components/ui/KpiCard';
+import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
-
-const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
 export default function StatisticsPage() {
   const router = useRouter();
@@ -659,77 +660,45 @@ export default function StatisticsPage() {
         </div>
 
         {/* Resumen de Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm mb-1">Total Nablijven</p>
-                <p className="text-3xl font-bold text-slate-100">{stats.total}</p>
-              </div>
-              <div className="p-3 bg-indigo-500/20 rounded-xl">
-                <BarChart3 className="h-6 w-6 text-indigo-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm mb-1">Met Chromebook</p>
-                <p className="text-3xl font-bold text-slate-100">{stats.withChromebook}</p>
-              </div>
-              <div className="p-3 bg-emerald-500/20 rounded-xl">
-                <CalendarIcon className="h-6 w-6 text-emerald-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm mb-1">Te Printen</p>
-                <p className="text-3xl font-bold text-slate-100">{stats.toPrint}</p>
-              </div>
-              <div className="p-3 bg-purple-500/20 rounded-xl">
-                <FileText className="h-6 w-6 text-purple-400" />
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <KpiCard label="Total nablijven" value={stats.total} icon={BarChart3} tone="indigo" />
+          <KpiCard label="Unieke leerlingen" value={new Set(filteredDetentions.map((d) => d.student.split(' - ')[0])).size} icon={Users} tone="emerald" />
+          <KpiCard label="Met Chromebook" value={stats.withChromebook} icon={CalendarIcon} tone="emerald" />
+          <KpiCard label="Te printen" value={stats.toPrint} icon={FileText} tone="purple" />
+          <KpiCard label="Geweigerd" value={geweigerdDetentions.length} icon={XCircle} tone="red" />
+          <KpiCard label="Strafstudies" value={strafstudieDetentions.length} icon={BookOpen} tone="rose" />
         </div>
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Gráfico por Día */}
-          {dayChartData.length > 0 && (
-            <div className="card p-6">
-              <h3 className="text-lg font-bold text-slate-100 mb-4">Nablijven per Dag</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dayChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-                  <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          <ChartCard
+            title="Nablijven per Dag"
+            subtitle="Verdeling over weekdagen"
+            empty={dayChartData.every((d) => d.count === 0)}
+          >
+            <NablijvenBarChart
+              data={dayChartData.map((d) => ({
+                label: DAY_LABELS[d.name] ?? d.name,
+                value: d.count,
+              }))}
+              color={NABLIIJVEN_CHART_COLORS.primary}
+              ariaLabel="Nablijven per weekdag"
+            />
+          </ChartCard>
 
-          {/* Gráfico Top Estudiantes */}
-          {topStudents.length > 0 && (
-            <div className="card p-6">
-              <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Leerlingen</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topStudents}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9ca3af" angle={-45} textAnchor="end" height={100} />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-                  <Bar dataKey="count" fill="#10b981" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          <ChartCard
+            title="Top 10 Leerlingen"
+            subtitle="Meeste nablijven in geselecteerde periode"
+            empty={topStudents.length === 0}
+          >
+            <NablijvenBarChart
+              data={topStudents.map((s) => ({ label: s.name, value: s.count }))}
+              layout="horizontal"
+              color={NABLIIJVEN_CHART_COLORS.secondary}
+              height={Math.max(280, topStudents.length * 36)}
+              ariaLabel="Top 10 leerlingen met nablijven"
+            />
+          </ChartCard>
         </div>
 
         {/* Period Comparison */}

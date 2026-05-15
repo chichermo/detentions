@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Save, FileText, Trash2, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Save, FileText, Trash2, ChevronDown } from 'lucide-react';
 import { Detention } from '@/types';
 
 interface DetentionTemplate {
@@ -38,7 +38,7 @@ export function saveTemplate(name: string, template: Partial<Detention>): string
 
 export function deleteTemplate(id: string): void {
   const templates = getTemplates();
-  const filtered = templates.filter(t => t.id !== id);
+  const filtered = templates.filter((t) => t.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 }
 
@@ -47,97 +47,133 @@ interface DetentionTemplateManagerProps {
   currentDetention?: Partial<Detention>;
 }
 
-export default function DetentionTemplateManager({ onSelectTemplate, currentDetention }: DetentionTemplateManagerProps) {
+export default function DetentionTemplateManager({
+  onSelectTemplate,
+  currentDetention,
+}: DetentionTemplateManagerProps) {
   const [templates, setTemplates] = useState<DetentionTemplate[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadTemplates();
+    setTemplates(getTemplates());
   }, []);
 
-  const loadTemplates = () => {
-    setTemplates(getTemplates());
-  };
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   const handleSave = () => {
     if (!templateName.trim() || !currentDetention) return;
-    saveTemplate(templateName, currentDetention);
+    saveTemplate(templateName.trim(), currentDetention);
     setTemplateName('');
     setShowSaveDialog(false);
-    loadTemplates();
+    setTemplates(getTemplates());
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (confirm('Weet je zeker dat je deze template wilt verwijderen?')) {
       deleteTemplate(id);
-      loadTemplates();
+      setTemplates(getTemplates());
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {templates.length > 0 && (
-        <div className="relative">
-          <button className="btn-secondary text-sm px-3 py-2 flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Templates
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="btn-secondary text-sm px-3 py-2 flex items-center gap-2"
+            aria-expanded={menuOpen}
+            aria-haspopup="listbox"
+          >
+            <FileText className="h-4 w-4" aria-hidden />
+            Templates ({templates.length})
+            <ChevronDown className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
-          <div className="absolute right-0 mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 min-w-[200px]">
-            <div className="p-2 border-b border-slate-700">
-              <h4 className="text-sm font-semibold text-slate-200">Templates</h4>
-            </div>
-            {templates.map((template) => (
-              <div
-                key={template.id}
-                className="flex items-center justify-between p-2 hover:bg-slate-700 group"
-              >
-                <button
-                  onClick={() => onSelectTemplate(template.template)}
-                  className="flex-1 text-left text-sm text-slate-200 hover:text-indigo-400"
-                >
-                  {template.name}
-                </button>
-                <button
-                  onClick={() => handleDelete(template.id)}
-                  className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-1"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+          {menuOpen && (
+            <ul
+              className="absolute right-0 mt-2 z-40 min-w-[220px] max-h-64 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1"
+              role="listbox"
+            >
+              {templates.map((template) => (
+                <li key={template.id} className="group flex items-center hover:bg-slate-700/80">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTemplate(template.template);
+                      setMenuOpen(false);
+                    }}
+                    className="flex-1 text-left px-3 py-2.5 text-sm text-slate-200 hover:text-indigo-300 truncate"
+                  >
+                    {template.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDelete(template.id, e)}
+                    className="p-2 text-red-400 hover:text-red-300 opacity-70 group-hover:opacity-100 focus-visible:opacity-100"
+                    aria-label={`Template ${template.name} verwijderen`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
       {currentDetention && (
         <button
+          type="button"
           onClick={() => setShowSaveDialog(true)}
           className="btn-secondary text-sm px-3 py-2 flex items-center gap-2"
         >
-          <Save className="h-4 w-4" />
-          Opslaan als Template
+          <Save className="h-4 w-4" aria-hidden />
+          Opslaan als template
         </button>
       )}
 
       {showSaveDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="template-dialog-title"
+        >
           <div className="card p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold text-slate-100 mb-4">Template Opslaan</h3>
+            <h3 id="template-dialog-title" className="text-lg font-bold text-slate-100 mb-1">
+              Template opslaan
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Sla huidige velden op als herbruikbare template (lokaal op dit apparaat).
+            </p>
             <input
               type="text"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="Naam van de template"
               className="input-field mb-4"
-              onKeyPress={(e) => e.key === 'Enter' && handleSave()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
               autoFocus
             />
             <div className="flex gap-3">
-              <button onClick={handleSave} className="btn-primary flex-1">
+              <button type="button" onClick={handleSave} className="btn-primary flex-1">
                 Opslaan
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowSaveDialog(false);
                   setTemplateName('');

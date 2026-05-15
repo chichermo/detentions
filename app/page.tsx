@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, Users, Search, Clock, ArrowRight, BarChart3, Plus, Download } from 'lucide-react';
+import { Calendar, Users, Search, Clock, ArrowRight, BarChart3, Plus, Download, LayoutDashboard } from 'lucide-react';
+import LoadingPage from '@/app/components/ui/LoadingPage';
 import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -11,6 +12,7 @@ import InstallPrompt from '@/app/components/InstallPrompt';
 export default function Home() {
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSessions();
@@ -18,13 +20,19 @@ export default function Home() {
 
   const fetchSessions = async () => {
     try {
-      const response = await fetch('/api/detentions/sessions');
+      const response = await fetch('/api/detentions/sessions', { cache: 'no-store' });
       const data = await response.json();
-      setSessions(data);
+      setSessions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching sessions:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return <LoadingPage label="Sessies laden..." />;
+  }
 
   const filteredSessions = sessions.filter(session => {
     if (!searchTerm) return true;
@@ -82,7 +90,7 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8 sm:mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8 sm:mb-12">
           <Link
             href="/students"
             className="card-hover p-6 group relative overflow-hidden"
@@ -120,6 +128,28 @@ export default function Home() {
                   Bekijk alle nablijven sessies
                 </p>
                 <div className="mt-3 flex items-center text-purple-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span>Bekijken</span>
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/dashboard"
+            className="card-hover p-6 group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-start gap-4">
+              <div className="p-3 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl shadow-lg shadow-sky-500/30 group-hover:scale-110 transition-transform duration-300">
+                <LayoutDashboard className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Dashboard</h2>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  KPI&apos;s, trends en toplijsten
+                </p>
+                <div className="mt-3 flex items-center text-sky-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                   <span>Bekijken</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </div>
@@ -208,13 +238,23 @@ export default function Home() {
                         <span className="badge-primary">{session.dayOfWeek}</span>
                       </div>
                     </div>
-                    {session.detentions.filter(d => d.shouldPrint).length > 0 && (
-                      <div className="ml-4 flex-shrink-0">
-                        <div className="badge-success">
-                          {session.detentions.filter(d => d.shouldPrint).length} te printen
-                        </div>
-                      </div>
-                    )}
+                    <div className="ml-4 flex-shrink-0 flex flex-wrap gap-2 justify-end">
+                      {session.detentions.filter((d) => d.shouldPrint).length > 0 && (
+                        <span className="badge-success">
+                          {session.detentions.filter((d) => d.shouldPrint).length} te printen
+                        </span>
+                      )}
+                      {session.detentions.filter((d) => d.nablijvenGeweigerd).length > 0 && (
+                        <span className="badge bg-red-500/20 text-red-300 border border-red-500/30">
+                          {session.detentions.filter((d) => d.nablijvenGeweigerd).length} geweigerd
+                        </span>
+                      )}
+                      {session.detentions.filter((d) => d.isDoublePeriod).length > 0 && (
+                        <span className="badge-warning">
+                          {session.detentions.filter((d) => d.isDoublePeriod).length} strafstudie
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               ))}

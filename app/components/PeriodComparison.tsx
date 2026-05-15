@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { Calendar, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse, subMonths, subYears } from 'date-fns';
 import nl from 'date-fns/locale/nl';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Detention } from '@/types';
+import ComparisonBarChart from '@/app/components/charts/ComparisonBarChart';
+import { DAY_LABELS } from '@/lib/chartTheme';
 
 interface PeriodComparisonProps {
   detentions: Detention[];
@@ -233,17 +234,16 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
       {/* Day Comparison Chart */}
       <div>
         <h4 className="text-md font-semibold text-slate-200 mb-4">Vergelijking per Dag</h4>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={dayComparisonData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="day" stroke="#9ca3af" />
-            <YAxis stroke="#9ca3af" />
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-            <Legend />
-            <Bar dataKey="period1" fill="#8b5cf6" name={formatPeriodLabel(period1Type, period1Value)} radius={[8, 8, 0, 0]} />
-            <Bar dataKey="period2" fill="#10b981" name={formatPeriodLabel(period2Type, period2Value)} radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <ComparisonBarChart
+          data={dayComparisonData.map((d) => ({
+            label: DAY_LABELS[d.day] ?? d.day,
+            period1: d.period1,
+            period2: d.period2,
+          }))}
+          period1Name={formatPeriodLabel(period1Type, period1Value)}
+          period2Name={formatPeriodLabel(period2Type, period2Value)}
+          ariaLabel="Vergelijking nablijven per dag tussen twee periodes"
+        />
       </div>
     </div>
   );
