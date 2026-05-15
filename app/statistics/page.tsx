@@ -744,18 +744,18 @@ export default function StatisticsPage() {
             <div className="card p-6">
               <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Leerkrachten</h3>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="table-simple">
                   <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerkracht</th>
-                      <th className="text-right py-3 px-4 text-slate-300 font-semibold">Aantal</th>
+                    <tr>
+                      <th>Leerkracht</th>
+                      <th className="text-right">Aantal</th>
                     </tr>
                   </thead>
                   <tbody>
                     {topTeachers.map((teacher, idx) => (
-                      <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td className="py-3 px-4 text-slate-200">{teacher.name}</td>
-                        <td className="py-3 px-4 text-slate-200 text-right font-semibold">{teacher.count}</td>
+                      <tr key={idx}>
+                        <td>{teacher.name}</td>
+                        <td className="text-right font-semibold">{teacher.count}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -769,18 +769,18 @@ export default function StatisticsPage() {
             <div className="card p-6">
               <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Redenen</h3>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="table-simple">
                   <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Reden</th>
-                      <th className="text-right py-3 px-4 text-slate-300 font-semibold">Aantal</th>
+                    <tr>
+                      <th>Reden</th>
+                      <th className="text-right">Aantal</th>
                     </tr>
                   </thead>
                   <tbody>
                     {topReasons.map((reason, idx) => (
-                      <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td className="py-3 px-4 text-slate-200">{reason.name}</td>
-                        <td className="py-3 px-4 text-slate-200 text-right font-semibold">{reason.count}</td>
+                      <tr key={idx}>
+                        <td>{reason.name}</td>
+                        <td className="text-right font-semibold">{reason.count}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -797,20 +797,20 @@ export default function StatisticsPage() {
             {geweigerdDetentions.length === 0 ? (
               <p className="text-slate-400 py-4">Geen nablijven geweigerd in de geselecteerde periode.</p>
             ) : (
-              <table className="w-full">
+              <table className="table-simple">
                 <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Datum</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerling</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Reden</th>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Leerling</th>
+                    <th>Reden</th>
                   </tr>
                 </thead>
                 <tbody>
                   {geweigerdDetentions.map((d) => (
-                    <tr key={d.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <td className="py-3 px-4 text-slate-200">{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                      <td className="py-3 px-4 text-slate-200">{d.student}</td>
-                      <td className="py-3 px-4 text-slate-200">{d.reason || '-'}</td>
+                    <tr key={d.id}>
+                      <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                      <td>{d.student}</td>
+                      <td>{d.reason || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -826,20 +826,20 @@ export default function StatisticsPage() {
             {strafstudieDetentions.length === 0 ? (
               <p className="text-slate-400 py-4">Geen strafstudies in de geselecteerde periode.</p>
             ) : (
-              <table className="w-full">
+              <table className="table-simple">
                 <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Datum</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerling</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-semibold">Periode</th>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Leerling</th>
+                    <th>Periode</th>
                   </tr>
                 </thead>
                 <tbody>
                   {strafstudieDetentions.map((d) => (
-                    <tr key={d.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <td className="py-3 px-4 text-slate-200">{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                      <td className="py-3 px-4 text-slate-200">{d.student}</td>
-                      <td className="py-3 px-4 text-slate-200">{d.timePeriod || '-'}</td>
+                    <tr key={d.id}>
+                      <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                      <td>{d.student}</td>
+                      <td>{d.timePeriod || '16:00-17:40'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -852,16 +852,16 @@ export default function StatisticsPage() {
         <div className="card p-6">
           <h3 className="text-lg font-bold text-slate-100 mb-4">Alle Nablijven ({filteredDetentions.length})</h3>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="table-simple">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-slate-300 font-semibold">#</th>
-                  <th className="text-left py-3 px-4 text-slate-300 font-semibold">Datum</th>
-                  <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerling</th>
-                  <th className="text-left py-3 px-4 text-slate-300 font-semibold">Leerkracht</th>
-                  <th className="text-left py-3 px-4 text-slate-300 font-semibold">Reden</th>
-                  <th className="text-center py-3 px-4 text-slate-300 font-semibold">Print</th>
-                  <th className="text-center py-3 px-4 text-slate-300 font-semibold">Chromebook</th>
+                <tr>
+                  <th>#</th>
+                  <th>Datum</th>
+                  <th>Leerling</th>
+                  <th>Leerkracht</th>
+                  <th>Reden</th>
+                  <th className="text-center">Print</th>
+                  <th className="text-center">Chromebook</th>
                 </tr>
               </thead>
               <tbody>
@@ -873,20 +873,20 @@ export default function StatisticsPage() {
                   </tr>
                 ) : (
                   filteredDetentions.map((detention) => (
-                    <tr key={detention.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <td className="py-3 px-4 text-slate-200">{detention.number}</td>
-                      <td className="py-3 px-4 text-slate-200">{format(parseISO(detention.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                      <td className="py-3 px-4 text-slate-200">{detention.student}</td>
-                      <td className="py-3 px-4 text-slate-200">{detention.teacher || '-'}</td>
-                      <td className="py-3 px-4 text-slate-200">{detention.reason || '-'}</td>
-                      <td className="py-3 px-4 text-center">
+                    <tr key={detention.id}>
+                      <td>{detention.number}</td>
+                      <td>{format(parseISO(detention.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                      <td>{detention.student}</td>
+                      <td>{detention.teacher || '-'}</td>
+                      <td>{detention.reason || '-'}</td>
+                      <td className="text-center">
                         {detention.shouldPrint ? (
                           <span className="badge-success">✓</span>
                         ) : (
                           <span className="text-slate-500">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="text-center">
                         {detention.canUseChromebook ? (
                           <span className="badge-success">✓</span>
                         ) : (

@@ -52,19 +52,64 @@ body {
   }
   
   .btn-primary {
-    @apply px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 active:scale-95;
+    @apply px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
   }
   
   .btn-secondary {
-    @apply px-5 py-2.5 bg-slate-700 text-slate-200 rounded-xl hover:bg-slate-600 font-semibold transition-all duration-200 active:scale-95;
+    @apply px-5 py-2.5 bg-slate-700 text-slate-200 rounded-xl hover:bg-slate-600 font-semibold transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
   }
   
   .btn-ghost {
-    @apply px-4 py-2 text-slate-400 rounded-xl hover:bg-slate-800 hover:text-slate-200 font-medium transition-all duration-200;
+    @apply px-4 py-2 text-slate-400 rounded-xl hover:bg-slate-800 hover:text-slate-200 font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
   }
   
   .input-field {
     @apply w-full px-4 py-3 border border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 bg-slate-700 text-slate-100 placeholder:text-slate-400 transition-all duration-200;
+  }
+
+  /* Compact inputs inside data tables (aligned row height with view mode) */
+  .input-field-table {
+    @apply w-full min-w-0 px-2 py-1.5 text-sm border border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 bg-slate-700/80 text-slate-100 placeholder:text-slate-500 transition-all duration-200;
+  }
+
+  .table-data {
+    @apply w-full table-fixed divide-y divide-slate-700;
+  }
+
+  .table-data thead {
+    @apply sticky top-0 z-20 bg-slate-800;
+  }
+
+  .table-data th {
+    @apply px-2 py-3 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap;
+  }
+
+  .table-data td {
+    @apply px-2 py-4 align-top;
+  }
+
+  .table-data tbody tr:hover {
+    @apply bg-slate-700/30;
+  }
+
+  .table-simple {
+    @apply w-full divide-y divide-slate-700;
+  }
+
+  .table-simple thead {
+    @apply bg-slate-800/50;
+  }
+
+  .table-simple th {
+    @apply px-4 py-3 text-left text-xs font-bold text-slate-300 uppercase tracking-wider whitespace-nowrap;
+  }
+
+  .table-simple td {
+    @apply px-4 py-3 text-sm text-slate-200;
+  }
+
+  .table-simple tbody tr {
+    @apply hover:bg-slate-700/30 transition-colors;
   }
   
   .badge {

@@ -275,44 +275,38 @@ export default function StudentsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-700">
-                <thead className="bg-slate-800/50">
+              <table className="table-simple">
+                <thead>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
-                      Naam
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">
-                      Klas
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-300 uppercase tracking-wider">
-                      Acties
-                    </th>
+                    <th>Naam</th>
+                    <th>Klas</th>
+                    <th className="text-right">Acties</th>
                   </tr>
                 </thead>
-                <tbody className="bg-slate-800/30 divide-y divide-slate-700">
+                <tbody>
                   {filteredStudents.map((student) => (
-                    <tr key={student.id} className="hover:bg-slate-700/30 transition-colors">
+                    <tr key={student.id} className={editingStudent?.id === student.id ? 'bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/30' : ''}>
                       {editingStudent?.id === student.id ? (
                         <>
-                          <td className="px-6 py-3 whitespace-nowrap">
+                          <td className="whitespace-nowrap">
                             <input
                               type="text"
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              className="input-field text-sm py-2 w-full"
+                              className="input-field-table"
                               placeholder="Naam"
                             />
                           </td>
-                          <td className="px-6 py-3 whitespace-nowrap">
+                          <td className="whitespace-nowrap">
                             <input
                               type="text"
                               value={formData.grade}
                               onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                              className="input-field text-sm py-2 w-full"
+                              className="input-field-table"
                               placeholder="Klas"
                             />
                           </td>
-                          <td className="px-6 py-3 whitespace-nowrap text-right">
+                          <td className="whitespace-nowrap text-right">
                             <div className="flex justify-end gap-2">
                               <button
                                 type="button"
