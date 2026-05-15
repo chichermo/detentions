@@ -21,13 +21,13 @@ export default function ChartCard({
 }: ChartCardProps) {
   return (
     <div className={`card p-4 sm:p-6 ${className}`}>
-      <div className="mb-4">
-        <h3 className="text-lg font-bold text-slate-100">{title}</h3>
-        {subtitle && <p className="text-sm text-slate-400 mt-0.5">{subtitle}</p>}
+      <div className="mb-5 pb-4 border-b border-[var(--border-subtle)]">
+        <h3 className="font-display text-lg font-bold text-primary">{title}</h3>
+        {subtitle && <p className="text-sm text-muted mt-1">{subtitle}</p>}
       </div>
       {empty ? (
-        <div className="flex items-center justify-center h-[280px] rounded-xl border border-dashed border-slate-600/50 bg-slate-800/30">
-          <p className="text-slate-400 text-sm px-4 text-center">{emptyMessage}</p>
+        <div className="empty-state h-[260px]">
+          <p className="text-sm">{emptyMessage}</p>
         </div>
       ) : (
         children

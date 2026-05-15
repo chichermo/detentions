@@ -30,10 +30,10 @@ function PieTooltip({
   const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
   return (
     <div style={CHART_TOOLTIP_STYLE} className="text-sm">
-      <p className="font-semibold text-slate-100">{item.name}</p>
+      <p className="font-semibold text-primary">{item.name}</p>
       <p className="tabular-nums mt-1">
         <span className="font-semibold">{item.value}</span>
-        <span className="text-slate-400 ml-1">({pct}%)</span>
+        <span className="text-muted ml-1">({pct}%)</span>
       </p>
     </div>
   );
@@ -78,7 +78,7 @@ export default function NablijvenPieChart({
       </ResponsiveContainer>
       <div className="flex flex-wrap justify-center gap-3 mt-2 px-2">
         {chartData.map((d, i) => (
-          <span key={d.name} className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+          <span key={d.name} className="inline-flex items-center gap-1.5 text-xs text-muted">
             <span
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: CHART_PALETTE[i % CHART_PALETTE.length] }}

@@ -48,7 +48,7 @@ function ComparisonTooltip({
   if (!active || !payload?.length) return null;
   return (
     <div style={CHART_TOOLTIP_STYLE} className="text-sm">
-      <p className="font-semibold mb-2 text-slate-100">{label}</p>
+      <p className="font-semibold mb-2 text-primary">{label}</p>
       {payload.map((p) => (
         <p key={p.name} className="flex justify-between gap-4 tabular-nums">
           <span style={{ color: p.color }}>{p.name}</span>

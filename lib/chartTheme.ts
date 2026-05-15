@@ -1,14 +1,14 @@
-/** Tema compartido Recharts — Nablijven (alineado con chillouts app) */
+/** Tema Recharts — paleta Nablijven (cobre / menta / coral) */
 
 export const NABLIIJVEN_CHART_COLORS = {
-  primary: '#818cf8',
-  secondary: '#10b981',
-  accent: '#f59e0b',
-  danger: '#f87171',
-  warning: '#fbbf24',
-  info: '#3b82f6',
-  purple: '#a78bfa',
-  pink: '#ec4899',
+  primary: '#e8953a',
+  secondary: '#5eead4',
+  accent: '#a78bfa',
+  danger: '#ff7b72',
+  warning: '#ffc878',
+  info: '#67c6e8',
+  purple: '#c4b5fd',
+  pink: '#f9a8d4',
 } as const;
 
 export const CHART_PALETTE = [
@@ -30,14 +30,15 @@ export const DAY_LABELS: Record<string, string> = {
 import type { CSSProperties } from 'react';
 
 export const CHART_TOOLTIP_STYLE: CSSProperties = {
-  backgroundColor: 'rgba(15, 23, 42, 0.96)',
-  border: '1px solid rgba(148, 163, 184, 0.2)',
-  borderRadius: '10px',
-  color: '#f1f5f9',
-  boxShadow: '0 10px 28px rgba(0, 0, 0, 0.35)',
-  padding: '10px 12px',
+  backgroundColor: 'rgba(14, 15, 22, 0.96)',
+  border: '1px solid rgba(244, 239, 230, 0.12)',
+  borderRadius: '12px',
+  color: '#f4efe6',
+  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.45)',
+  padding: '10px 14px',
+  fontFamily: 'var(--font-sans)',
 };
 
-export const CHART_AXIS_TICK = { fill: 'rgba(148, 163, 184, 0.85)', fontSize: 11 };
-export const CHART_GRID_STROKE = 'rgba(148, 163, 184, 0.12)';
-export const BAR_TOP_RADIUS: [number, number, number, number] = [6, 6, 0, 0];
+export const CHART_AXIS_TICK = { fill: 'rgba(244, 239, 230, 0.45)', fontSize: 11 };
+export const CHART_GRID_STROKE = 'rgba(244, 239, 230, 0.08)';
+export const BAR_TOP_RADIUS: [number, number, number, number] = [8, 8, 0, 0];

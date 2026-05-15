@@ -243,7 +243,7 @@ export default function DetentionSessionPage() {
   const isMonday = currentDayOfWeek === 'MAANDAG';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
+    <div className="app-page">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

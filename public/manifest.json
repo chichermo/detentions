@@ -4,8 +4,8 @@
   "description": "Systeem voor het beheren van nablijven op school",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#6366f1",
+  "background_color": "#07080c",
+  "theme_color": "#e8953a",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -2,12 +2,62 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, Users, Search, Clock, ArrowRight, BarChart3, Plus, Download, LayoutDashboard } from 'lucide-react';
+import {
+  Calendar,
+  Users,
+  Search,
+  Clock,
+  ArrowRight,
+  BarChart3,
+  Plus,
+  Download,
+  LayoutDashboard,
+  Sparkles,
+} from 'lucide-react';
 import LoadingPage from '@/app/components/ui/LoadingPage';
 import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import InstallPrompt from '@/app/components/InstallPrompt';
+
+const NAV_ITEMS = [
+  {
+    href: '/students',
+    title: 'Leerlingen',
+    desc: 'Lijsten per weekdag beheren',
+    icon: Users,
+    cardClass: 'nav-card-copper',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
+    linkClass: 'text-[#f0c078]',
+  },
+  {
+    href: '/calendar',
+    title: 'Kalender',
+    desc: 'Alle sessies in één overzicht',
+    icon: Calendar,
+    cardClass: 'nav-card-violet',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#a78bfa] to-[#7c5cc7] text-[#1a1028]',
+    linkClass: 'text-[#d4c4fd]',
+  },
+  {
+    href: '/dashboard',
+    title: 'Dashboard',
+    desc: "KPI's, trends en toplijsten",
+    icon: LayoutDashboard,
+    cardClass: 'nav-card-sky',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#67c6e8] to-[#3d9fc4] text-[#0a1820]',
+    linkClass: 'text-[#9dd9f0]',
+  },
+  {
+    href: '/statistics',
+    title: 'Statistieken',
+    desc: 'Rapporten en export',
+    icon: BarChart3,
+    cardClass: 'nav-card-mint',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#5eead4] to-[#2dd4bf] text-[#0a1f1a]',
+    linkClass: 'text-[#8ef0d8]',
+  },
+] as const;
 
 export default function Home() {
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
@@ -34,33 +84,45 @@ export default function Home() {
     return <LoadingPage label="Sessies laden..." />;
   }
 
-  const filteredSessions = sessions.filter(session => {
+  const filteredSessions = sessions.filter((session) => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
-    return session.detentions.some(d => 
-      d.student.toLowerCase().includes(searchLower) ||
-      d.reason?.toLowerCase().includes(searchLower) ||
-      d.teacher?.toLowerCase().includes(searchLower)
+    return session.detentions.some(
+      (d) =>
+        d.student.toLowerCase().includes(searchLower) ||
+        d.reason?.toLowerCase().includes(searchLower) ||
+        d.teacher?.toLowerCase().includes(searchLower)
     );
   });
 
+  const totalDetentions = sessions.reduce((n, s) => n + s.detentions.length, 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
-      {/* Header */}
-      <header className="glass sticky top-0 z-50 border-b border-slate-800/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+    <div className="app-page">
+      <header className="glass sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
             <div>
-              <h1 className="text-3xl font-bold text-slate-100 tracking-tight">
-                Nablijven Systeem
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-[var(--accent)]" aria-hidden />
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                  Schoolbeheer
+                </span>
+              </div>
+              <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
+                Nablijven
               </h1>
-              <p className="text-slate-400 mt-1.5 flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-indigo-400" />
-                <span>Beheer van nablijven (16:00 - 16:50)</span>
+              <p className="text-secondary mt-2 flex flex-wrap items-center gap-2 text-sm">
+                <span className="time-pill">
+                  <Clock className="h-3.5 w-3.5" />
+                  16:00 – 16:50
+                </span>
+                <span className="text-muted">· {totalDetentions} registraties totaal</span>
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <button
+                type="button"
                 onClick={async () => {
                   try {
                     const response = await fetch('/api/backup');
@@ -82,182 +144,109 @@ export default function Home() {
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Backup</span>
               </button>
+              <Link href="/detentions/new" className="btn-primary flex items-center gap-2 text-sm">
+                <Plus className="h-4 w-4" />
+                <span>Nieuwe sessie</span>
+              </Link>
               <InstallPrompt />
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8 sm:mb-12">
-          <Link
-            href="/students"
-            className="card-hover p-6 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Leerlingen</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Beheer lijsten van leerlingen per dag
-                </p>
-                <div className="mt-3 flex items-center text-indigo-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Bekijken</span>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {NAV_ITEMS.map((item) => (
+            <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>
+              <div className="relative flex flex-col gap-4">
+                <div className={item.iconClass}>
+                  <item.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-bold text-primary">{item.title}</h2>
+                  <p className="text-sm text-muted mt-1 leading-relaxed">{item.desc}</p>
+                </div>
+                <div
+                  className={`flex items-center text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity ${item.linkClass}`}
+                >
+                  <span>Openen</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </div>
               </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/calendar"
-            className="card-hover p-6 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                <Calendar className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Kalender</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Bekijk alle nablijven sessies
-                </p>
-                <div className="mt-3 flex items-center text-purple-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Bekijken</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="card-hover p-6 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl shadow-lg shadow-sky-500/30 group-hover:scale-110 transition-transform duration-300">
-                <LayoutDashboard className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Dashboard</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  KPI&apos;s, trends en toplijsten
-                </p>
-                <div className="mt-3 flex items-center text-sky-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Bekijken</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/statistics"
-            className="card-hover p-6 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
-                <BarChart3 className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-slate-100 mb-1.5">Statistieken</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Analyse en rapporten met export
-                </p>
-                <div className="mt-3 flex items-center text-orange-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Bekijken</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </div>
-              </div>
-            </div>
-          </Link>
+            </Link>
+          ))}
         </div>
 
-        {/* Recent Sessions */}
-        <div className="card p-8">
+        <div className="card p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-8">
             <div>
-              <h2 className="section-title">Recente Sessies</h2>
+              <h2 className="section-title">Recente sessies</h2>
               <p className="section-subtitle">
                 {filteredSessions.length} sessie{filteredSessions.length !== 1 ? 's' : ''} gevonden
               </p>
             </div>
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 pointer-events-none" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted pointer-events-none" />
               <input
-                type="text"
-                placeholder="Zoeken naar leerling, reden of leerkracht..."
+                type="search"
+                placeholder="Leerling, reden of leerkracht…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-14"
+                className="input-field pl-12"
               />
             </div>
           </div>
 
           {filteredSessions.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-2xl mb-5 border border-slate-700">
-                <Calendar className="h-10 w-10 text-slate-500" />
-              </div>
-              <p className="text-slate-400 mb-3 font-medium">Geen sessies geregistreerd.</p>
-              <Link
-                href="/detentions/new"
-                className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
-              >
-                <span>Eerste sessie aanmaken</span>
+            <div className="empty-state">
+              <Calendar className="h-12 w-12 text-muted mb-4 opacity-60" />
+              <p className="text-secondary font-medium mb-4">Nog geen sessies geregistreerd.</p>
+              <Link href="/detentions/new" className="btn-primary inline-flex items-center gap-2">
                 <Plus className="h-4 w-4" />
+                Eerste sessie aanmaken
               </Link>
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredSessions.slice(-10).reverse().map((session) => (
-                <Link
-                  key={session.date}
-                  href={`/detentions/${session.date}`}
-                  className="block border border-slate-700 rounded-xl p-5 hover:bg-slate-700/50 hover:border-indigo-500/50 hover:shadow-lg transition-all duration-200 group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-100 text-base mb-2 group-hover:text-indigo-400 transition-colors">
-                        {format(new Date(session.date), "EEEE d MMMM yyyy", { locale: nl })}
-                      </h3>
-                      <div className="flex items-center gap-4 text-sm text-slate-400">
-                        <span className="flex items-center gap-1.5">
-                          <Users className="h-4 w-4 text-slate-500" />
-                          <span className="font-medium text-slate-300">{session.detentions.length}</span>
-                          <span>nablijven</span>
-                        </span>
-                        <span className="text-slate-600">•</span>
-                        <span className="badge-primary">{session.dayOfWeek}</span>
+              {filteredSessions
+                .slice(-10)
+                .reverse()
+                .map((session) => (
+                  <Link key={session.date} href={`/detentions/${session.date}`} className="session-row group">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display font-bold text-primary text-base mb-2 group-hover:text-[var(--accent-hover)] transition-colors">
+                          {format(new Date(session.date), 'EEEE d MMMM yyyy', { locale: nl })}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+                          <span className="flex items-center gap-1.5">
+                            <Users className="h-4 w-4 opacity-60" />
+                            <span className="font-semibold text-secondary">{session.detentions.length}</span>
+                            nablijven
+                          </span>
+                          <span className="badge-primary">{session.dayOfWeek}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-end shrink-0">
+                        {session.detentions.filter((d) => d.shouldPrint).length > 0 && (
+                          <span className="badge-success">
+                            {session.detentions.filter((d) => d.shouldPrint).length} print
+                          </span>
+                        )}
+                        {session.detentions.filter((d) => d.nablijvenGeweigerd).length > 0 && (
+                          <span className="badge-danger">
+                            {session.detentions.filter((d) => d.nablijvenGeweigerd).length} geweigerd
+                          </span>
+                        )}
+                        {session.detentions.filter((d) => d.isDoublePeriod).length > 0 && (
+                          <span className="badge-warning">
+                            {session.detentions.filter((d) => d.isDoublePeriod).length} strafstudie
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="ml-4 flex-shrink-0 flex flex-wrap gap-2 justify-end">
-                      {session.detentions.filter((d) => d.shouldPrint).length > 0 && (
-                        <span className="badge-success">
-                          {session.detentions.filter((d) => d.shouldPrint).length} te printen
-                        </span>
-                      )}
-                      {session.detentions.filter((d) => d.nablijvenGeweigerd).length > 0 && (
-                        <span className="badge bg-red-500/20 text-red-300 border border-red-500/30">
-                          {session.detentions.filter((d) => d.nablijvenGeweigerd).length} geweigerd
-                        </span>
-                      )}
-                      {session.detentions.filter((d) => d.isDoublePeriod).length > 0 && (
-                        <span className="badge-warning">
-                          {session.detentions.filter((d) => d.isDoublePeriod).length} strafstudie
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
             </div>
           )}
         </div>

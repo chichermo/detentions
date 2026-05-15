@@ -188,7 +188,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
+    <div className="app-page">
       <PageHeader
         title="Dashboard"
         subtitle="Overzicht en inzichten"

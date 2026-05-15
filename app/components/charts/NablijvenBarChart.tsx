@@ -44,7 +44,7 @@ function BarTooltip({
   const color = payload[0]?.color ?? NABLIIJVEN_CHART_COLORS.primary;
   return (
     <div style={CHART_TOOLTIP_STYLE} className="text-sm">
-      <p className="font-semibold mb-1.5 text-slate-100">{label}</p>
+      <p className="font-semibold mb-1.5 text-primary">{label}</p>
       <p className="flex justify-between gap-4 tabular-nums">
         <span style={{ color }}>{valueLabel}</span>
         <span className="font-semibold">{value}</span>

@@ -42,7 +42,7 @@ function LineTooltip({
   if (!active || !payload?.length) return null;
   return (
     <div style={CHART_TOOLTIP_STYLE} className="text-sm">
-      <p className="font-semibold mb-2 text-slate-100">{label}</p>
+      <p className="font-semibold mb-2 text-primary">{label}</p>
       <div className="space-y-1">
         {payload.map((p) => (
           <p key={p.name} className="flex justify-between gap-4 tabular-nums">

@@ -6,24 +6,28 @@ interface LoadingPageProps {
 
 export default function LoadingPage({ label = 'Laden...' }: LoadingPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 flex flex-col items-center justify-center gap-6 px-4">
-      <div className="flex gap-2" aria-hidden>
-        {[0, 1, 2].map((i) => (
+    <div className="app-page min-h-screen flex flex-col items-center justify-center gap-8 px-4">
+      <div className="relative">
+        <div className="w-14 h-14 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-card)] flex items-center justify-center">
           <span
-            key={i}
-            className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"
-            style={{ animationDelay: `${i * 150}ms` }}
+            className="w-6 h-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin"
+            aria-hidden
           />
-        ))}
+        </div>
+        <div
+          className="absolute -inset-4 rounded-3xl opacity-40 blur-xl -z-10"
+          style={{ background: 'var(--accent-glow)' }}
+          aria-hidden
+        />
       </div>
-      <p className="text-slate-400 text-sm font-medium" role="status">
+      <p className="text-muted text-sm font-medium tracking-wide" role="status">
         {label}
       </p>
-      <div className="w-full max-w-md space-y-3 px-2" aria-hidden>
-        <div className="h-24 rounded-2xl skeleton" />
+      <div className="w-full max-w-sm space-y-3" aria-hidden>
+        <div className="h-20 skeleton rounded-2xl" />
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-20 rounded-2xl skeleton" />
-          <div className="h-20 rounded-2xl skeleton" />
+          <div className="h-16 skeleton rounded-xl" />
+          <div className="h-16 skeleton rounded-xl" />
         </div>
       </div>
     </div>
