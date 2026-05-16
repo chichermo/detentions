@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Lock,
   AlertTriangle,
-  Info,
   ExternalLink,
 } from 'lucide-react';
 import { DetentionSession, CalendarDaySetting } from '@/types';
@@ -80,6 +79,15 @@ export default function CalendarPage() {
     dayPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [selectedDate]);
 
+  // Al cambiar de mes, deseleccionar si el día no es Ma/Di/Do
+  useEffect(() => {
+    if (!selectedDate) return;
+    const d = parseISO(selectedDate);
+    if (!isSameMonth(d, currentDate) || !isNablijvenWeekday(d)) {
+      setSelectedDate(null);
+    }
+  }, [currentDate, selectedDate]);
+
   const permissions = getRoleDefinition(role);
   const canAdminCalendar = permissions.canBlockDays || permissions.canEditCalendarNotices;
 
@@ -104,6 +112,8 @@ export default function CalendarPage() {
     e.preventDefault();
     e.stopPropagation();
     if (!isSameMonth(day, currentDate)) return;
+    // Solo interactividad en maandag, dinsdag en donderdag
+    if (!isNablijvenWeekday(day)) return;
     const dateStr = format(day, 'yyyy-MM-dd');
     const session = getSessionsForDate(day);
     if (session) {
@@ -187,7 +197,7 @@ export default function CalendarPage() {
                     Nablijven Kalender
                   </h1>
                   <p className="text-slate-400 text-xs sm:text-sm mt-0.5 hidden sm:block">
-                    Klik op een dag voor details · Ma, Di, Do = nablijven
+                    Klik op maandag, dinsdag of donderdag
                   </p>
                 </div>
               </div>
@@ -223,6 +233,7 @@ export default function CalendarPage() {
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/30 border border-amber-500/50" /> Melding</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Geblokkeerd</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-indigo-500" /> Geselecteerd</span>
+            <span className="text-slate-500">· Alleen Ma, Di, Do zijn klikbaar</span>
           </div>
 
           <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
@@ -240,6 +251,7 @@ export default function CalendarPage() {
               const isSelected = selectedDate === dateStr;
               const inMonth = isSameMonth(day, currentDate);
               const nablijvenDay = isNablijvenWeekday(day);
+              const clickable = inMonth && nablijvenDay;
               const blocked = cfg?.blocked;
               const hasNotice = !!(cfg?.notice || cfg?.noticeTitle);
 
@@ -247,29 +259,31 @@ export default function CalendarPage() {
                 <button
                   key={dateStr}
                   type="button"
-                  aria-pressed={isSelected}
+                  aria-pressed={clickable ? isSelected : undefined}
+                  aria-disabled={!clickable}
                   aria-label={format(day, 'd MMMM yyyy', { locale: nl })}
                   onClick={(e) => handleDayClick(day, e)}
-                  disabled={!inMonth}
+                  disabled={!clickable}
                   className={`
-                    aspect-square p-1.5 sm:p-2 rounded-xl border-2 transition-all duration-200 text-left touch-manipulation
+                    aspect-square p-1.5 sm:p-2 rounded-xl border-2 transition-all duration-200 text-left
                     relative z-[1]
-                    ${!inMonth ? 'opacity-25 cursor-default border-transparent pointer-events-none' : 'cursor-pointer active:scale-[0.98] hover:border-indigo-400/60'}
-                    ${blocked && inMonth ? 'border-red-500/60 bg-red-950/40' : ''}
-                    ${hasNotice && !blocked && inMonth ? 'border-amber-500/50 bg-amber-950/20' : ''}
-                    ${!blocked && !hasNotice && session && inMonth ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
-                    ${!blocked && !hasNotice && !session && nablijvenDay && inMonth ? 'border-slate-600 bg-slate-800/60 hover:border-indigo-500/50' : ''}
-                    ${!blocked && !hasNotice && !session && !nablijvenDay && inMonth ? 'border-slate-700/80 bg-slate-900/40 hover:border-slate-500' : ''}
-                    ${isToday && inMonth ? 'ring-1 ring-indigo-400' : ''}
-                    ${isSelected && inMonth ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-slate-900' : ''}
+                    ${!inMonth ? 'opacity-25 cursor-default border-transparent' : ''}
+                    ${inMonth && !nablijvenDay ? 'opacity-30 cursor-not-allowed border-slate-800/50 bg-slate-900/30' : ''}
+                    ${clickable ? 'cursor-pointer touch-manipulation active:scale-[0.98] hover:border-indigo-400/60' : ''}
+                    ${blocked && clickable ? 'border-red-500/60 bg-red-950/40' : ''}
+                    ${hasNotice && !blocked && clickable ? 'border-amber-500/50 bg-amber-950/20' : ''}
+                    ${!blocked && !hasNotice && session && clickable ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
+                    ${!blocked && !hasNotice && !session && clickable ? 'border-slate-600 bg-slate-800/60 hover:border-indigo-500/50' : ''}
+                    ${isToday && clickable ? 'ring-1 ring-indigo-400' : ''}
+                    ${isSelected && clickable ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-slate-900' : ''}
                   `}
                 >
-                  <div className={`text-xs sm:text-sm font-bold ${inMonth ? 'text-slate-100' : 'text-slate-600'}`}>
+                  <div className={`text-xs sm:text-sm font-bold ${clickable ? 'text-slate-100' : inMonth ? 'text-slate-500' : 'text-slate-600'}`}>
                     {format(day, 'd')}
                   </div>
-                  {inMonth && blocked && <Lock className="h-3 w-3 text-red-400 mt-0.5" />}
-                  {inMonth && hasNotice && !blocked && <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />}
-                  {session && inMonth && (
+                  {clickable && blocked && <Lock className="h-3 w-3 text-red-400 mt-0.5" />}
+                  {clickable && hasNotice && !blocked && <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />}
+                  {session && clickable && (
                     <div className="text-[10px] sm:text-xs font-semibold text-emerald-300 mt-0.5 truncate">
                       {session.detentions.length} nabl.
                     </div>
@@ -280,7 +294,7 @@ export default function CalendarPage() {
           </div>
           {!selectedDate && (
             <p className="mt-4 text-center text-sm text-slate-500">
-              Klik op een dag in de kalender om details te zien of een sessie te starten.
+              Klik op een maandag, dinsdag of donderdag om een sessie te openen of aan te maken.
             </p>
           )}
 
@@ -311,13 +325,6 @@ export default function CalendarPage() {
               <p className="text-red-300 text-sm mb-4 flex items-center gap-2">
                 <Lock className="h-4 w-4" />
                 Deze dag is geblokkeerd — geen nablijven mogelijk.
-              </p>
-            )}
-
-            {!isNablijvenDay && (
-              <p className="text-slate-400 text-sm mb-4 flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                Geen standaard nablijven-dag (alleen maandag, dinsdag en donderdag).
               </p>
             )}
 
