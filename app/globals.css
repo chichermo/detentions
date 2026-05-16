@@ -377,6 +377,320 @@ body {
     border-spacing: 0;
   }
 
+  /* Lista nablijven (sin tabla ni scroll horizontal) */
+  .detention-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .detention-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.28);
+    padding: 1rem 1.125rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .detention-card:hover {
+    border-color: var(--border-default);
+  }
+
+  .detention-card--editing {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(232, 149, 58, 0.35);
+    background: rgba(0, 0, 0, 0.38);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .detention-card--dragging {
+    opacity: 0.55;
+  }
+
+  .detention-card-drop-target .detention-card {
+    border-color: var(--accent-hover);
+    box-shadow: 0 0 0 2px var(--accent-muted);
+  }
+
+  .detention-card__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .detention-card__grip {
+    color: var(--text-faint);
+    cursor: grab;
+    padding-top: 0.15rem;
+    flex-shrink: 0;
+  }
+
+  .detention-card__grip:active {
+    cursor: grabbing;
+  }
+
+  .detention-card__number {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, var(--accent), #c97a28);
+    color: #1a1208;
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+
+  .detention-card__student {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.35;
+  }
+
+  .detention-card__flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+  }
+
+  .detention-flag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: var(--accent-muted);
+    color: #f0c078;
+    border: 1px solid rgba(232, 149, 58, 0.25);
+  }
+
+  .detention-flag--amber {
+    background: rgba(251, 191, 36, 0.15);
+    color: #ffe0a8;
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+
+  .detention-card__actions {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .detention-card__action {
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .detention-card__action:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+  }
+
+  .detention-card__action--primary:hover {
+    background: var(--accent-muted);
+    color: #f0c078;
+  }
+
+  .detention-card__action--danger:hover {
+    background: var(--coral-muted);
+    color: #ffd0cc;
+  }
+
+  .detention-card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem 1rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  @media (min-width: 768px) {
+    .detention-card__meta {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .detention-card__meta dt {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-bottom: 0.15rem;
+  }
+
+  .detention-card__meta dd {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .detention-card__notes {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* Formulario edición (tarjeta completa) */
+  .detention-edit-card {
+    padding: 1.25rem;
+  }
+
+  .detention-edit-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .detention-edit-card__badge {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, var(--accent), #c97a28);
+    color: #1a1208;
+    font-weight: 700;
+  }
+
+  .detention-edit-card__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 8rem;
+  }
+
+  .detention-edit-card__header-actions {
+    display: none;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  @media (min-width: 640px) {
+    .detention-edit-card__header-actions {
+      display: flex;
+    }
+
+    .detention-edit-card__footer {
+      display: none !important;
+    }
+  }
+
+  .detention-edit-card__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 640px) {
+    .detention-edit-card__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .detention-edit-card__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .detention-edit-card__field--full {
+    grid-column: 1 / -1;
+  }
+
+  .detention-field-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .detention-edit-card select,
+  .detention-edit-card input:not([type='checkbox']),
+  .detention-edit-card textarea {
+    background-color: rgba(0, 0, 0, 0.45) !important;
+    color: var(--text-primary) !important;
+    color-scheme: dark;
+  }
+
+  .detention-edit-card__checks {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    padding: 0.75rem 0;
+  }
+
+  .detention-edit-card__check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .detention-edit-card__check input {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--accent);
+  }
+
+  .detention-edit-card__check--danger input {
+    accent-color: var(--coral);
+  }
+
+  .detention-notes-input {
+    display: block;
+    width: 100%;
+    min-height: 6rem;
+    padding: 0.75rem 0.875rem;
+    line-height: 1.55;
+    font-size: 0.875rem;
+    resize: vertical;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+  }
+
+  .detention-notes-input::placeholder {
+    color: var(--text-faint);
+  }
+
+  .detention-notes-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+
+  .detention-edit-card__footer {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
   .table-data thead {
     @apply sticky top-0 z-20;
     background: rgba(14, 15, 22, 0.95);
