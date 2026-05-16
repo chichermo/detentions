@@ -1,6 +1,6 @@
 // Service Worker para PWA - Nablijven Systeem
-const CACHE_NAME = 'nablijven-v2';
-const STATIC_CACHE = 'nablijven-static-v2';
+const CACHE_NAME = 'nablijven-v3';
+const STATIC_CACHE = 'nablijven-static-v3';
 
 /** Solo se pueden cachear peticiones http/https del mismo origen (no chrome-extension, blob, etc.) */
 function isCacheableRequest(request) {
@@ -33,6 +33,12 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Activación
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -52,6 +58,15 @@ self.addEventListener('activate', (event) => {
 // Fetch - Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Nunca cachear navegación HTML: evita JS antiguo y páginas sin hidratar
+  const accept = event.request.headers.get('accept') || '';
+  if (event.request.mode === 'navigate' || accept.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/'))
+    );
     return;
   }
 

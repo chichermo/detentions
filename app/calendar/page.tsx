@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -43,7 +43,9 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [adminSaving, setAdminSaving] = useState(false);
-  const [role, setRole] = useState(getStoredRole());
+  const [role, setRole] = useState<'beheerder' | 'coordinator' | 'leerkracht' | 'secretariaat' | 'directie' | 'gast'>('leerkracht');
+  const [mounted, setMounted] = useState(false);
+  const dayPanelRef = useRef<HTMLDivElement>(null);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -69,7 +71,13 @@ export default function CalendarPage() {
   }, [loadData]);
 
   useEffect(() => {
+    setMounted(true);
     setRole(getStoredRole());
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDate || !dayPanelRef.current) return;
+    dayPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [selectedDate]);
 
   const permissions = getRoleDefinition(role);
@@ -92,9 +100,16 @@ export default function CalendarPage() {
     ? sessions.find((s) => s.date === selectedDate)
     : undefined;
 
-  const handleDayClick = (day: Date) => {
+  const handleDayClick = (day: Date, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!isSameMonth(day, currentDate)) return;
     const dateStr = format(day, 'yyyy-MM-dd');
+    const session = getSessionsForDate(day);
+    if (session) {
+      router.push(`/detentions/${dateStr}`);
+      return;
+    }
     setSelectedDate(dateStr);
   };
 
@@ -232,11 +247,14 @@ export default function CalendarPage() {
                 <button
                   key={dateStr}
                   type="button"
-                  onClick={() => handleDayClick(day)}
+                  aria-pressed={isSelected}
+                  aria-label={format(day, 'd MMMM yyyy', { locale: nl })}
+                  onClick={(e) => handleDayClick(day, e)}
                   disabled={!inMonth}
                   className={`
-                    aspect-square p-1.5 sm:p-2 rounded-xl border-2 transition-all duration-200 text-left
-                    ${!inMonth ? 'opacity-25 cursor-default border-transparent' : 'cursor-pointer hover:scale-[1.02] hover:z-10'}
+                    aspect-square p-1.5 sm:p-2 rounded-xl border-2 transition-all duration-200 text-left touch-manipulation
+                    relative z-[1]
+                    ${!inMonth ? 'opacity-25 cursor-default border-transparent pointer-events-none' : 'cursor-pointer active:scale-[0.98] hover:border-indigo-400/60'}
                     ${blocked && inMonth ? 'border-red-500/60 bg-red-950/40' : ''}
                     ${hasNotice && !blocked && inMonth ? 'border-amber-500/50 bg-amber-950/20' : ''}
                     ${!blocked && !hasNotice && session && inMonth ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
@@ -260,10 +278,19 @@ export default function CalendarPage() {
               );
             })}
           </div>
-        </div>
+          {!selectedDate && (
+            <p className="mt-4 text-center text-sm text-slate-500">
+              Klik op een dag in de kalender om details te zien of een sessie te starten.
+            </p>
+          )}
 
-        {selectedDate && (
-          <div className="card p-6 sm:p-8 mb-8">
+          {selectedDate && (
+            <div ref={dayPanelRef}
+              id="calendar-day-detail"
+              className="mt-6 pt-6 border-t border-slate-700 scroll-mt-28"
+              role="region"
+              aria-live="polite"
+            >
             <h2 className="section-title mb-2">
               {format(parseISO(selectedDate), 'EEEE d MMMM yyyy', { locale: nl })}
             </h2>
@@ -309,7 +336,7 @@ export default function CalendarPage() {
               ) : null}
             </div>
 
-            {canAdminCalendar && (
+            {mounted && canAdminCalendar && (
               <div className="border-t border-slate-700 pt-6 mt-6 space-y-4">
                 <h3 className="font-bold text-slate-200">Beheer (admin)</h3>
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -359,8 +386,9 @@ export default function CalendarPage() {
                 </div>
               </div>
             )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         <div className="card p-6 sm:p-8">
           <h2 className="section-title mb-6">Sessies van deze maand</h2>

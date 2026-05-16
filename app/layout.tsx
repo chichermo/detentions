@@ -63,6 +63,18 @@ export default function RootLayout({
               navigator.serviceWorker.register('/sw.js')
                 .then((registration) => {
                   console.log('SW registered: ', registration);
+                  if (registration.waiting) {
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                  registration.addEventListener('updatefound', () => {
+                    const worker = registration.installing;
+                    if (!worker) return;
+                    worker.addEventListener('statechange', () => {
+                      if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        worker.postMessage({ type: 'SKIP_WAITING' });
+                      }
+                    });
+                  });
                 })
                 .catch((registrationError) => {
                   console.log('SW registration failed: ', registrationError);
