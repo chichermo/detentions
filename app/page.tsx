@@ -19,6 +19,7 @@ import { DetentionSession } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import InstallPrompt from '@/app/components/InstallPrompt';
+import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
 
@@ -122,7 +123,8 @@ export default function Home() {
                 <span className="text-muted">· {totalDetentions} registraties totaal</span>
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              <RoleSelector />
               <button
                 type="button"
                 onClick={async () => {

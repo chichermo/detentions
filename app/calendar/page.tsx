@@ -1,171 +1,259 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { DetentionSession } from '@/types';
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, getDay } from 'date-fns';
+import {
+  ArrowLeft,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  AlertTriangle,
+  Info,
+  ExternalLink,
+} from 'lucide-react';
+import { DetentionSession, CalendarDaySetting } from '@/types';
+import {
+  format,
+  parseISO,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  startOfWeek,
+  endOfWeek,
+} from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { apiFetch } from '@/lib/apiClient';
+import { isNablijvenWeekday } from '@/lib/calendarUtils';
+import {
+  fetchCalendarDays,
+  saveCalendarDay,
+  getDaySettingFromList,
+} from '@/lib/calendarDaysClient';
+import { getStoredRole } from '@/lib/auth';
+import { getRoleDefinition } from '@/lib/roles';
+import RoleSelector from '@/app/components/RoleSelector';
 
 export default function CalendarPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
+  const [calendarDays, setCalendarDays] = useState<CalendarDaySetting[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
-    try {
-      const response = await apiFetch('/api/detentions/sessions');
-      const data = await response.json();
-      setSessions(data);
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-    }
-  };
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [role, setRole] = useState(getStoredRole());
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
+  const rangeStart = format(startOfWeek(monthStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const rangeEnd = format(endOfWeek(monthEnd, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+
+  const loadData = useCallback(async () => {
+    try {
+      const [sessionsRes, days] = await Promise.all([
+        apiFetch('/api/detentions/sessions'),
+        fetchCalendarDays(rangeStart, rangeEnd),
+      ]);
+      const data = await sessionsRes.json();
+      setSessions(Array.isArray(data) ? data : []);
+      setCalendarDays(days);
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+    }
+  }, [rangeStart, rangeEnd]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    setRole(getStoredRole());
+  }, [selectedDate]);
+
+  const permissions = getRoleDefinition(role);
+  const canAdminCalendar = permissions.canBlockDays || permissions.canEditCalendarNotices;
+
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const daysInMonth = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const getSessionsForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return sessions.find(s => s.date === dateStr);
+    return sessions.find((s) => s.date === dateStr);
   };
 
-  // Verificar si un día es clickeable (solo lunes, martes y jueves)
-  const isClickableDay = (date: Date): boolean => {
-    const dayOfWeek = getDay(date); // 0 = domingo, 1 = lunes, 2 = martes, 3 = miércoles, 4 = jueves, 5 = viernes, 6 = sábado
-    return dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 4; // Lunes, Martes, Jueves
+  const getDayConfig = (dateStr: string) =>
+    getDaySettingFromList(dateStr, calendarDays);
+
+  const selectedConfig = selectedDate ? getDayConfig(selectedDate) : undefined;
+  const selectedSession = selectedDate
+    ? sessions.find((s) => s.date === selectedDate)
+    : undefined;
+
+  const handleDayClick = (day: Date) => {
+    if (!isSameMonth(day, currentDate)) return;
+    const dateStr = format(day, 'yyyy-MM-dd');
+    setSelectedDate(dateStr);
   };
 
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const handleOpenSession = () => {
+    if (!selectedDate) return;
+    router.push(`/detentions/${selectedDate}`);
   };
 
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const handleCreateSession = () => {
+    if (!selectedDate) return;
+    const cfg = getDayConfig(selectedDate);
+    if (cfg?.blocked) {
+      alert('Deze dag is geblokkeerd door de beheerder.');
+      return;
+    }
+    if (cfg && !cfg.allowDetentions) {
+      alert('Voor deze dag zijn geen nablijven toegestaan (zie melding).');
+      return;
+    }
+    router.push(`/detentions/new?date=${selectedDate}`);
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
+  const updateDayConfig = async (patch: Partial<CalendarDaySetting>) => {
+    if (!selectedDate || !canAdminCalendar) return;
+    setAdminSaving(true);
+    const current: CalendarDaySetting = {
+      date: selectedDate,
+      blocked: selectedConfig?.blocked ?? false,
+      allowDetentions: selectedConfig?.allowDetentions ?? true,
+      noticeTitle: selectedConfig?.noticeTitle,
+      notice: selectedConfig?.notice,
+      ...patch,
+    };
+    try {
+      await saveCalendarDay(current);
+      setCalendarDays((prev) => {
+        const rest = prev.filter((d) => d.date !== selectedDate);
+        return [...rest, current].sort((a, b) => a.date.localeCompare(b.date));
+      });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Opslaan mislukt');
+    } finally {
+      setAdminSaving(false);
+    }
   };
 
   const dayNames = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+
+  const selectedDayDate = selectedDate ? parseISO(selectedDate) : null;
+  const isNablijvenDay = selectedDayDate ? isNablijvenWeekday(selectedDayDate) : false;
+
+  const canCreateOnSelected = useMemo(() => {
+    if (!selectedDate || !isNablijvenDay) return false;
+    const cfg = getDayConfig(selectedDate);
+    if (cfg?.blocked) return false;
+    if (cfg && !cfg.allowDetentions) return false;
+    return !selectedSession;
+  }, [selectedDate, isNablijvenDay, calendarDays, selectedSession]);
 
   return (
     <div className="app-page">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button
-              onClick={() => router.push('/')}
-              className="btn-ghost p-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-2 sm:p-2.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg shadow-purple-500/30">
-                <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight">Nablijven Kalender</h1>
-                <p className="text-slate-400 text-xs sm:text-sm mt-1 hidden sm:block">Overzicht van alle nablijven sessies</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <button onClick={() => router.push('/')} className="btn-ghost p-2 shrink-0">
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg shadow-purple-500/30 shrink-0">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight truncate">
+                    Nablijven Kalender
+                  </h1>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-0.5 hidden sm:block">
+                    Klik op een dag voor details · Ma, Di, Do = nablijven
+                  </p>
+                </div>
               </div>
             </div>
+            <RoleSelector />
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* Calendar Controls */}
-        <div className="card p-8 mb-8">
-          <div className="flex items-center justify-between mb-8">
-            <button
-              onClick={goToPreviousMonth}
-              className="btn-secondary flex items-center gap-2"
-            >
+        <div className="card p-4 sm:p-8 mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 sm:mb-8">
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="btn-secondary flex items-center gap-2">
               <ChevronLeft className="h-5 w-5" />
               Vorige
             </button>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-100">
-                {format(currentDate, 'MMMM yyyy', { locale: nl })}
-              </h2>
-            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100">
+              {format(currentDate, 'MMMM yyyy', { locale: nl })}
+            </h2>
             <div className="flex gap-2">
-              <button
-                onClick={goToToday}
-                className="btn-primary"
-              >
+              <button onClick={() => setCurrentDate(new Date())} className="btn-primary">
                 Vandaag
               </button>
-              <button
-                onClick={goToNextMonth}
-                className="btn-secondary flex items-center gap-2"
-              >
+              <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="btn-secondary flex items-center gap-2">
                 Volgende
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2">
-            {/* Day Headers */}
+          <div className="flex flex-wrap gap-3 mb-4 text-xs text-slate-400">
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/40 border border-emerald-500/60" /> Sessie</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/30 border border-amber-500/50" /> Melding</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Geblokkeerd</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-indigo-500" /> Geselecteerd</span>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
             {dayNames.map((day) => (
-              <div key={day} className="text-center font-bold text-slate-400 py-3 text-sm">
+              <div key={day} className="text-center font-bold text-slate-400 py-2 text-xs sm:text-sm">
                 {day}
               </div>
             ))}
 
-            {/* Calendar Days */}
             {daysInMonth.map((day) => {
+              const dateStr = format(day, 'yyyy-MM-dd');
               const session = getSessionsForDate(day);
+              const cfg = getDayConfig(dateStr);
               const isToday = isSameDay(day, new Date());
-              const isSelected = selectedDate === format(day, 'yyyy-MM-dd');
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              const clickable = isClickableDay(day) && isCurrentMonth;
+              const isSelected = selectedDate === dateStr;
+              const inMonth = isSameMonth(day, currentDate);
+              const nablijvenDay = isNablijvenWeekday(day);
+              const blocked = cfg?.blocked;
+              const hasNotice = !!(cfg?.notice || cfg?.noticeTitle);
 
               return (
                 <button
-                  key={day.toISOString()}
-                  onClick={() => {
-                    if (!clickable) return;
-                    const dateStr = format(day, 'yyyy-MM-dd');
-                    if (session) {
-                      router.push(`/detentions/${dateStr}`);
-                    } else {
-                      setSelectedDate(dateStr);
-                    }
-                  }}
-                  disabled={!clickable && !session}
+                  key={dateStr}
+                  type="button"
+                  onClick={() => handleDayClick(day)}
+                  disabled={!inMonth}
                   className={`
-                    aspect-square p-2 rounded-xl border-2 transition-all duration-200
-                    ${isToday && clickable ? 'border-indigo-500 bg-indigo-500/20 shadow-lg shadow-indigo-500/30' : isToday ? 'border-slate-600 bg-slate-800/50' : 'border-slate-700'}
-                    ${isSelected && !session ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-800' : ''}
-                    ${session ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/50 cursor-pointer' : ''}
-                    ${!clickable && !session ? 'opacity-30 cursor-not-allowed bg-slate-900/50' : clickable && !session ? 'hover:bg-slate-800 cursor-pointer' : ''}
-                    ${!isCurrentMonth ? 'opacity-40' : ''}
+                    aspect-square p-1.5 sm:p-2 rounded-xl border-2 transition-all duration-200 text-left
+                    ${!inMonth ? 'opacity-25 cursor-default border-transparent' : 'cursor-pointer hover:scale-[1.02] hover:z-10'}
+                    ${blocked && inMonth ? 'border-red-500/60 bg-red-950/40' : ''}
+                    ${hasNotice && !blocked && inMonth ? 'border-amber-500/50 bg-amber-950/20' : ''}
+                    ${!blocked && !hasNotice && session && inMonth ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
+                    ${!blocked && !hasNotice && !session && nablijvenDay && inMonth ? 'border-slate-600 bg-slate-800/60 hover:border-indigo-500/50' : ''}
+                    ${!blocked && !hasNotice && !session && !nablijvenDay && inMonth ? 'border-slate-700/80 bg-slate-900/40 hover:border-slate-500' : ''}
+                    ${isToday && inMonth ? 'ring-1 ring-indigo-400' : ''}
+                    ${isSelected && inMonth ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-slate-900' : ''}
                   `}
                 >
-                  <div className={`text-sm font-bold mb-1 ${isToday && clickable ? 'text-indigo-300' : !clickable && !session ? 'text-slate-500' : 'text-slate-200'}`}>
+                  <div className={`text-xs sm:text-sm font-bold ${inMonth ? 'text-slate-100' : 'text-slate-600'}`}>
                     {format(day, 'd')}
                   </div>
-                  {session && (
-                    <div className="space-y-1">
-                      <div className="text-xs font-bold text-emerald-300">
-                        {session.detentions.length} nabl.
-                      </div>
-                      {session.detentions.filter(d => d.shouldPrint).length > 0 && (
-                        <div className="text-xs text-indigo-400 font-bold">📄</div>
-                      )}
+                  {inMonth && blocked && <Lock className="h-3 w-3 text-red-400 mt-0.5" />}
+                  {inMonth && hasNotice && !blocked && <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />}
+                  {session && inMonth && (
+                    <div className="text-[10px] sm:text-xs font-semibold text-emerald-300 mt-0.5 truncate">
+                      {session.detentions.length} nabl.
                     </div>
                   )}
                 </button>
@@ -174,77 +262,127 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Selected Date Info */}
-        {selectedDate && !sessions.find(s => s.date === selectedDate) && (
-          <div className="card p-8 mb-8">
-            <h2 className="section-title mb-4">
-              {format(parseISO(selectedDate), "EEEE d MMMM yyyy", { locale: nl })}
+        {selectedDate && (
+          <div className="card p-6 sm:p-8 mb-8">
+            <h2 className="section-title mb-2">
+              {format(parseISO(selectedDate), 'EEEE d MMMM yyyy', { locale: nl })}
             </h2>
-            <div className="text-center py-10">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-2xl mb-5 border border-slate-700">
-                <CalendarIcon className="h-10 w-10 text-slate-500" />
+
+            {selectedConfig?.noticeTitle && (
+              <div className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                <p className="font-semibold text-amber-200 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  {selectedConfig.noticeTitle}
+                </p>
+                {selectedConfig.notice && (
+                  <p className="text-sm text-amber-100/80 mt-2">{selectedConfig.notice}</p>
+                )}
               </div>
-              <p className="text-slate-400 font-medium mb-4">Geen nablijven sessie geregistreerd voor deze datum.</p>
-              <button
-                onClick={() => router.push(`/detentions/new?date=${selectedDate}`)}
-                className="btn-primary"
-              >
-                Nieuwe Sessie Aanmaken
-              </button>
+            )}
+
+            {selectedConfig?.blocked && (
+              <p className="text-red-300 text-sm mb-4 flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Deze dag is geblokkeerd — geen nablijven mogelijk.
+              </p>
+            )}
+
+            {!isNablijvenDay && (
+              <p className="text-slate-400 text-sm mb-4 flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Geen standaard nablijven-dag (alleen maandag, dinsdag en donderdag).
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-3 mb-6">
+              {selectedSession ? (
+                <button type="button" onClick={handleOpenSession} className="btn-primary flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Sessie openen ({selectedSession.detentions.length})
+                </button>
+              ) : canCreateOnSelected ? (
+                <button type="button" onClick={handleCreateSession} className="btn-primary">
+                  Nieuwe sessie aanmaken
+                </button>
+              ) : selectedSession === undefined && isNablijvenDay && selectedConfig && !selectedConfig.allowDetentions ? (
+                <p className="text-slate-400 text-sm">Nablijven niet toegestaan volgens daginstelling.</p>
+              ) : null}
             </div>
+
+            {canAdminCalendar && (
+              <div className="border-t border-slate-700 pt-6 mt-6 space-y-4">
+                <h3 className="font-bold text-slate-200">Beheer (admin)</h3>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedConfig?.blocked ?? false}
+                    disabled={adminSaving}
+                    onChange={(e) => updateDayConfig({ blocked: e.target.checked })}
+                  />
+                  <span className="text-slate-300">Dag blokkeren</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedConfig?.allowDetentions ?? true}
+                    disabled={adminSaving || selectedConfig?.blocked}
+                    onChange={(e) => updateDayConfig({ allowDetentions: e.target.checked })}
+                  />
+                  <span className="text-slate-300">Nablijven toestaan op deze dag</span>
+                </label>
+                <div>
+                  <label className="form-label">Titel melding</label>
+                  <input
+                    type="text"
+                    className="input-field w-full"
+                    placeholder="bv. Schooluitstap"
+                    value={selectedConfig?.noticeTitle ?? ''}
+                    disabled={adminSaving}
+                    onChange={(e) =>
+                      updateDayConfig({ noticeTitle: e.target.value || undefined })
+                    }
+                    onBlur={() => {}}
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Melding / situatie</label>
+                  <textarea
+                    className="detention-notes-input w-full"
+                    rows={3}
+                    placeholder="Uitleg voor leerkrachten..."
+                    value={selectedConfig?.notice ?? ''}
+                    disabled={adminSaving}
+                    onChange={(e) =>
+                      updateDayConfig({ notice: e.target.value || undefined })
+                    }
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Sessions List */}
-        <div className="card p-8">
-          <h2 className="section-title mb-8">
-            Sessies van deze Maand
-          </h2>
-          {sessions.filter(s => {
-            const sessionDate = parseISO(s.date);
-            return isSameMonth(sessionDate, currentDate);
-          }).length === 0 ? (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-2xl mb-5 border border-slate-700">
-                <CalendarIcon className="h-10 w-10 text-slate-500" />
-              </div>
-              <p className="text-slate-400 font-medium">Geen sessies geregistreerd voor deze maand.</p>
-            </div>
+        <div className="card p-6 sm:p-8">
+          <h2 className="section-title mb-6">Sessies van deze maand</h2>
+          {sessions.filter((s) => isSameMonth(parseISO(s.date), currentDate)).length === 0 ? (
+            <p className="text-slate-400 text-center py-12">Geen sessies deze maand.</p>
           ) : (
             <div className="space-y-3">
               {sessions
-                .filter(s => {
-                  const sessionDate = parseISO(s.date);
-                  return isSameMonth(sessionDate, currentDate);
-                })
+                .filter((s) => isSameMonth(parseISO(s.date), currentDate))
                 .map((session) => (
                   <button
                     key={session.date}
-                    onClick={() => {
-                      setSelectedDate(null);
-                      router.push(`/detentions/${session.date}`);
-                    }}
-                    className="w-full text-left border border-slate-700 rounded-xl p-5 hover:bg-slate-700/50 hover:border-indigo-500/50 hover:shadow-lg transition-all duration-200 group"
+                    type="button"
+                    onClick={() => router.push(`/detentions/${session.date}`)}
+                    className="w-full text-left border border-slate-700 rounded-xl p-4 hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-slate-100 text-base mb-2 group-hover:text-indigo-400 transition-colors">
-                          {format(parseISO(session.date), "EEEE d MMMM", { locale: nl })}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-slate-400">
-                          <span>{session.detentions.length} nablijven</span>
-                          <span className="text-slate-600">•</span>
-                          <span className="badge-primary">{session.dayOfWeek}</span>
-                        </div>
-                      </div>
-                      {session.detentions.filter(d => d.shouldPrint).length > 0 && (
-                        <div className="ml-4 flex-shrink-0">
-                          <div className="badge-success">
-                            {session.detentions.filter(d => d.shouldPrint).length} te printen
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="font-bold text-slate-100">
+                      {format(parseISO(session.date), 'EEEE d MMMM', { locale: nl })}
+                    </h3>
+                    <p className="text-sm text-slate-400 mt-1">
+                      {session.detentions.length} nablijven · {session.dayOfWeek}
+                    </p>
                   </button>
                 ))}
             </div>

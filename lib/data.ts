@@ -1,4 +1,4 @@
-import { Student, Detention, DetentionSession, DayOfWeek } from '@/types';
+import { Student, Detention, DetentionSession, DayOfWeek, CalendarDaySetting } from '@/types';
 import { supabase } from './supabase';
 
 // Detectar si Supabase está configurado
@@ -85,6 +85,28 @@ export async function deleteStudent(id: string): Promise<void> {
   }
 }
 
+function mapDetentionRow(d: Record<string, unknown>): Detention {
+  return {
+    id: d.id as string,
+    number: d.number as number,
+    date: d.date as string,
+    dayOfWeek: d.day_of_week as DayOfWeek,
+    student: d.student as string,
+    teacher: (d.teacher as string) || undefined,
+    reason: (d.reason as string) || undefined,
+    task: (d.task as string) || undefined,
+    lvsDate: (d.lvs_date as string) || undefined,
+    shouldPrint: (d.should_print as boolean) || false,
+    canUseChromebook: (d.can_use_chromebook as boolean) || false,
+    extraNotes: (d.extra_notes as string) || undefined,
+    isDoublePeriod: (d.is_double_period as boolean) || false,
+    timePeriod: (d.time_period as Detention['timePeriod']) || undefined,
+    nablijvenGeweigerd: (d.nablijven_geweigerd as boolean) || false,
+    didNotAttend: (d.did_not_attend as boolean) || false,
+    sourceDetentionId: (d.source_detention_id as string) || undefined,
+  };
+}
+
 // Funciones para detenciones
 export async function getDetentions(date?: string): Promise<Detention[]> {
   try {
@@ -102,23 +124,7 @@ export async function getDetentions(date?: string): Promise<Detention[]> {
         return [];
       }
       
-      return (data || []).map((d: any) => ({
-        id: d.id,
-        number: d.number,
-        date: d.date,
-        dayOfWeek: d.day_of_week as DayOfWeek,
-        student: d.student,
-        teacher: d.teacher || undefined,
-        reason: d.reason || undefined,
-        task: d.task || undefined,
-        lvsDate: d.lvs_date || undefined,
-        shouldPrint: d.should_print || false,
-        canUseChromebook: d.can_use_chromebook || false,
-        extraNotes: d.extra_notes || undefined,
-        isDoublePeriod: d.is_double_period || false,
-        timePeriod: d.time_period || undefined,
-        nablijvenGeweigerd: d.nablijven_geweigerd || false,
-      }));
+      return (data || []).map((d: Record<string, unknown>) => mapDetentionRow(d));
     }
     
     // Fallback: retornar array vacío si no hay Supabase
@@ -144,23 +150,7 @@ export async function getDetentionsByDateRange(startDate: string, endDate: strin
         return [];
       }
       
-      return (data || []).map((d: any) => ({
-        id: d.id,
-        number: d.number,
-        date: d.date,
-        dayOfWeek: d.day_of_week as DayOfWeek,
-        student: d.student,
-        teacher: d.teacher || undefined,
-        reason: d.reason || undefined,
-        task: d.task || undefined,
-        lvsDate: d.lvs_date || undefined,
-        shouldPrint: d.should_print || false,
-        canUseChromebook: d.can_use_chromebook || false,
-        extraNotes: d.extra_notes || undefined,
-        isDoublePeriod: d.is_double_period || false,
-        timePeriod: d.time_period || undefined,
-        nablijvenGeweigerd: d.nablijven_geweigerd || false,
-      }));
+      return (data || []).map((d: Record<string, unknown>) => mapDetentionRow(d));
     }
     
     return [];
@@ -191,6 +181,8 @@ export async function saveDetention(detention: Detention): Promise<void> {
           is_double_period: detention.isDoublePeriod || false,
           time_period: detention.timePeriod || null,
           nablijven_geweigerd: detention.nablijvenGeweigerd || false,
+          did_not_attend: detention.didNotAttend || false,
+          source_detention_id: detention.sourceDetentionId || null,
         }, {
           onConflict: 'id'
         });
@@ -249,5 +241,63 @@ export async function getDetentionSessions(): Promise<DetentionSession[]> {
   } catch (error) {
     console.error('Error in getDetentionSessions:', error);
     return [];
+  }
+}
+
+function mapCalendarDayRow(row: Record<string, unknown>): CalendarDaySetting {
+  return {
+    date: row.date as string,
+    blocked: (row.blocked as boolean) ?? false,
+    allowDetentions: row.allow_detentions !== false,
+    noticeTitle: (row.notice_title as string) || undefined,
+    notice: (row.notice as string) || undefined,
+  };
+}
+
+export async function getCalendarDaySettings(
+  startDate?: string,
+  endDate?: string
+): Promise<CalendarDaySetting[]> {
+  try {
+    if (useSupabase && supabase) {
+      let query = supabase.from('calendar_day_settings').select('*');
+      if (startDate) query = query.gte('date', startDate);
+      if (endDate) query = query.lte('date', endDate);
+      const { data, error } = await query.order('date');
+      if (error) {
+        console.error('Error fetching calendar days:', error);
+        return [];
+      }
+      return (data || []).map((r: Record<string, unknown>) => mapCalendarDayRow(r));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error in getCalendarDaySettings:', error);
+    return [];
+  }
+}
+
+export async function getCalendarDaySetting(date: string): Promise<CalendarDaySetting | null> {
+  const all = await getCalendarDaySettings(date, date);
+  return all[0] ?? null;
+}
+
+export async function saveCalendarDaySetting(setting: CalendarDaySetting): Promise<void> {
+  if (!useSupabase || !supabase) {
+    throw new Error('Supabase not configured');
+  }
+  const { error } = await supabase.from('calendar_day_settings').upsert(
+    {
+      date: setting.date,
+      blocked: setting.blocked,
+      allow_detentions: setting.allowDetentions,
+      notice_title: setting.noticeTitle || null,
+      notice: setting.notice || null,
+    },
+    { onConflict: 'date' }
+  );
+  if (error) {
+    console.error('Error saving calendar day:', error);
+    throw error;
   }
 }

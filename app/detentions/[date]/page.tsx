@@ -180,6 +180,7 @@ export default function DetentionSessionPage() {
       isDoublePeriod: false,
       timePeriod: undefined,
       nablijvenGeweigerd: false,
+      didNotAttend: false,
     });
     setShowAddForm(true);
     fetchStudents(dayOfWeek);
@@ -222,6 +223,7 @@ export default function DetentionSessionPage() {
       isDoublePeriod: newDetention.isDoublePeriod || false,
       timePeriod: newDetention.timePeriod,
       nablijvenGeweigerd: newDetention.nablijvenGeweigerd || false,
+      didNotAttend: newDetention.didNotAttend || false,
     };
 
     try {

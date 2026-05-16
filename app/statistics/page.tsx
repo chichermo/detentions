@@ -7,6 +7,7 @@ import { Detention, Student } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import PeriodComparison from '@/app/components/PeriodComparison';
+import DetailedReportsSection from '@/app/components/DetailedReportsSection';
 import ChartCard from '@/app/components/charts/ChartCard';
 import NablijvenBarChart from '@/app/components/charts/NablijvenBarChart';
 import KpiCard from '@/app/components/ui/KpiCard';
@@ -723,6 +724,8 @@ export default function StatisticsPage() {
             />
           </ChartCard>
         </div>
+
+        <DetailedReportsSection detentions={filteredDetentions} />
 
         {/* Period Comparison */}
         <div className="mb-8">

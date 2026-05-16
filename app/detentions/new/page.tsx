@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Plus, X, Calendar as CalendarIcon } from 'lucide-react
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
+import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
 import { format, parseISO, getDay } from 'date-fns';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
@@ -79,6 +80,7 @@ export default function NewDetentionPage() {
     isDoublePeriod: false,
     timePeriod: undefined,
     nablijvenGeweigerd: false,
+    didNotAttend: false,
   });
 
   const addDetention = () => {
@@ -124,11 +126,27 @@ export default function NewDetentionPage() {
         isDoublePeriod: d.isDoublePeriod || false,
         timePeriod: d.timePeriod,
         nablijvenGeweigerd: d.nablijvenGeweigerd || false,
+        didNotAttend: d.didNotAttend || false,
       }));
 
     if (detentionsToSave.length === 0) {
       alert('Voeg ten minste één leerling toe voordat je opslaat.');
       return;
+    }
+
+    try {
+      const daySettings = await fetchCalendarDays(date, date);
+      const cfg = getDaySettingFromList(date, daySettings);
+      if (cfg?.blocked) {
+        alert('Deze dag is geblokkeerd. Geen nablijven mogelijk.');
+        return;
+      }
+      if (cfg && !cfg.allowDetentions) {
+        alert('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
+        return;
+      }
+    } catch {
+      /* offline: doorgaan */
     }
 
     try {
@@ -352,10 +370,25 @@ export default function NewDetentionPage() {
                     <input
                       type="checkbox"
                       checked={detention.nablijvenGeweigerd || false}
-                      onChange={(e) => updateDetention(index, 'nablijvenGeweigerd', e.target.checked)}
+                      onChange={(e) => {
+                        updateDetention(index, 'nablijvenGeweigerd', e.target.checked);
+                        if (e.target.checked) updateDetention(index, 'didNotAttend', false);
+                      }}
                       className="h-5 w-5 text-red-600 focus:ring-red-500 rounded border-slate-500 bg-slate-700"
                     />
                     <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 bg-orange-600/20 rounded-xl hover:bg-orange-600/30 cursor-pointer transition-colors border border-orange-500/50">
+                    <input
+                      type="checkbox"
+                      checked={detention.didNotAttend || false}
+                      onChange={(e) => {
+                        updateDetention(index, 'didNotAttend', e.target.checked);
+                        if (e.target.checked) updateDetention(index, 'nablijvenGeweigerd', false);
+                      }}
+                      className="h-5 w-5 text-orange-600 focus:ring-orange-500 rounded border-slate-500 bg-slate-700"
+                    />
+                    <span className="text-sm font-medium text-orange-200">Niet opgedagen</span>
                   </label>
                   {selectedDay === 'MAANDAG' && (
                     <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">

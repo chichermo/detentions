@@ -138,9 +138,23 @@ export default function DetentionEditPanel({
             <input
               type="checkbox"
               checked={detention.nablijvenGeweigerd || false}
-              onChange={(e) => onChange('nablijvenGeweigerd', e.target.checked)}
+              onChange={(e) => {
+                onChange('nablijvenGeweigerd', e.target.checked);
+                if (e.target.checked) onChange('didNotAttend', false);
+              }}
             />
             Geweigerd
+          </label>
+          <label className="detention-edit-card__check detention-edit-card__check--warning">
+            <input
+              type="checkbox"
+              checked={detention.didNotAttend || false}
+              onChange={(e) => {
+                onChange('didNotAttend', e.target.checked);
+                if (e.target.checked) onChange('nablijvenGeweigerd', false);
+              }}
+            />
+            Niet opgedagen
           </label>
           {isMonday && (
             <label className="detention-edit-card__check">
@@ -153,10 +167,15 @@ export default function DetentionEditPanel({
                   if (!checked) onChange('timePeriod', undefined);
                 }}
               />
-              Strafstudie
+              Dubbele nablijven (maandag)
             </label>
           )}
         </div>
+        {!isMonday && (detention.nablijvenGeweigerd || detention.didNotAttend) && (
+          <p className="text-xs text-amber-400/90 col-span-full">
+            Leerling krijgt dubbele nablijven op de eerstvolgende maandag (strafstudie).
+          </p>
+        )}
 
         <div className="detention-edit-card__field detention-edit-card__field--full">
           <FieldLabel>Opmerkingen</FieldLabel>
