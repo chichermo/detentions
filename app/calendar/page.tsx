@@ -42,6 +42,8 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [adminSaving, setAdminSaving] = useState(false);
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('');
+  const [draftNotice, setDraftNotice] = useState('');
   const [role, setRole] = useState<'beheerder' | 'coordinator' | 'leerkracht' | 'secretariaat' | 'directie' | 'gast'>('leerkracht');
   const [mounted, setMounted] = useState(false);
   const dayPanelRef = useRef<HTMLDivElement>(null);
@@ -108,11 +110,18 @@ export default function CalendarPage() {
     ? sessions.find((s) => s.date === selectedDate)
     : undefined;
 
+  // Tekst lokaal bewerken; opslaan bij blur (niet bij elke toets → cursor-bug)
+  useEffect(() => {
+    setDraftNoticeTitle(selectedConfig?.noticeTitle ?? '');
+    setDraftNotice(selectedConfig?.notice ?? '');
+    // Alleen synchroniseren bij wissel van geselecteerde dag
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
   const handleDayClick = (day: Date, e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isSameMonth(day, currentDate)) return;
-    // Solo interactividad en maandag, dinsdag en donderdag
     if (!isNablijvenWeekday(day)) return;
     const dateStr = format(day, 'yyyy-MM-dd');
     const session = getSessionsForDate(day);
@@ -149,18 +158,27 @@ export default function CalendarPage() {
       date: selectedDate,
       blocked: selectedConfig?.blocked ?? false,
       allowDetentions: selectedConfig?.allowDetentions ?? true,
-      noticeTitle: selectedConfig?.noticeTitle,
-      notice: selectedConfig?.notice,
+      noticeTitle: draftNoticeTitle || undefined,
+      notice: draftNotice || undefined,
       ...patch,
     };
+    // Optimistische UI zodat checkbox/tekst meteen kloppen
+    setCalendarDays((prev) => {
+      const rest = prev.filter((d) => d.date !== selectedDate);
+      return [...rest, current].sort((a, b) => a.date.localeCompare(b.date));
+    });
     try {
       await saveCalendarDay(current);
-      setCalendarDays((prev) => {
-        const rest = prev.filter((d) => d.date !== selectedDate);
-        return [...rest, current].sort((a, b) => a.date.localeCompare(b.date));
-      });
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Opslaan mislukt');
+      // herlaad om inconsistentie te vermijden
+      try {
+        const start = format(monthStart, 'yyyy-MM-dd');
+        const end = format(monthEnd, 'yyyy-MM-dd');
+        setCalendarDays(await fetchCalendarDays(start, end));
+      } catch {
+        /* ignore */
+      }
     } finally {
       setAdminSaving(false);
     }
@@ -370,12 +388,13 @@ export default function CalendarPage() {
                     type="text"
                     className="input-field w-full"
                     placeholder="bv. Schooluitstap"
-                    value={selectedConfig?.noticeTitle ?? ''}
-                    disabled={adminSaving}
-                    onChange={(e) =>
-                      updateDayConfig({ noticeTitle: e.target.value || undefined })
+                    value={draftNoticeTitle}
+                    onChange={(e) => setDraftNoticeTitle(e.target.value)}
+                    onBlur={() =>
+                      updateDayConfig({
+                        noticeTitle: draftNoticeTitle.trim() || undefined,
+                      })
                     }
-                    onBlur={() => {}}
                   />
                 </div>
                 <div>
@@ -384,10 +403,12 @@ export default function CalendarPage() {
                     className="detention-notes-input w-full"
                     rows={3}
                     placeholder="Uitleg voor leerkrachten..."
-                    value={selectedConfig?.notice ?? ''}
-                    disabled={adminSaving}
-                    onChange={(e) =>
-                      updateDayConfig({ notice: e.target.value || undefined })
+                    value={draftNotice}
+                    onChange={(e) => setDraftNotice(e.target.value)}
+                    onBlur={() =>
+                      updateDayConfig({
+                        notice: draftNotice.trim() || undefined,
+                      })
                     }
                   />
                 </div>

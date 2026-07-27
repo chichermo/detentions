@@ -68,6 +68,7 @@ export default function NewDetentionPage() {
   };
 
   const createEmptyDetention = (): Partial<Detention> => ({
+    id: `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
     number: detentions.length + 1,
     student: '',
     teacher: '',
@@ -253,7 +254,7 @@ export default function NewDetentionPage() {
         </div>
         <div className="space-y-6">
           {detentions.map((detention, index) => (
-            <div key={index} className="card p-8">
+            <div key={detention.id || `row-${index}`} className="card p-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
