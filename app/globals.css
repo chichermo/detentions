@@ -94,7 +94,12 @@ body {
 
 .app-page > * {
   position: relative;
-  z-index: 1;
+  /* No forzar z-index:1 — dat overschrijft sticky headers (z-50)
+     en laat dropdowns achter de content verdwijnen. */
+}
+
+.app-page > header {
+  z-index: 50;
 }
 
 @layer utilities {
@@ -333,18 +338,18 @@ body {
     border-color: var(--border-subtle);
   }
 
-  .dropdown-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 34;
-    background: transparent;
-  }
-
   .dropdown-menu {
-    @apply absolute mt-2 z-[35] min-w-[12rem] max-h-64 overflow-y-auto rounded-xl py-1;
+    @apply absolute mt-2 z-[80] min-w-[12rem] max-h-64 overflow-y-auto rounded-xl py-1;
     background: rgba(14, 15, 22, 0.98);
     border: 1px solid var(--border-default);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  .dropdown-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: transparent;
   }
 
   .dropdown-item {

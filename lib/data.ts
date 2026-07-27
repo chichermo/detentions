@@ -254,6 +254,93 @@ function mapCalendarDayRow(row: Record<string, unknown>): CalendarDaySetting {
   };
 }
 
+function isMissingRelationError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const code = String(error.code || '');
+  const msg = String(error.message || '').toLowerCase();
+  return (
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find the table')
+  );
+}
+
+function supabaseErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === 'object') {
+    const e = error as { message?: string; details?: string; hint?: string; code?: string };
+    if (e.message) {
+      if (isMissingRelationError(e)) {
+        return (
+          'Tabel calendar_day_settings ontbreekt of de database is onbereikbaar. ' +
+          'Controleer Supabase / voer supabase/migration_calendar_and_attendance.sql uit.'
+        );
+      }
+      return e.message;
+    }
+  }
+  return fallback;
+}
+
+const CALENDAR_SETTINGS_KEY = 'nablijven_calendar_days';
+
+async function loadCalendarDaysFromAppSettings(): Promise<CalendarDaySetting[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', CALENDAR_SETTINGS_KEY)
+    .maybeSingle();
+  if (error) {
+    if (isMissingRelationError(error)) return [];
+    throw new Error(supabaseErrorMessage(error, 'Kon kalenderinstellingen niet laden'));
+  }
+  const value = data?.value;
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.map((row) =>
+      mapCalendarDayRow({
+        date: row.date,
+        blocked: row.blocked,
+        allow_detentions: row.allowDetentions ?? row.allow_detentions,
+        notice_title: row.noticeTitle ?? row.notice_title,
+        notice: row.notice,
+      })
+    );
+  }
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, CalendarDaySetting>).map((row) =>
+      mapCalendarDayRow({
+        date: row.date,
+        blocked: row.blocked,
+        allow_detentions: row.allowDetentions,
+        notice_title: row.noticeTitle,
+        notice: row.notice,
+      })
+    );
+  }
+  return [];
+}
+
+async function saveCalendarDayToAppSettings(setting: CalendarDaySetting): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured');
+  const existing = await loadCalendarDaysFromAppSettings();
+  const map: Record<string, CalendarDaySetting> = {};
+  for (const row of existing) map[row.date] = row;
+  map[setting.date] = setting;
+  const { error } = await supabase.from('app_settings').upsert(
+    {
+      key: CALENDAR_SETTINGS_KEY,
+      value: map,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'key' }
+  );
+  if (error) throw new Error(supabaseErrorMessage(error, 'Kon kalenderinstelling niet opslaan'));
+}
+
 export async function getCalendarDaySettings(
   startDate?: string,
   endDate?: string
@@ -265,6 +352,14 @@ export async function getCalendarDaySettings(
       if (endDate) query = query.lte('date', endDate);
       const { data, error } = await query.order('date');
       if (error) {
+        if (isMissingRelationError(error)) {
+          const fromSettings = await loadCalendarDaysFromAppSettings();
+          return fromSettings.filter((s) => {
+            if (startDate && s.date < startDate) return false;
+            if (endDate && s.date > endDate) return false;
+            return true;
+          });
+        }
         console.error('Error fetching calendar days:', error);
         return [];
       }
@@ -273,7 +368,16 @@ export async function getCalendarDaySettings(
     return [];
   } catch (error) {
     console.error('Error in getCalendarDaySettings:', error);
-    return [];
+    try {
+      const fromSettings = await loadCalendarDaysFromAppSettings();
+      return fromSettings.filter((s) => {
+        if (startDate && s.date < startDate) return false;
+        if (endDate && s.date > endDate) return false;
+        return true;
+      });
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -284,8 +388,11 @@ export async function getCalendarDaySetting(date: string): Promise<CalendarDaySe
 
 export async function saveCalendarDaySetting(setting: CalendarDaySetting): Promise<void> {
   if (!useSupabase || !supabase) {
-    throw new Error('Supabase not configured');
+    throw new Error(
+      'Supabase is niet geconfigureerd. Zet NEXT_PUBLIC_SUPABASE_URL en NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+    );
   }
+
   const { error } = await supabase.from('calendar_day_settings').upsert(
     {
       date: setting.date,
@@ -296,8 +403,15 @@ export async function saveCalendarDaySetting(setting: CalendarDaySetting): Promi
     },
     { onConflict: 'date' }
   );
-  if (error) {
-    console.error('Error saving calendar day:', error);
-    throw error;
+
+  if (!error) return;
+
+  // Fallback: app_settings (werkt ook als calendar_day_settings-tabel nog ontbreekt)
+  if (isMissingRelationError(error)) {
+    await saveCalendarDayToAppSettings(setting);
+    return;
   }
+
+  console.error('Error saving calendar day:', error);
+  throw new Error(supabaseErrorMessage(error, 'Fout bij opslaan van kalenderdag'));
 }

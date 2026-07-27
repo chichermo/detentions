@@ -13,10 +13,19 @@ export default function RoleSelector() {
     setRole(getStoredRole());
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const current = CHILLOUTS_ROLES.find((r) => r.id === role);
 
   return (
-    <div className="relative">
+    <div className={`relative ${open ? 'z-[80]' : 'z-10'}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -32,12 +41,12 @@ export default function RoleSelector() {
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[70]"
             aria-label="Sluiten"
             onClick={() => setOpen(false)}
           />
           <ul
-            className="absolute right-0 top-full mt-2 z-50 min-w-[240px] rounded-xl border border-slate-700 bg-slate-900 shadow-xl py-1"
+            className="absolute right-0 top-full mt-2 z-[80] min-w-[240px] rounded-xl border border-slate-700 bg-slate-900 shadow-2xl py-1"
             role="listbox"
           >
             {CHILLOUTS_ROLES.map((r) => (

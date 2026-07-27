@@ -28,10 +28,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const setting: CalendarDaySetting = await request.json();
+    if (!setting?.date) {
+      return NextResponse.json(
+        { success: false, error: 'Datum ontbreekt in het verzoek' },
+        { status: 400 }
+      );
+    }
     await saveCalendarDaySetting(setting);
     return NextResponse.json({ success: true, setting });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Fout bij opslaan';
+    const message =
+      error instanceof Error
+        ? error.message
+        : error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : 'Fout bij opslaan';
+    console.error('[api/calendar-days POST]', error);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
