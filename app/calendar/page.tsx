@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -34,6 +34,7 @@ import {
 import { getStoredRole } from '@/lib/auth';
 import { getRoleDefinition } from '@/lib/roles';
 import RoleSelector from '@/app/components/RoleSelector';
+import Modal from '@/app/components/ui/Modal';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -41,12 +42,14 @@ export default function CalendarPage() {
   const [calendarDays, setCalendarDays] = useState<CalendarDaySetting[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [dayModalOpen, setDayModalOpen] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('');
   const [draftNotice, setDraftNotice] = useState('');
-  const [role, setRole] = useState<'beheerder' | 'coordinator' | 'leerkracht' | 'secretariaat' | 'directie' | 'gast'>('leerkracht');
+  const [role, setRole] = useState<
+    'beheerder' | 'coordinator' | 'leerkracht' | 'secretariaat' | 'directie' | 'gast'
+  >('leerkracht');
   const [mounted, setMounted] = useState(false);
-  const dayPanelRef = useRef<HTMLDivElement>(null);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -76,17 +79,13 @@ export default function CalendarPage() {
     setRole(getStoredRole());
   }, []);
 
-  useEffect(() => {
-    if (!selectedDate || !dayPanelRef.current) return;
-    dayPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [selectedDate]);
-
-  // Al cambiar de mes, deseleccionar si el día no es Ma/Di/Do
+  // Al cambiar de mes, cerrar modal si el día ya no aplica
   useEffect(() => {
     if (!selectedDate) return;
     const d = parseISO(selectedDate);
     if (!isSameMonth(d, currentDate) || !isNablijvenWeekday(d)) {
       setSelectedDate(null);
+      setDayModalOpen(false);
     }
   }, [currentDate, selectedDate]);
 
@@ -102,21 +101,23 @@ export default function CalendarPage() {
     return sessions.find((s) => s.date === dateStr);
   };
 
-  const getDayConfig = (dateStr: string) =>
-    getDaySettingFromList(dateStr, calendarDays);
+  const getDayConfig = (dateStr: string) => getDaySettingFromList(dateStr, calendarDays);
 
   const selectedConfig = selectedDate ? getDayConfig(selectedDate) : undefined;
   const selectedSession = selectedDate
     ? sessions.find((s) => s.date === selectedDate)
     : undefined;
 
-  // Tekst lokaal bewerken; opslaan bij blur (niet bij elke toets → cursor-bug)
   useEffect(() => {
     setDraftNoticeTitle(selectedConfig?.noticeTitle ?? '');
     setDraftNotice(selectedConfig?.notice ?? '');
-    // Alleen synchroniseren bij wissel van geselecteerde dag
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
+
+  const closeDayModal = () => {
+    setDayModalOpen(false);
+    setSelectedDate(null);
+  };
 
   const handleDayClick = (day: Date, e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -125,11 +126,24 @@ export default function CalendarPage() {
     if (!isNablijvenWeekday(day)) return;
     const dateStr = format(day, 'yyyy-MM-dd');
     const session = getSessionsForDate(day);
+    const cfg = getDayConfig(dateStr);
+
+    // Día bloqueado o con melding → siempre popup (sin scroll)
+    if (cfg?.blocked || cfg?.noticeTitle || cfg?.notice) {
+      setSelectedDate(dateStr);
+      setDayModalOpen(true);
+      return;
+    }
+
+    // Sesión existente sin bloqueo → abrir sesión
     if (session) {
       router.push(`/detentions/${dateStr}`);
       return;
     }
+
+    // Día libre → popup para crear / beheer
     setSelectedDate(dateStr);
+    setDayModalOpen(true);
   };
 
   const handleOpenSession = () => {
@@ -140,14 +154,8 @@ export default function CalendarPage() {
   const handleCreateSession = () => {
     if (!selectedDate) return;
     const cfg = getDayConfig(selectedDate);
-    if (cfg?.blocked) {
-      alert('Deze dag is geblokkeerd door de beheerder.');
-      return;
-    }
-    if (cfg && !cfg.allowDetentions) {
-      alert('Voor deze dag zijn geen nablijven toegestaan (zie melding).');
-      return;
-    }
+    if (cfg?.blocked) return;
+    if (cfg && !cfg.allowDetentions) return;
     router.push(`/detentions/new?date=${selectedDate}`);
   };
 
@@ -162,20 +170,21 @@ export default function CalendarPage() {
       notice: draftNotice || undefined,
       ...patch,
     };
-    // Optimistische UI zodat checkbox/tekst meteen kloppen
     setCalendarDays((prev) => {
       const rest = prev.filter((d) => d.date !== selectedDate);
       return [...rest, current].sort((a, b) => a.date.localeCompare(b.date));
     });
     try {
       await saveCalendarDay(current);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Opslaan mislukt');
-      // herlaad om inconsistentie te vermijden
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Opslaan mislukt');
       try {
-        const start = format(monthStart, 'yyyy-MM-dd');
-        const end = format(monthEnd, 'yyyy-MM-dd');
-        setCalendarDays(await fetchCalendarDays(start, end));
+        setCalendarDays(
+          await fetchCalendarDays(
+            format(monthStart, 'yyyy-MM-dd'),
+            format(monthEnd, 'yyyy-MM-dd')
+          )
+        );
       } catch {
         /* ignore */
       }
@@ -196,6 +205,13 @@ export default function CalendarPage() {
     if (cfg && !cfg.allowDetentions) return false;
     return !selectedSession;
   }, [selectedDate, isNablijvenDay, calendarDays, selectedSession]);
+
+  const modalTitle = selectedDate
+    ? format(parseISO(selectedDate), 'EEEE d MMMM yyyy', { locale: nl })
+    : 'Dag';
+
+  const hasRemark = !!(selectedConfig?.noticeTitle || selectedConfig?.notice);
+  const isBlocked = !!selectedConfig?.blocked;
 
   return (
     <div className="app-page">
@@ -228,7 +244,12 @@ export default function CalendarPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="card p-4 sm:p-8 mb-8">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6 sm:mb-8">
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="btn-secondary flex items-center gap-2">
+            <button
+              onClick={() =>
+                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
+              }
+              className="btn-secondary flex items-center gap-2"
+            >
               <ChevronLeft className="h-5 w-5" />
               Vorige
             </button>
@@ -239,7 +260,12 @@ export default function CalendarPage() {
               <button onClick={() => setCurrentDate(new Date())} className="btn-primary">
                 Vandaag
               </button>
-              <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="btn-secondary flex items-center gap-2">
+              <button
+                onClick={() =>
+                  setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
+                }
+                className="btn-secondary flex items-center gap-2"
+              >
                 Volgende
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -247,10 +273,16 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 mb-4 text-xs text-slate-400">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/40 border border-emerald-500/60" /> Sessie</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/30 border border-amber-500/50" /> Melding</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Geblokkeerd</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-indigo-500" /> Geselecteerd</span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-emerald-500/40 border border-emerald-500/60" />{' '}
+              Sessie
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-amber-500/30 border border-amber-500/50" /> Melding
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Geblokkeerd
+            </span>
             <span className="text-slate-500">· Alleen Ma, Di, Do zijn klikbaar</span>
           </div>
 
@@ -266,7 +298,7 @@ export default function CalendarPage() {
               const session = getSessionsForDate(day);
               const cfg = getDayConfig(dateStr);
               const isToday = isSameDay(day, new Date());
-              const isSelected = selectedDate === dateStr;
+              const isSelected = dayModalOpen && selectedDate === dateStr;
               const inMonth = isSameMonth(day, currentDate);
               const nablijvenDay = isNablijvenWeekday(day);
               const clickable = inMonth && nablijvenDay;
@@ -296,11 +328,15 @@ export default function CalendarPage() {
                     ${isSelected && clickable ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-slate-900' : ''}
                   `}
                 >
-                  <div className={`text-xs sm:text-sm font-bold ${clickable ? 'text-slate-100' : inMonth ? 'text-slate-500' : 'text-slate-600'}`}>
+                  <div
+                    className={`text-xs sm:text-sm font-bold ${clickable ? 'text-slate-100' : inMonth ? 'text-slate-500' : 'text-slate-600'}`}
+                  >
                     {format(day, 'd')}
                   </div>
                   {clickable && blocked && <Lock className="h-3 w-3 text-red-400 mt-0.5" />}
-                  {clickable && hasNotice && !blocked && <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />}
+                  {clickable && hasNotice && !blocked && (
+                    <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />
+                  )}
                   {session && clickable && (
                     <div className="text-[10px] sm:text-xs font-semibold text-emerald-300 mt-0.5 truncate">
                       {session.detentions.length} nabl.
@@ -310,112 +346,9 @@ export default function CalendarPage() {
               );
             })}
           </div>
-          {!selectedDate && (
-            <p className="mt-4 text-center text-sm text-slate-500">
-              Klik op een maandag, dinsdag of donderdag om een sessie te openen of aan te maken.
-            </p>
-          )}
-
-          {selectedDate && (
-            <div ref={dayPanelRef}
-              id="calendar-day-detail"
-              className="mt-6 pt-6 border-t border-slate-700 scroll-mt-28"
-              role="region"
-              aria-live="polite"
-            >
-            <h2 className="section-title mb-2">
-              {format(parseISO(selectedDate), 'EEEE d MMMM yyyy', { locale: nl })}
-            </h2>
-
-            {selectedConfig?.noticeTitle && (
-              <div className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <p className="font-semibold text-amber-200 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  {selectedConfig.noticeTitle}
-                </p>
-                {selectedConfig.notice && (
-                  <p className="text-sm text-amber-100/80 mt-2">{selectedConfig.notice}</p>
-                )}
-              </div>
-            )}
-
-            {selectedConfig?.blocked && (
-              <p className="text-red-300 text-sm mb-4 flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Deze dag is geblokkeerd — geen nablijven mogelijk.
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-3 mb-6">
-              {selectedSession ? (
-                <button type="button" onClick={handleOpenSession} className="btn-primary flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Sessie openen ({selectedSession.detentions.length})
-                </button>
-              ) : canCreateOnSelected ? (
-                <button type="button" onClick={handleCreateSession} className="btn-primary">
-                  Nieuwe sessie aanmaken
-                </button>
-              ) : selectedSession === undefined && isNablijvenDay && selectedConfig && !selectedConfig.allowDetentions ? (
-                <p className="text-slate-400 text-sm">Nablijven niet toegestaan volgens daginstelling.</p>
-              ) : null}
-            </div>
-
-            {mounted && canAdminCalendar && (
-              <div className="border-t border-slate-700 pt-6 mt-6 space-y-4">
-                <h3 className="font-bold text-slate-200">Beheer (admin)</h3>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedConfig?.blocked ?? false}
-                    disabled={adminSaving}
-                    onChange={(e) => updateDayConfig({ blocked: e.target.checked })}
-                  />
-                  <span className="text-slate-300">Dag blokkeren</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedConfig?.allowDetentions ?? true}
-                    disabled={adminSaving || selectedConfig?.blocked}
-                    onChange={(e) => updateDayConfig({ allowDetentions: e.target.checked })}
-                  />
-                  <span className="text-slate-300">Nablijven toestaan op deze dag</span>
-                </label>
-                <div>
-                  <label className="form-label">Titel melding</label>
-                  <input
-                    type="text"
-                    className="input-field w-full"
-                    placeholder="bv. Schooluitstap"
-                    value={draftNoticeTitle}
-                    onChange={(e) => setDraftNoticeTitle(e.target.value)}
-                    onBlur={() =>
-                      updateDayConfig({
-                        noticeTitle: draftNoticeTitle.trim() || undefined,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Melding / situatie</label>
-                  <textarea
-                    className="detention-notes-input w-full"
-                    rows={3}
-                    placeholder="Uitleg voor leerkrachten..."
-                    value={draftNotice}
-                    onChange={(e) => setDraftNotice(e.target.value)}
-                    onBlur={() =>
-                      updateDayConfig({
-                        notice: draftNotice.trim() || undefined,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            )}
-            </div>
-          )}
+          <p className="mt-4 text-center text-sm text-slate-500">
+            Klik op een dag om details, meldingen of beheer in een venster te openen.
+          </p>
         </div>
 
         <div className="card p-6 sm:p-8">
@@ -445,6 +378,145 @@ export default function CalendarPage() {
           )}
         </div>
       </main>
+
+      <Modal
+        open={dayModalOpen && !!selectedDate}
+        onClose={closeDayModal}
+        title={modalTitle}
+        description={
+          isBlocked
+            ? 'Deze dag is geblokkeerd'
+            : hasRemark
+              ? 'Melding voor deze dag'
+              : 'Sessie of dagbeheer'
+        }
+        maxWidth="lg"
+        footer={
+          <button type="button" className="btn-secondary" onClick={closeDayModal}>
+            Sluiten
+          </button>
+        }
+      >
+        {isBlocked && (
+          <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/40 p-4">
+            <p className="flex items-center gap-2 font-semibold text-red-200">
+              <Lock className="h-4 w-4 shrink-0" />
+              Geblokkeerd — geen nablijven mogelijk
+            </p>
+            {(selectedConfig?.noticeTitle || selectedConfig?.notice) && (
+              <div className="mt-3 border-t border-red-500/25 pt-3">
+                {selectedConfig.noticeTitle && (
+                  <p className="font-medium text-red-100">{selectedConfig.noticeTitle}</p>
+                )}
+                {selectedConfig.notice && (
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-red-100/85">
+                    {selectedConfig.notice}
+                  </p>
+                )}
+              </div>
+            )}
+            {!selectedConfig?.noticeTitle && !selectedConfig?.notice && (
+              <p className="mt-2 text-sm text-red-100/70">
+                Er is geen extra toelichting toegevoegd voor deze blokkering.
+              </p>
+            )}
+          </div>
+        )}
+
+        {!isBlocked && hasRemark && (
+          <div className="mb-4 rounded-xl border border-amber-500/35 bg-amber-500/10 p-4">
+            <p className="flex items-center gap-2 font-semibold text-amber-200">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              {selectedConfig?.noticeTitle || 'Melding'}
+            </p>
+            {selectedConfig?.notice && (
+              <p className="mt-2 whitespace-pre-wrap text-sm text-amber-100/85">
+                {selectedConfig.notice}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="mb-4 flex flex-wrap gap-3">
+          {selectedSession ? (
+            <button
+              type="button"
+              onClick={handleOpenSession}
+              className="btn-primary flex items-center gap-2"
+              disabled={isBlocked}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Sessie openen ({selectedSession.detentions.length})
+            </button>
+          ) : canCreateOnSelected ? (
+            <button type="button" onClick={handleCreateSession} className="btn-primary">
+              Nieuwe sessie aanmaken
+            </button>
+          ) : selectedSession === undefined &&
+            isNablijvenDay &&
+            selectedConfig &&
+            !selectedConfig.allowDetentions &&
+            !isBlocked ? (
+            <p className="text-sm text-slate-400">
+              Nablijven niet toegestaan volgens daginstelling.
+            </p>
+          ) : null}
+        </div>
+
+        {mounted && canAdminCalendar && (
+          <div className="space-y-4 border-t border-slate-700 pt-5">
+            <h3 className="font-bold text-slate-200">Beheer (admin)</h3>
+            <label className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                checked={selectedConfig?.blocked ?? false}
+                disabled={adminSaving}
+                onChange={(e) => updateDayConfig({ blocked: e.target.checked })}
+              />
+              <span className="text-slate-300">Dag blokkeren</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                checked={selectedConfig?.allowDetentions ?? true}
+                disabled={adminSaving || selectedConfig?.blocked}
+                onChange={(e) => updateDayConfig({ allowDetentions: e.target.checked })}
+              />
+              <span className="text-slate-300">Nablijven toestaan op deze dag</span>
+            </label>
+            <div>
+              <label className="form-label">Titel melding</label>
+              <input
+                type="text"
+                className="input-field w-full"
+                placeholder="bv. Schooluitstap"
+                value={draftNoticeTitle}
+                onChange={(e) => setDraftNoticeTitle(e.target.value)}
+                onBlur={() =>
+                  updateDayConfig({
+                    noticeTitle: draftNoticeTitle.trim() || undefined,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className="form-label">Melding / situatie</label>
+              <textarea
+                className="detention-notes-input w-full"
+                rows={3}
+                placeholder="Uitleg waarom deze dag geblokkeerd is of andere info…"
+                value={draftNotice}
+                onChange={(e) => setDraftNotice(e.target.value)}
+                onBlur={() =>
+                  updateDayConfig({
+                    notice: draftNotice.trim() || undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
