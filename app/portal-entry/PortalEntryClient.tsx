@@ -100,8 +100,8 @@ export default function PortalEntryClient() {
         })
       );
 
-      setMessage('Welkom — Detentions openen…');
-      router.replace('/dashboard');
+      setMessage('Welkom — Nablijven openen…');
+      router.replace('/');
     };
     run();
   }, [router, searchParams]);
