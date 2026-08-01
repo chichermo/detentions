@@ -26,9 +26,11 @@ export default function MassImport({
   defaultDay = 'MAANDAG',
 }: MassImportProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [preview, setPreview] = useState<Student[] | Partial<Detention>[]>([]);
+  const [pendingStudents, setPendingStudents] = useState<Student[] | null>(null);
+  const [pendingDetentions, setPendingDetentions] = useState<Partial<Detention>[] | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -37,7 +39,8 @@ export default function MassImport({
     setIsProcessing(true);
     setError(null);
     setSuccess(null);
-    setPreview([]);
+    setPendingStudents(null);
+    setPendingDetentions(null);
 
     try {
       const data = await file.arrayBuffer();
@@ -71,29 +74,7 @@ export default function MassImport({
           );
         }
 
-        setPreview(students.slice(0, 8));
-
-        const res = await fetch('/api/students', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ students }),
-        });
-        const result = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(result.details || result.error || 'Import mislukt');
-        }
-        if (result.failed && !result.saved) {
-          throw new Error(
-            result.firstError ||
-              `${result.failed} leerlingen mislukt (controleer database / kolom day)`
-          );
-        }
-
-        setSuccess(
-          `${result.saved ?? students.length} leerlingen geïmporteerd in Excel-volgorde` +
-            (result.failed ? ` (${result.failed} mislukt)` : '')
-        );
-        onImportStudents?.(students);
+        setPendingStudents(students);
       } else {
         const detentions: Partial<Detention>[] = jsonData
           .map((row, index) => ({
@@ -112,26 +93,83 @@ export default function MassImport({
           }))
           .filter((d) => d.student && d.date);
 
-        setPreview(detentions.slice(0, 5) as Partial<Detention>[]);
-        if (onImportDetentions) {
-          for (const detention of detentions) {
-            await fetch('/api/detentions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(detention),
-            });
-          }
-          setSuccess(`${detentions.length} nablijven geïmporteerd`);
-          onImportDetentions(detentions as Detention[]);
+        if (!detentions.length) {
+          throw new Error('Geen geldige nablijven gevonden.');
         }
+        setPendingDetentions(detentions);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Fout bij importeren van bestand');
+      setError(err instanceof Error ? err.message : 'Fout bij lezen van bestand');
     } finally {
       setIsProcessing(false);
       event.target.value = '';
     }
   };
+
+  const clearPending = () => {
+    setPendingStudents(null);
+    setPendingDetentions(null);
+    setError(null);
+  };
+
+  const confirmStudents = async () => {
+    if (!pendingStudents?.length) return;
+    setIsSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch('/api/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ students: pendingStudents }),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(result.details || result.error || 'Import mislukt');
+      }
+      if (result.failed && !result.saved) {
+        throw new Error(
+          result.firstError ||
+            `${result.failed} leerlingen mislukt (controleer database / kolom day)`
+        );
+      }
+      setSuccess(
+        `${result.saved ?? pendingStudents.length} leerlingen geïmporteerd in Excel-volgorde` +
+          (result.failed ? ` (${result.failed} mislukt)` : '')
+      );
+      onImportStudents?.(pendingStudents);
+      setPendingStudents(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Import mislukt');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const confirmDetentions = async () => {
+    if (!pendingDetentions?.length || !onImportDetentions) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      for (const detention of pendingDetentions) {
+        await fetch('/api/detentions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(detention),
+        });
+      }
+      setSuccess(`${pendingDetentions.length} nablijven geïmporteerd`);
+      onImportDetentions(pendingDetentions as Detention[]);
+      setPendingDetentions(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Import mislukt');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const previewStudents = pendingStudents || [];
+  const previewDetentions = pendingDetentions || [];
 
   return (
     <div className="card p-6">
@@ -144,7 +182,7 @@ export default function MassImport({
             Excel import {type === 'students' ? 'leerlingen' : 'nablijven'}
           </h3>
           <p className="text-sm text-slate-400">
-            Volgorde en klas-organisatie uit het bestand blijven behouden
+            Eerst preview, daarna bevestigen — volgorde blijft behouden
           </p>
         </div>
       </div>
@@ -162,7 +200,7 @@ export default function MassImport({
               accept=".xlsx,.xls,.csv"
               onChange={handleFileUpload}
               className="hidden"
-              disabled={isProcessing}
+              disabled={isProcessing || isSaving}
             />
           </label>
           {isProcessing && <span className="text-slate-400 text-sm">Verwerken…</span>}
@@ -183,16 +221,65 @@ export default function MassImport({
         </div>
       )}
 
-      {preview.length > 0 && type === 'students' && (
+      {previewStudents.length > 0 && type === 'students' && (
         <div className="mt-4">
-          <h4 className="text-sm font-semibold text-slate-300 mb-2">Preview (eerste rijen):</h4>
-          <div className="bg-slate-700/50 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
-            {(preview as Student[]).map((s, idx) => (
-              <div key={idx} className="text-xs text-slate-300 flex gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-slate-300">
+              Preview — {previewStudents.length} leerlingen
+            </h4>
+            <div className="flex gap-2">
+              <button type="button" className="btn-secondary text-sm" onClick={clearPending}>
+                Annuleren
+              </button>
+              <button
+                type="button"
+                className="btn-primary text-sm"
+                disabled={isSaving}
+                onClick={confirmStudents}
+              >
+                {isSaving ? 'Opslaan…' : `Bevestigen (${previewStudents.length})`}
+              </button>
+            </div>
+          </div>
+          <div className="bg-slate-700/50 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
+            {previewStudents.map((s, idx) => (
+              <div key={s.id || idx} className="text-xs text-slate-300 flex gap-3">
                 <span className="text-slate-500 w-6">{(s.sortOrder ?? idx) + 1}.</span>
                 <span className="flex-1">{s.name}</span>
                 <span className="text-slate-400">{s.grade}</span>
                 <span className="text-slate-500">{s.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {previewDetentions.length > 0 && type === 'detentions' && (
+        <div className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-slate-300">
+              Preview — {previewDetentions.length} nablijven
+            </h4>
+            <div className="flex gap-2">
+              <button type="button" className="btn-secondary text-sm" onClick={clearPending}>
+                Annuleren
+              </button>
+              <button
+                type="button"
+                className="btn-primary text-sm"
+                disabled={isSaving}
+                onClick={confirmDetentions}
+              >
+                {isSaving ? 'Opslaan…' : `Bevestigen (${previewDetentions.length})`}
+              </button>
+            </div>
+          </div>
+          <div className="bg-slate-700/50 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+            {previewDetentions.slice(0, 20).map((d, idx) => (
+              <div key={idx} className="text-xs text-slate-300 flex gap-3">
+                <span className="text-slate-500 w-6">{idx + 1}.</span>
+                <span className="flex-1">{d.student}</span>
+                <span className="text-slate-400">{d.date}</span>
               </div>
             ))}
           </div>

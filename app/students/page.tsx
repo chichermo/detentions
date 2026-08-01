@@ -26,6 +26,7 @@ export default function StudentsPage() {
   const [showBulk, setShowBulk] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkPreview, setBulkPreview] = useState<Student[] | null>(null);
 
   useEffect(() => {
     fetchStudents();
@@ -74,21 +75,32 @@ export default function StudentsPage() {
     setShowImport(false);
   };
 
-  const handleBulkSave = async () => {
+  const handleBulkPreview = () => {
     const rows = parseBulkStudentLines(bulkText);
     if (!rows.length) {
-      alert('Plak minstens één regel: Naam;Klas');
+      alert('Plak minstens één regel: Achternaam;Voornaam;Klas');
+      setBulkPreview(null);
       return;
     }
     const base = students.reduce((max, s) => Math.max(max, s.sortOrder ?? -1), -1) + 1;
     const stamp = Date.now();
-    const payload: Student[] = rows.map((r, index) => ({
-      id: `student-${stamp}-${index}`,
-      name: r.name,
-      grade: r.grade,
-      day: selectedDay,
-      sortOrder: base + index,
-    }));
+    setBulkPreview(
+      rows.map((r, index) => ({
+        id: `student-${stamp}-${index}`,
+        name: r.name,
+        grade: r.grade,
+        day: selectedDay,
+        sortOrder: base + index,
+      }))
+    );
+  };
+
+  const handleBulkSave = async () => {
+    const payload = bulkPreview;
+    if (!payload?.length) {
+      handleBulkPreview();
+      return;
+    }
 
     setBulkSaving(true);
     try {
@@ -102,6 +114,7 @@ export default function StudentsPage() {
         throw new Error(data.details || data.error || 'Bulk opslaan mislukt');
       }
       setBulkText('');
+      setBulkPreview(null);
       setShowBulk(false);
       await fetchStudents();
       alert(`${data.saved ?? payload.length} leerlingen toegevoegd`);
@@ -268,21 +281,48 @@ export default function StudentsPage() {
             </p>
             <textarea
               value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
+              onChange={(e) => {
+                setBulkText(e.target.value);
+                setBulkPreview(null);
+              }}
               rows={10}
               className="input-field font-mono text-sm"
               placeholder={'Degrendele;Leandro;1 Aarde\nGeers;Lewis;1 Aarde\nLisa Janssens;2 Vuur'}
             />
+            {bulkPreview && bulkPreview.length > 0 && (
+              <div className="mt-4 bg-slate-700/50 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                <p className="text-xs text-slate-400 mb-2">
+                  Preview — {bulkPreview.length} leerlingen
+                </p>
+                {bulkPreview.map((s, idx) => (
+                  <div key={s.id} className="text-xs text-slate-300 flex gap-3">
+                    <span className="text-slate-500 w-6">{idx + 1}.</span>
+                    <span className="flex-1">{s.name}</span>
+                    <span className="text-slate-400">{s.grade}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="mt-4 flex gap-3">
+              <button type="button" onClick={handleBulkPreview} className="btn-secondary">
+                Preview tonen
+              </button>
               <button
                 type="button"
                 onClick={handleBulkSave}
-                disabled={bulkSaving}
+                disabled={bulkSaving || !bulkPreview?.length}
                 className="btn-primary"
               >
-                {bulkSaving ? 'Opslaan…' : 'Alles opslaan'}
+                {bulkSaving ? 'Opslaan…' : 'Bevestigen & opslaan'}
               </button>
-              <button type="button" className="btn-secondary" onClick={() => setShowBulk(false)}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setShowBulk(false);
+                  setBulkPreview(null);
+                }}
+              >
                 Annuleren
               </button>
             </div>

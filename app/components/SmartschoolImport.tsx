@@ -18,9 +18,10 @@ interface SmartschoolImportProps {
 
 export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: SmartschoolImportProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [preview, setPreview] = useState<Student[]>([]);
+  const [pending, setPending] = useState<Student[] | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -29,7 +30,7 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
     setIsProcessing(true);
     setError(null);
     setSuccess(null);
-    setPreview([]);
+    setPending(null);
 
     try {
       const data = await file.arrayBuffer();
@@ -62,12 +63,25 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
         );
       }
 
-      setPreview(students.slice(0, 8));
+      setPending(students);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Fout bij lezen van bestand');
+    } finally {
+      setIsProcessing(false);
+      event.target.value = '';
+    }
+  };
 
+  const confirmImport = async () => {
+    if (!pending?.length) return;
+    setIsSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
       const res = await fetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ students }),
+        body: JSON.stringify({ students: pending }),
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -81,15 +95,15 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
       }
 
       setSuccess(
-        `${result.saved ?? students.length} leerlingen geïmporteerd (Smartschool-volgorde)` +
+        `${result.saved ?? pending.length} leerlingen geïmporteerd (Smartschool-volgorde)` +
           (result.failed ? ` (${result.failed} mislukt)` : '')
       );
-      onImport(students);
+      onImport(pending);
+      setPending(null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Fout bij importeren van bestand');
+      setError(err instanceof Error ? err.message : 'Import mislukt');
     } finally {
-      setIsProcessing(false);
-      event.target.value = '';
+      setIsSaving(false);
     }
   };
 
@@ -101,7 +115,9 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-100">Smartschool import</h3>
-          <p className="text-sm text-slate-400">Excel/CSV uit Smartschool — volgorde blijft behouden</p>
+          <p className="text-sm text-slate-400">
+            Excel/CSV uit Smartschool — eerst preview, daarna bevestigen
+          </p>
         </div>
       </div>
 
@@ -113,7 +129,7 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
             type="file"
             accept=".xlsx,.xls,.csv"
             onChange={handleFileUpload}
-            disabled={isProcessing}
+            disabled={isProcessing || isSaving}
             className="hidden"
           />
         </label>
@@ -134,12 +150,33 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
         </div>
       )}
 
-      {preview.length > 0 && (
+      {pending && pending.length > 0 && (
         <div className="mt-4">
-          <h4 className="text-sm font-semibold text-slate-300 mb-2">Preview:</h4>
-          <div className="bg-slate-700/50 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
-            {preview.map((student, idx) => (
-              <div key={idx} className="text-xs text-slate-300 flex gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-slate-300">
+              Preview — {pending.length} leerlingen
+            </h4>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-secondary text-sm"
+                onClick={() => setPending(null)}
+              >
+                Annuleren
+              </button>
+              <button
+                type="button"
+                className="btn-primary text-sm"
+                disabled={isSaving}
+                onClick={confirmImport}
+              >
+                {isSaving ? 'Opslaan…' : `Bevestigen (${pending.length})`}
+              </button>
+            </div>
+          </div>
+          <div className="bg-slate-700/50 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
+            {pending.map((student, idx) => (
+              <div key={student.id || idx} className="text-xs text-slate-300 flex gap-3">
                 <span className="text-slate-500 w-6">{idx + 1}.</span>
                 <span className="flex-1">{student.name}</span>
                 <span className="text-slate-400">{student.grade}</span>
@@ -151,7 +188,8 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
 
       <div className="mt-4 p-3 bg-slate-700/30 rounded-lg">
         <p className="text-xs text-slate-400">
-          Kolommen: Voornaam + Naam (achternaam), Klas/Groep, optioneel Dag. Namen worden met spatie samengevoegd.
+          Kolommen: Voornaam + Naam (achternaam), Klas/Groep, optioneel Dag. Namen worden met spatie
+          samengevoegd.
         </p>
       </div>
     </div>
