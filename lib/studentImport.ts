@@ -78,6 +78,60 @@ export function normalizePersonName(...parts: Array<string | undefined | null>):
   return unglueCamelCase(cleaned.join(' '));
 }
 
+/** Tokens of a display name (stable key for matching across days). */
+export function nameTokenKey(name: string): string {
+  return String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((t) => t.toLowerCase())
+    .sort((a, b) => a.localeCompare(b, 'nl'))
+    .join('|');
+}
+
+/**
+ * Align name order across days using a reference day (default MAANDAG).
+ * Fixes "Degrendele Leandro" when MAANDAG already has "Leandro Degrendele".
+ */
+export function alignNamesToReferenceDay<
+  T extends { name: string; grade?: string; day?: string },
+>(students: T[], referenceDay = 'MAANDAG'): T[] {
+  const refs = students.filter((s) => String(s.day || '').toUpperCase() === referenceDay);
+  const canonical = new Map<string, string>();
+
+  for (const r of refs) {
+    const key = `${nameTokenKey(r.name)}::${normalizeGrade(r.grade || '').toLowerCase()}`;
+    if (key.startsWith('::')) continue;
+    if (!canonical.has(key)) canonical.set(key, r.name);
+  }
+
+  if (canonical.size === 0) return students;
+
+  return students.map((s) => {
+    const key = `${nameTokenKey(s.name)}::${normalizeGrade(s.grade || '').toLowerCase()}`;
+    const wanted = canonical.get(key);
+    if (wanted && wanted !== s.name) {
+      return { ...s, name: wanted };
+    }
+    return s;
+  });
+}
+
+/**
+ * Flip two-token "Achternaam Voornaam" → "Voornaam Achternaam".
+ * Use only when the list is known to be Last First (e.g. paste without semicolon).
+ */
+export function flipTwoTokenName(name: string): string {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 2) {
+    return normalizePersonName(parts[1], parts[0]);
+  }
+  return normalizePersonName(name);
+}
+
 /**
  * Build display name from Excel/Smartschool rows.
  * Smartschool: "Voornaam" + "Naam" (surname). "Naam" alone is NOT always full name.
@@ -160,6 +214,7 @@ export function parseBulkStudentLines(text: string): { name: string; grade: stri
           }
         } else if (parts.length === 2) {
           if (looksLikeClassToken(parts[1])) {
+            // "Voornaam Achternaam;Klas" of "Achternaam;Voornaam" al gefixt in parts[0]
             name = fixSemicolonName(parts[0]);
             grade = parts[1];
           } else {

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStudents, saveStudent, saveStudentsBulk, deleteStudent } from '@/lib/data';
 import { Student, DayOfWeek } from '@/types';
-import { fixSemicolonName, normalizeGrade } from '@/lib/studentImport';
+import {
+  alignNamesToReferenceDay,
+  fixSemicolonName,
+  flipTwoTokenName,
+  normalizeGrade,
+} from '@/lib/studentImport';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,26 +24,50 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // One-shot: herstel "Achternaam;Voornaam" en "1Aarde" → nette waarden
+    // One-shot: herstel "Achternaam;Voornaam", "1Aarde", en volgorde t.o.v. MAANDAG
     if (body?.repairNames === true) {
       const all = await getStudents(undefined);
-      const toFix = all.filter(
-        (s) =>
-          /[;,]/.test(s.name) ||
-          /([a-zà-ÿ])([A-ZÀ-Ÿ])/.test(s.name) ||
-          /\d[A-Za-zÀ-ÿ]/.test(s.grade || '')
-      );
-      const repaired: Student[] = toFix.map((s) => ({
+      const referenceDay = String(body.referenceDay || 'MAANDAG').toUpperCase();
+
+      let normalized: Student[] = all.map((s) => ({
         ...s,
         name: fixSemicolonName(s.name),
         grade: normalizeGrade(s.grade || ''),
       }));
-      const result = await saveStudentsBulk(repaired);
+
+      // Optioneel: alle 2-woordnamen omdraaien (Achternaam Voornaam → Voornaam Achternaam)
+      if (body.flipTwoTokenNames === true) {
+        const days: string[] | null = Array.isArray(body.flipDays)
+          ? body.flipDays.map((d: string) => String(d).toUpperCase())
+          : null;
+        normalized = normalized.map((s) => {
+          if (days && !days.includes(String(s.day || '').toUpperCase())) return s;
+          return { ...s, name: flipTwoTokenName(s.name) };
+        });
+      }
+
+      // Zelfde leerling op andere dagen → zelfde volgorde als referencedag
+      normalized = alignNamesToReferenceDay(normalized, referenceDay);
+
+      const byId = new Map(all.map((s) => [s.id, s]));
+      const toSave = normalized.filter((s) => {
+        const prev = byId.get(s.id);
+        return !prev || prev.name !== s.name || (prev.grade || '') !== (s.grade || '');
+      });
+
+      const result = toSave.length
+        ? await saveStudentsBulk(toSave)
+        : { saved: 0, failed: 0 };
       return NextResponse.json({
         success: true,
-        repaired: repaired.length,
+        repaired: toSave.length,
+        referenceDay,
         ...result,
-        sample: repaired.slice(0, 5).map((s) => s.name),
+        sample: toSave.slice(0, 8).map((s) => ({
+          day: s.day,
+          name: s.name,
+          grade: s.grade,
+        })),
       });
     }
 
