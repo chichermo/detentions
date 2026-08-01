@@ -10,6 +10,7 @@ import EnhancedTable from '@/app/components/EnhancedTable';
 import MassImport from '@/app/components/MassImport';
 import SmartschoolImport from '@/app/components/SmartschoolImport';
 import FileAttachment from '@/app/components/FileAttachment';
+import { parseBulkStudentLines } from '@/lib/studentImport';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
 
@@ -22,6 +23,9 @@ export default function StudentsPage() {
   const [formData, setFormData] = useState({ name: '', grade: '' });
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({ text: '' });
   const [showImport, setShowImport] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -57,32 +61,87 @@ export default function StudentsPage() {
   };
 
   const filteredStudents = getFilteredStudents().sort((a, b) => {
-    // Ordenar por clase (grade)
-    const gradeA = a.grade || '';
-    const gradeB = b.grade || '';
-    return gradeA.localeCompare(gradeB);
+    const ao = a.sortOrder ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.sortOrder ?? Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    const gradeCmp = (a.grade || '').localeCompare(b.grade || '', 'nl');
+    if (gradeCmp !== 0) return gradeCmp;
+    return a.name.localeCompare(b.name, 'nl');
   });
 
-  const handleImportStudents = async (importedStudents: Student[]) => {
-    // Los estudiantes ya se importaron en el componente MassImport
+  const handleImportStudents = async () => {
     await fetchStudents();
     setShowImport(false);
   };
 
+  const handleBulkSave = async () => {
+    const rows = parseBulkStudentLines(bulkText);
+    if (!rows.length) {
+      alert('Plak minstens één regel: Naam;Klas');
+      return;
+    }
+    const base = students.reduce((max, s) => Math.max(max, s.sortOrder ?? -1), -1) + 1;
+    const stamp = Date.now();
+    const payload: Student[] = rows.map((r, index) => ({
+      id: `student-${stamp}-${index}`,
+      name: r.name,
+      grade: r.grade,
+      day: selectedDay,
+      sortOrder: base + index,
+    }));
+
+    setBulkSaving(true);
+    try {
+      const res = await apiFetch('/api/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ students: payload }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.details || data.error || 'Bulk opslaan mislukt');
+      }
+      setBulkText('');
+      setShowBulk(false);
+      await fetchStudents();
+      alert(`${data.saved ?? payload.length} leerlingen toegevoegd`);
+    } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        alert(error.message);
+        return;
+      }
+      alert(error instanceof Error ? error.message : 'Bulk opslaan mislukt');
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const doSaveStudent = async () => {
+    const nextOrder =
+      editingStudent?.sortOrder ??
+      students.reduce((max, s) => Math.max(max, s.sortOrder ?? -1), -1) + 1;
     const student: Student = {
       id: editingStudent?.id || `student-${Date.now()}`,
       name: formData.name,
       grade: formData.grade,
       day: selectedDay,
+      sortOrder: nextOrder,
     };
 
     try {
-      await apiFetch('/api/students', {
+      const res = await apiFetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(student),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(
+          (data as { details?: string; error?: string }).details ||
+            (data as { error?: string }).error ||
+            'Opslaan mislukt'
+        );
+      }
       setFormData({ name: '', grade: '' });
       setShowForm(false);
       setEditingStudent(null);
@@ -96,6 +155,7 @@ export default function StudentsPage() {
         return;
       }
       console.error('Error saving student:', error);
+      alert(error instanceof Error ? error.message : 'Opslaan mislukt');
     }
   };
 
@@ -149,29 +209,99 @@ export default function StudentsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* Import Button */}
-        <div className="mb-6 flex justify-end">
+        {/* Import / Bulk */}
+        <div className="mb-6 flex flex-wrap justify-end gap-3">
           <button
-            onClick={() => setShowImport(!showImport)}
+            type="button"
+            onClick={async () => {
+              if (!confirm('Namen herstellen? (Achternaam;Voornaam → Voornaam Achternaam)')) return;
+              try {
+                const res = await apiFetch('/api/students', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ repairNames: true }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.details || data.error || 'Herstel mislukt');
+                await fetchStudents();
+                alert(`${data.repaired ?? 0} namen hersteld`);
+              } catch (e) {
+                alert(e instanceof Error ? e.message : 'Herstel mislukt');
+              }
+            }}
+            className="btn-ghost flex items-center gap-2 text-sm"
+          >
+            Herstel namen
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowBulk(!showBulk);
+              if (!showBulk) setShowImport(false);
+            }}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            {showBulk ? 'Verberg bulk' : 'Bulk toevoegen'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowImport(!showImport);
+              if (!showImport) setShowBulk(false);
+            }}
             className="btn-secondary flex items-center gap-2"
           >
             <Upload className="h-5 w-5" />
-            {showImport ? 'Verberg Import' : 'Massa Import'}
+            {showImport ? 'Verberg import' : 'Excel / Smartschool'}
           </button>
         </div>
+
+        {showBulk && (
+          <div className="card p-6 mb-6">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">Bulk toevoegen — {selectedDay}</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Eén leerling per regel. Aanbevolen:{' '}
+              <code className="text-slate-300">Achternaam;Voornaam;Klas</code> of{' '}
+              <code className="text-slate-300">Voornaam Achternaam;Klas</code>.
+              Volgorde blijft behouden.
+            </p>
+            <textarea
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              rows={10}
+              className="input-field font-mono text-sm"
+              placeholder={'Degrendele;Leandro;1 Aarde\nGeers;Lewis;1 Aarde\nLisa Janssens;2 Vuur'}
+            />
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={handleBulkSave}
+                disabled={bulkSaving}
+                className="btn-primary"
+              >
+                {bulkSaving ? 'Opslaan…' : 'Alles opslaan'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setShowBulk(false)}>
+                Annuleren
+              </button>
+            </div>
+          </div>
+        )}
 
         {showImport && (
           <div className="mb-6 space-y-4">
             <SmartschoolImport
+              defaultDay={selectedDay}
               onImport={handleImportStudents}
             />
             <MassImport
               type="students"
+              defaultDay={selectedDay}
               onImportStudents={handleImportStudents}
             />
           </div>
         )}
-
         {/* Advanced Search */}
         <AdvancedSearch
           onSearch={setSearchFilters}

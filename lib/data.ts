@@ -1,5 +1,6 @@
 import { Student, Detention, DetentionSession, DayOfWeek, CalendarDaySetting } from '@/types';
 import { supabase } from './supabase';
+import { TABLES } from './tables';
 
 // Detectar si Supabase está configurado
 const useSupabase = supabase !== null;
@@ -8,15 +9,34 @@ const useSupabase = supabase !== null;
 export async function getStudents(day?: DayOfWeek): Promise<Student[]> {
   try {
     if (useSupabase && supabase) {
-      let query = supabase.from('students').select('*');
+      let query = supabase.from(TABLES.students).select('*');
       
       if (day) {
         query = query.eq('day', day);
       }
       
-      const { data, error } = await query.order('name');
+      const { data, error } = await query
+        .order('sort_order', { ascending: true })
+        .order('grade', { ascending: true })
+        .order('name', { ascending: true });
       
       if (error) {
+        // Kolom sort_order bestaat mogelijk nog niet — fallback
+        if (/sort_order/i.test(error.message || '')) {
+          let fallback = supabase.from(TABLES.students).select('*');
+          if (day) fallback = fallback.eq('day', day);
+          const second = await fallback.order('grade').order('name');
+          if (second.error) {
+            console.error('Error fetching students:', second.error);
+            return [];
+          }
+          return (second.data || []).map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            grade: s.grade || '',
+            day: s.day as DayOfWeek,
+          }));
+        }
         console.error('Error fetching students:', error);
         return [];
       }
@@ -24,8 +44,9 @@ export async function getStudents(day?: DayOfWeek): Promise<Student[]> {
       return (data || []).map((s: any) => ({
         id: s.id,
         name: s.name,
-        grade: s.grade,
+        grade: s.grade || '',
         day: s.day as DayOfWeek,
+        sortOrder: typeof s.sort_order === 'number' ? s.sort_order : undefined,
       }));
     }
     
@@ -40,18 +61,32 @@ export async function getStudents(day?: DayOfWeek): Promise<Student[]> {
 export async function saveStudent(student: Student): Promise<void> {
   try {
     if (useSupabase && supabase) {
-      const { error } = await supabase
-        .from('students')
-        .upsert({
+      const payload: Record<string, unknown> = {
           id: student.id,
           name: student.name,
           grade: student.grade,
           day: student.day,
-        }, {
+        };
+        if (typeof student.sortOrder === 'number') {
+          payload.sort_order = student.sortOrder;
+        }
+      const { error } = await supabase
+        .from(TABLES.students)
+        .upsert(payload, {
           onConflict: 'id'
         });
       
       if (error) {
+        // Retry zonder sort_order als kolom ontbreekt
+        if (/sort_order/i.test(error.message || '') && 'sort_order' in payload) {
+          delete payload.sort_order;
+          const retry = await supabase.from(TABLES.students).upsert(payload, { onConflict: 'id' });
+          if (retry.error) {
+            console.error('Error saving student:', retry.error);
+            throw retry.error;
+          }
+          return;
+        }
         console.error('Error saving student:', error);
         throw error;
       }
@@ -64,11 +99,76 @@ export async function saveStudent(student: Student): Promise<void> {
   }
 }
 
+export async function saveStudentsBulk(
+  students: Student[]
+): Promise<{ saved: number; failed: number; firstError?: string }> {
+  if (!useSupabase || !supabase) {
+    throw new Error(
+      'Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+    );
+  }
+
+  const toRow = (student: Student, includeSort: boolean) => {
+    const row: Record<string, unknown> = {
+      id: student.id,
+      name: student.name,
+      grade: student.grade,
+      day: student.day,
+    };
+    if (includeSort && typeof student.sortOrder === 'number') {
+      row.sort_order = student.sortOrder;
+    }
+    return row;
+  };
+
+  let includeSort = students.some((s) => typeof s.sortOrder === 'number');
+  const chunkSize = 100;
+  let saved = 0;
+  let failed = 0;
+  let firstError: string | undefined;
+
+  for (let i = 0; i < students.length; i += chunkSize) {
+    const chunk = students.slice(i, i + chunkSize);
+    let { error } = await supabase
+      .from(TABLES.students)
+      .upsert(chunk.map((s) => toRow(s, includeSort)), { onConflict: 'id' });
+
+    if (error && includeSort && /sort_order/i.test(error.message || '')) {
+      includeSort = false;
+      ({ error } = await supabase
+        .from(TABLES.students)
+        .upsert(chunk.map((s) => toRow(s, false)), { onConflict: 'id' }));
+    }
+
+    if (error) {
+      // Fallback: één-voor-één zodat partiële imports lukken
+      for (const student of chunk) {
+        try {
+          await saveStudent(student);
+          saved += 1;
+        } catch (err) {
+          failed += 1;
+          if (!firstError) {
+            firstError =
+              err && typeof err === 'object' && 'message' in err
+                ? String((err as { message: unknown }).message)
+                : 'Opslaan mislukt';
+          }
+        }
+      }
+    } else {
+      saved += chunk.length;
+    }
+  }
+
+  return { saved, failed, firstError };
+}
+
 export async function deleteStudent(id: string): Promise<void> {
   try {
     if (useSupabase && supabase) {
       const { error } = await supabase
-        .from('students')
+        .from(TABLES.students)
         .delete()
         .eq('id', id);
       
@@ -111,7 +211,7 @@ function mapDetentionRow(d: Record<string, unknown>): Detention {
 export async function getDetentions(date?: string): Promise<Detention[]> {
   try {
     if (useSupabase && supabase) {
-      let query = supabase.from('detentions').select('*');
+      let query = supabase.from(TABLES.detentions).select('*');
       
       if (date) {
         query = query.eq('date', date);
@@ -139,7 +239,7 @@ export async function getDetentionsByDateRange(startDate: string, endDate: strin
   try {
     if (useSupabase && supabase) {
       const { data, error } = await supabase
-        .from('detentions')
+        .from(TABLES.detentions)
         .select('*')
         .gte('date', startDate)
         .lte('date', endDate)
@@ -164,7 +264,7 @@ export async function saveDetention(detention: Detention): Promise<void> {
   try {
     if (useSupabase && supabase) {
       const { error } = await supabase
-        .from('detentions')
+        .from(TABLES.detentions)
         .upsert({
           id: detention.id,
           number: detention.number,
@@ -204,7 +304,7 @@ export async function deleteDetention(id: string): Promise<void> {
   try {
     if (useSupabase && supabase) {
       const { error } = await supabase
-        .from('detentions')
+        .from(TABLES.detentions)
         .delete()
         .eq('id', id);
       
@@ -289,7 +389,7 @@ const CALENDAR_SETTINGS_KEY = 'nablijven_calendar_days';
 async function loadCalendarDaysFromAppSettings(): Promise<CalendarDaySetting[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('app_settings')
+    .from(TABLES.appSettings)
     .select('value')
     .eq('key', CALENDAR_SETTINGS_KEY)
     .maybeSingle();
@@ -330,7 +430,7 @@ async function saveCalendarDayToAppSettings(setting: CalendarDaySetting): Promis
   const map: Record<string, CalendarDaySetting> = {};
   for (const row of existing) map[row.date] = row;
   map[setting.date] = setting;
-  const { error } = await supabase.from('app_settings').upsert(
+  const { error } = await supabase.from(TABLES.appSettings).upsert(
     {
       key: CALENDAR_SETTINGS_KEY,
       value: map,
@@ -347,7 +447,7 @@ export async function getCalendarDaySettings(
 ): Promise<CalendarDaySetting[]> {
   try {
     if (useSupabase && supabase) {
-      let query = supabase.from('calendar_day_settings').select('*');
+      let query = supabase.from(TABLES.calendarDaySettings).select('*');
       if (startDate) query = query.gte('date', startDate);
       if (endDate) query = query.lte('date', endDate);
       const { data, error } = await query.order('date');
@@ -393,7 +493,7 @@ export async function saveCalendarDaySetting(setting: CalendarDaySetting): Promi
     );
   }
 
-  const { error } = await supabase.from('calendar_day_settings').upsert(
+  const { error } = await supabase.from(TABLES.calendarDaySettings).upsert(
     {
       date: setting.date,
       blocked: setting.blocked,

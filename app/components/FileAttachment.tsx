@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Upload, X, File, Download, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { STORAGE_BUCKETS, TABLES } from '@/lib/tables';
 
 interface FileAttachmentProps {
   recordId: string;
@@ -31,7 +32,7 @@ export default function FileAttachment({ recordId, recordType, onUploadComplete 
 
     try {
       const { data, error } = await supabase
-        .from('attachments')
+        .from(TABLES.attachments)
         .select('*')
         .eq('record_id', recordId)
         .eq('record_type', recordType)
@@ -57,17 +58,17 @@ export default function FileAttachment({ recordId, recordType, onUploadComplete 
       const filePath = `${recordType}/${recordId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('attachments')
+        .from(STORAGE_BUCKETS.attachments)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('attachments')
+        .from(STORAGE_BUCKETS.attachments)
         .getPublicUrl(filePath);
 
       const { error: insertError } = await supabase
-        .from('attachments')
+        .from(TABLES.attachments)
         .insert({
           id: `attachment-${Date.now()}`,
           record_id: recordId,
@@ -96,13 +97,13 @@ export default function FileAttachment({ recordId, recordType, onUploadComplete 
 
     try {
       const { error: deleteError } = await supabase.storage
-        .from('attachments')
+        .from(STORAGE_BUCKETS.attachments)
         .remove([filePath]);
 
       if (deleteError) throw deleteError;
 
       const { error: dbError } = await supabase
-        .from('attachments')
+        .from(TABLES.attachments)
         .delete()
         .eq('id', attachmentId);
 

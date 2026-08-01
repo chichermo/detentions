@@ -79,7 +79,7 @@ async function migrateStudents() {
     const batch = studentsToInsert.slice(i, i + batchSize);
     
     const { data, error } = await supabase
-      .from('students')
+      .from('nablijven_students')
       .upsert(batch, { onConflict: 'id' });
 
     if (error) {
@@ -137,7 +137,7 @@ async function migrateDetentions() {
     const batch = detentionsToInsert.slice(i, i + batchSize);
     
     const { data, error } = await supabase
-      .from('detentions')
+      .from('nablijven_detentions')
       .upsert(batch, { onConflict: 'id' });
 
     if (error) {
@@ -159,7 +159,7 @@ async function testConnection() {
   try {
     // Intentar hacer una consulta simple
     const { data, error } = await supabase
-      .from('students')
+      .from('nablijven_students')
       .select('count', { count: 'exact', head: true });
     
     if (error) {

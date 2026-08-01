@@ -5,6 +5,8 @@ export interface Student {
   name: string;
   grade: string;
   day: DayOfWeek;
+  /** Volgorde uit Excel / bulk (lager = eerder). Behoudt klas-organisatie. */
+  sortOrder?: number;
 }
 
 export interface Detention {

@@ -64,7 +64,7 @@ async function migrateStudents() {
     const batch = studentsToInsert.slice(i, i + batchSize);
     
     const { data, error } = await supabase
-      .from('students')
+      .from('nablijven_students')
       .upsert(batch, { onConflict: 'id' });
 
     if (error) {
@@ -121,7 +121,7 @@ async function migrateDetentions() {
     const batch = detentionsToInsert.slice(i, i + batchSize);
     
     const { data, error } = await supabase
-      .from('detentions')
+      .from('nablijven_detentions')
       .upsert(batch, { onConflict: 'id' });
 
     if (error) {

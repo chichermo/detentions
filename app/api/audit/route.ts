@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { TABLES } from '@/lib/tables';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('audit_logs')
+      .from(TABLES.auditLogs)
       .select('*')
       .eq('table_name', table)
       .eq('record_id', recordId)

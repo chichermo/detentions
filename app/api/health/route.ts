@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { TABLES } from '@/lib/tables';
 
 /**
  * Endpoint de verificación de salud
@@ -20,7 +21,7 @@ export async function GET() {
 
       // Intentar una consulta simple para verificar conexión
       const { data, error } = await supabase
-        .from('students')
+        .from(TABLES.students)
         .select('count', { count: 'exact', head: true });
 
       if (!error) {
