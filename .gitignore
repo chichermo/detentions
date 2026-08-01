@@ -40,3 +40,7 @@ next-env.d.ts
 
 # vercel
 .vercel
+# Local Vercel env dumps (never commit)
+.env.vercel*
+.env*.local
+
