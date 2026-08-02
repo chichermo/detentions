@@ -114,8 +114,13 @@ export default function StatisticsPage() {
   };
 
   const filteredDetentions = getFilteredDetentions();
-  const geweigerdDetentions = filteredDetentions.filter(d => d.nablijvenGeweigerd);
-  const strafstudieDetentions = filteredDetentions.filter(d => d.isDoublePeriod);
+  const nablijvenGeweigerd = filteredDetentions.filter(
+    (d) => d.nablijvenGeweigerd && !d.isDoublePeriod
+  );
+  const strafstudieGeweigerd = filteredDetentions.filter(
+    (d) => d.nablijvenGeweigerd && !!d.isDoublePeriod
+  );
+  const strafstudieDetentions = filteredDetentions.filter((d) => d.isDoublePeriod);
 
   // Estadísticas calculadas
   const stats = {
@@ -684,12 +689,13 @@ export default function StatisticsPage() {
         </div>
 
         {/* Resumen de Estadísticas */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <KpiCard label="Totaal nablijven" value={stats.total} icon={BarChart3} tone="indigo" />
           <KpiCard label="Leerlingen" value={new Set(filteredDetentions.map((d) => d.student.split(' - ')[0])).size} icon={Users} tone="emerald" />
           <KpiCard label="Met Chromebook" value={stats.withChromebook} icon={CalendarIcon} tone="emerald" />
           <KpiCard label="Te printen" value={stats.toPrint} icon={FileText} tone="purple" />
-          <KpiCard label="Geweigerd" value={geweigerdDetentions.length} icon={XCircle} tone="red" />
+          <KpiCard label="Nablijven geweigerd" value={nablijvenGeweigerd.length} icon={XCircle} tone="red" />
+          <KpiCard label="Strafstudie geweigerd" value={strafstudieGeweigerd.length} icon={XCircle} tone="rose" />
           <KpiCard label="Strafstudies" value={strafstudieDetentions.length} icon={BookOpen} tone="rose" />
         </div>
 
@@ -785,32 +791,76 @@ export default function StatisticsPage() {
           )}
         </div>
 
-        {/* Overzicht Nablijven geweigerd */}
-        <div className="card p-6 mb-8">
-          <h3 className="text-lg font-bold text-slate-100 mb-4">Nablijven geweigerd ({geweigerdDetentions.length})</h3>
-          <div className="overflow-x-auto">
-            {geweigerdDetentions.length === 0 ? (
-              <p className="text-slate-400 py-4">Geen nablijven geweigerd in de geselecteerde periode.</p>
-            ) : (
-              <table className="table-simple">
-                <thead>
-                  <tr>
-                    <th>Datum</th>
-                    <th>Leerling</th>
-                    <th>Reden</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {geweigerdDetentions.map((d) => (
-                    <tr key={d.id}>
-                      <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                      <td>{d.student}</td>
-                      <td>{d.reason || '-'}</td>
+        {/* Overzicht geweigerd: nablijven vs strafstudie */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="card p-6">
+            <h3 className="text-lg font-bold text-slate-100 mb-1">
+              Nablijven geweigerd ({nablijvenGeweigerd.length})
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Gewone nablijven (di/do) die geweigerd werden — opvolging via strafstudie.
+            </p>
+            <div className="overflow-x-auto">
+              {nablijvenGeweigerd.length === 0 ? (
+                <p className="text-slate-400 py-4">Geen nablijven geweigerd in de geselecteerde periode.</p>
+              ) : (
+                <table className="table-simple">
+                  <thead>
+                    <tr>
+                      <th>Datum</th>
+                      <th>Dag</th>
+                      <th>Leerling</th>
+                      <th>Reden</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {nablijvenGeweigerd.map((d) => (
+                      <tr key={d.id}>
+                        <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                        <td>{DAY_LABELS[d.dayOfWeek] ?? d.dayOfWeek}</td>
+                        <td>{d.student}</td>
+                        <td>{d.reason || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <h3 className="text-lg font-bold text-slate-100 mb-1">
+              Strafstudie geweigerd ({strafstudieGeweigerd.length})
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Strafstudie op maandag die opnieuw geweigerd werd.
+            </p>
+            <div className="overflow-x-auto">
+              {strafstudieGeweigerd.length === 0 ? (
+                <p className="text-slate-400 py-4">Geen strafstudie geweigerd in de geselecteerde periode.</p>
+              ) : (
+                <table className="table-simple">
+                  <thead>
+                    <tr>
+                      <th>Datum</th>
+                      <th>Leerling</th>
+                      <th>Periode</th>
+                      <th>Reden</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {strafstudieGeweigerd.map((d) => (
+                      <tr key={d.id}>
+                        <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
+                        <td>{d.student}</td>
+                        <td>{d.timePeriod || '16:00-17:40'}</td>
+                        <td>{d.reason || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
 
@@ -827,6 +877,7 @@ export default function StatisticsPage() {
                     <th>Datum</th>
                     <th>Leerling</th>
                     <th>Periode</th>
+                    <th className="text-center">Geweigerd</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -835,6 +886,13 @@ export default function StatisticsPage() {
                       <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
                       <td>{d.student}</td>
                       <td>{d.timePeriod || '16:00-17:40'}</td>
+                      <td className="text-center">
+                        {d.nablijvenGeweigerd ? (
+                          <span className="badge-danger">Ja</span>
+                        ) : (
+                          <span className="text-slate-500">Nee</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
