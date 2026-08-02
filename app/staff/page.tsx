@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, ArrowLeft, UserCog, Upload, X } from 'lucide-react';
+import { Plus, Trash2, Edit, Check, ArrowLeft, UserCog, Upload, X } from 'lucide-react';
 import { StaffMember } from '@/types';
 import { apiFetch } from '@/lib/apiClient';
 import MassImport from '@/app/components/MassImport';
@@ -20,6 +20,8 @@ export default function StaffPage() {
   const [bulkPreview, setBulkPreview] = useState<StaffMember[] | null>(null);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [editName, setEditName] = useState('');
 
   const fetchStaff = async () => {
     try {
@@ -78,9 +80,54 @@ export default function StaffPage() {
     if (!confirm(`"${memberName}" verwijderen uit personeel?`)) return;
     try {
       await apiFetch(`/api/staff?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (editingStaff?.id === id) {
+        setEditingStaff(null);
+        setEditName('');
+      }
       await fetchStaff();
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Verwijderen mislukt');
+    }
+  };
+
+  const handleEdit = (member: StaffMember) => {
+    setShowForm(false);
+    setEditingStaff(member);
+    setEditName(member.name);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStaff(null);
+    setEditName('');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingStaff) return;
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      alert('Vul een naam in.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await apiFetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingStaff.id,
+          name: trimmed,
+          sortOrder: editingStaff.sortOrder,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.details || data.error || 'Opslaan mislukt');
+      setEditingStaff(null);
+      setEditName('');
+      await fetchStaff();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Opslaan mislukt');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -180,7 +227,14 @@ export default function StaffPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setShowForm(true)} className="btn-primary inline-flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                handleCancelEdit();
+                setShowForm(true);
+              }}
+              className="btn-primary inline-flex items-center gap-2"
+            >
               <Plus className="h-4 w-4" /> Lid toevoegen
             </button>
             <button type="button" onClick={() => setShowBulk(true)} className="btn-secondary inline-flex items-center gap-2">
@@ -313,19 +367,80 @@ export default function StaffPage() {
                 </thead>
                 <tbody>
                   {filtered.map((m, i) => (
-                    <tr key={m.id}>
+                    <tr
+                      key={m.id}
+                      className={
+                        editingStaff?.id === m.id
+                          ? 'bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/30'
+                          : undefined
+                      }
+                    >
                       <td className="text-slate-500">{i + 1}</td>
-                      <td className="font-medium">{m.name}</td>
-                      <td className="text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(m.id, m.name)}
-                          className="btn-ghost p-2 text-red-300 hover:text-red-200"
-                          title="Verwijderen"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
+                      {editingStaff?.id === m.id ? (
+                        <>
+                          <td>
+                            <input
+                              type="text"
+                              className="input-field-table w-full"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit();
+                                if (e.key === 'Escape') handleCancelEdit();
+                              }}
+                              placeholder="Naam"
+                              autoFocus
+                              disabled={saving}
+                            />
+                          </td>
+                          <td className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={handleSaveEdit}
+                                disabled={saving}
+                                className="text-emerald-400 hover:text-emerald-300 p-2 hover:bg-emerald-500/20 rounded-lg transition-all disabled:opacity-50"
+                                title="Opslaan"
+                              >
+                                <Check className="h-5 w-5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                disabled={saving}
+                                className="text-slate-400 hover:text-slate-300 p-2 hover:bg-slate-500/20 rounded-lg transition-all disabled:opacity-50"
+                                title="Annuleren"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="font-medium">{m.name}</td>
+                          <td className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(m)}
+                                className="text-indigo-400 hover:text-indigo-300 p-2 hover:bg-indigo-500/20 rounded-lg transition-all"
+                                title="Bewerken"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(m.id, m.name)}
+                                className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all"
+                                title="Verwijderen"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
