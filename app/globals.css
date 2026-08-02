@@ -245,6 +245,24 @@ body {
     box-shadow: 0 0 0 3px var(--accent-muted);
   }
 
+  /* Zoekveld met icoon links — overschrijft px van .input-field */
+  .input-field-with-icon {
+    padding-left: 2.75rem;
+  }
+
+  .input-field-with-icon-right {
+    padding-right: 2.5rem;
+  }
+
+  input[type='search']::-webkit-search-decoration,
+  input[type='search']::-webkit-search-cancel-button,
+  input[type='search']::-webkit-search-results-button,
+  input[type='search']::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+
   /* Selects — altura fija, flecha custom, sin desalineación */
   select.input-field,
   select.input-field-table,

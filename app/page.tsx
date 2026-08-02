@@ -191,13 +191,14 @@ export default function Home() {
               </p>
             </div>
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted pointer-events-none" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none z-10" />
               <input
-                type="search"
+                type="text"
                 placeholder="Leerling, reden of personeel…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-12"
+                className="input-field input-field-with-icon"
+                autoComplete="off"
               />
             </div>
           </div>

@@ -51,13 +51,14 @@ export default function AdvancedSearch({ onSearch, placeholder = "Zoeken..." }: 
 
       <div className="flex gap-2 mb-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
           <input
             type="text"
             value={filters.text}
             onChange={(e) => handleFilterChange('text', e.target.value)}
             placeholder={placeholder}
-            className="input-field pl-12"
+            className={`input-field input-field-with-icon${filters.text ? ' input-field-with-icon-right' : ''}`}
+            autoComplete="off"
           />
           {filters.text && (
             <button

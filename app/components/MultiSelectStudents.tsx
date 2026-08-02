@@ -100,13 +100,13 @@ export default function MultiSelectStudents({
           <div className="dropdown-menu left-0 right-0 w-full max-h-80 overflow-hidden p-0 mt-2">
             <div className="p-3 border-b border-[var(--border-subtle)]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none z-10" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Zoek leerlingen..."
-                  className="input-field pl-12"
+                  className="input-field input-field-with-icon"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
