@@ -24,6 +24,17 @@ export async function POST(request: NextRequest) {
         }))
         .filter((m) => m.name);
       const result = await saveStaffBulk(normalized);
+      if (result.failed && !result.saved) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Personeel opslaan mislukt',
+            details: result.firstError || 'Geen personeelsleden opgeslagen',
+            ...result,
+          },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ success: true, ...result });
     }
 

@@ -120,6 +120,9 @@ export default function StaffPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.details || data.error || 'Bulk opslaan mislukt');
+      if (data.failed && !data.saved) {
+        throw new Error(data.firstError || data.details || 'Geen personeelsleden opgeslagen');
+      }
       setBulkText('');
       setBulkPreview(null);
       setShowBulk(false);
@@ -150,6 +153,9 @@ export default function StaffPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.details || data.error || 'Import mislukt');
+    if (data.failed && !data.saved) {
+      throw new Error(data.firstError || data.details || 'Geen personeelsleden opgeslagen');
+    }
     await fetchStaff();
     setShowImport(false);
     alert(`${data.saved ?? toSave.length} personeelsleden geïmporteerd`);

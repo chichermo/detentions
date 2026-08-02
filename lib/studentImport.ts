@@ -4,7 +4,9 @@ import type { DayOfWeek } from '@/types';
 export function cellExact(row: Record<string, unknown>, keys: string[]): string {
   const headers = Object.keys(row);
   for (const key of keys) {
-    const hit = headers.find((k) => k.trim().toLowerCase() === key.toLowerCase());
+    const hit = headers.find(
+      (k) => k.replace(/^\uFEFF/, '').trim().toLowerCase() === key.toLowerCase()
+    );
     if (hit != null && row[hit] != null && String(row[hit]).trim() !== '') {
       return String(row[hit]).trim();
     }

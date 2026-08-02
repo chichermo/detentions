@@ -146,10 +146,10 @@ export default function MassImport({
     setError(null);
     setSuccess(null);
     try {
-      if (onImportStaff) {
-        await onImportStaff(pendingStaff);
-        setSuccess(`${pendingStaff.length} personeelsleden klaar voor opslaan`);
-        setPendingStaff(null);
+        if (onImportStaff) {
+          await onImportStaff(pendingStaff);
+          setSuccess(`${pendingStaff.length} personeelsleden geïmporteerd`);
+          setPendingStaff(null);
       } else {
         const res = await fetch('/api/staff', {
           method: 'POST',
@@ -158,6 +158,11 @@ export default function MassImport({
         });
         const result = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(result.details || result.error || 'Import mislukt');
+        if (result.failed && !result.saved) {
+          throw new Error(
+            result.firstError || result.details || 'Geen personeelsleden opgeslagen'
+          );
+        }
         setSuccess(`${result.saved ?? pendingStaff.length} personeelsleden geïmporteerd`);
         setPendingStaff(null);
       }
