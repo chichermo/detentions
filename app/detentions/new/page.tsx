@@ -299,14 +299,14 @@ export default function NewDetentionPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Leerkracht
+                    Personeel
                   </label>
                   <input
                     type="text"
                     value={detention.teacher || ''}
                     onChange={(e) => updateDetention(index, 'teacher', e.target.value)}
                     className="input-field"
-                    placeholder="Naam van leerkracht"
+                    placeholder="Naam van personeelslid"
                   />
                 </div>
 

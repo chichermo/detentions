@@ -92,12 +92,12 @@ export default function AdvancedSearch({ onSearch, placeholder = "Zoeken..." }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Leerkracht</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Personeel</label>
             <input
               type="text"
               value={filters.teacher || ''}
               onChange={(e) => handleFilterChange('teacher', e.target.value)}
-              placeholder="Naam leerkracht"
+              placeholder="Naam personeelslid"
               className="input-field"
             />
           </div>

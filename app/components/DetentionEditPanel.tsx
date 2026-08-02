@@ -75,13 +75,13 @@ export default function DetentionEditPanel({
         </div>
 
         <div className="detention-edit-card__field">
-          <FieldLabel>Leerkracht</FieldLabel>
+          <FieldLabel>Personeel</FieldLabel>
           <input
             type="text"
             value={detention.teacher || ''}
             onChange={(e) => onChange('teacher', e.target.value)}
             className="input-field w-full"
-            placeholder="Naam leerkracht"
+            placeholder="Naam personeelslid"
           />
         </div>
 

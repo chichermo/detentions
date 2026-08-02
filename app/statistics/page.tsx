@@ -339,7 +339,7 @@ export default function StatisticsPage() {
       checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('4. Top 10 Leerkrachten met Meeste Nablijven', margin, yPos);
+      doc.text('4. Top 10 Personeel met Meeste Nablijven', margin, yPos);
       yPos += 12;
       
       const teachersTableData = topTeachers.map((t, idx) => [
@@ -350,7 +350,7 @@ export default function StatisticsPage() {
       
       await autoTable(doc, {
         startY: yPos,
-        head: [['#', 'Leerkracht', 'Aantal']],
+        head: [['#', 'Personeel', 'Aantal']],
         body: teachersTableData,
         styles: { fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -417,7 +417,7 @@ export default function StatisticsPage() {
       
       await autoTable(doc, {
         startY: yPos,
-        head: [['#', 'Datum', 'Dag', 'Leerling', 'Leerkracht', 'Reden', 'Print', 'Chromebook']],
+        head: [['#', 'Datum', 'Dag', 'Leerling', 'Personeel', 'Reden', 'Print', 'Chromebook']],
         body: detailedTableData,
         styles: { fontSize: 7, cellPadding: 1.5 },
         headStyles: { fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -477,8 +477,8 @@ export default function StatisticsPage() {
       ['Leerling', 'Aantal'],
       ...topStudents.map(s => [s.name, s.count]),
       [''],
-      ['Top 10 Leerkrachten'],
-      ['Leerkracht', 'Aantal'],
+      ['Top 10 Personeel'],
+      ['Personeel', 'Aantal'],
       ...topTeachers.map(t => [t.name, t.count]),
     ];
     
@@ -487,7 +487,7 @@ export default function StatisticsPage() {
     
     // Hoja 2: Nablijven
     const detentionsData = [
-      ['#', 'Datum', 'Dag', 'Leerling', 'Leerkracht', 'Reden', 'Opdracht', 'LVS Datum', 'Print', 'Chromebook', 'Opmerkingen'],
+      ['#', 'Datum', 'Dag', 'Leerling', 'Personeel', 'Reden', 'Opdracht', 'LVS Datum', 'Print', 'Chromebook', 'Opmerkingen'],
       ...filteredDetentions.map(d => [
         d.number,
         d.date,
@@ -734,15 +734,15 @@ export default function StatisticsPage() {
 
         {/* Tablas de Datos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Tabla Top Leerkrachten */}
+          {/* Tabla Top Personeel */}
           {topTeachers.length > 0 && (
             <div className="card p-6">
-              <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Leerkrachten</h3>
+              <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Personeel</h3>
               <div className="overflow-x-auto">
                 <table className="table-simple">
                   <thead>
                     <tr>
-                      <th>Leerkracht</th>
+                      <th>Personeel</th>
                       <th className="text-right">Aantal</th>
                     </tr>
                   </thead>
@@ -853,7 +853,7 @@ export default function StatisticsPage() {
                   <th>#</th>
                   <th>Datum</th>
                   <th>Leerling</th>
-                  <th>Leerkracht</th>
+                  <th>Personeel</th>
                   <th>Reden</th>
                   <th className="text-center">Print</th>
                   <th className="text-center">Chromebook</th>

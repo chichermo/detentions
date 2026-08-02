@@ -127,7 +127,7 @@ export default function DetentionSessionList({
 
                   <dl className="detention-card__meta">
                     <div>
-                      <dt>Leerkracht</dt>
+                      <dt>Personeel</dt>
                       <dd>{detention.teacher || '—'}</dd>
                     </div>
                     <div>

@@ -83,7 +83,7 @@ export default function MassImport({
             date: cellExact(row, ['Datum', 'Date']),
             dayOfWeek: parseDayOfWeek(cellExact(row, ['Dag', 'Day']), defaultDay),
             student: buildStudentName(row) || cellExact(row, ['Leerling', 'Student', 'Naam']),
-            teacher: cellExact(row, ['Leerkracht', 'Teacher']),
+            teacher: cellExact(row, ['Personeel', 'Leerkracht', 'Teacher']),
             reason: cellExact(row, ['Reden', 'Reason']),
             task: cellExact(row, ['Opdracht', 'Task']),
             lvsDate: cellExact(row, ['LVS Datum', 'LVS Date', 'lvs_date']),

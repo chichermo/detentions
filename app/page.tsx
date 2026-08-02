@@ -194,7 +194,7 @@ export default function Home() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted pointer-events-none" />
               <input
                 type="search"
-                placeholder="Leerling, reden of leerkracht…"
+                placeholder="Leerling, reden of personeel…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input-field pl-12"

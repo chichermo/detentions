@@ -495,14 +495,14 @@ function DetentionForm({
 
       <div>
         <label className="form-label">
-          Leerkracht
+          Personeel
         </label>
         <input
           type="text"
           value={detention.teacher || ''}
           onChange={(e) => onChange('teacher', e.target.value)}
           className="input-field"
-          placeholder="Naam van leerkracht"
+          placeholder="Naam van personeelslid"
         />
       </div>
 
