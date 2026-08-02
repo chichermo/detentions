@@ -7,7 +7,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const staff = await getStaff();
-  return NextResponse.json(staff, {
+  // Normalize accents on read so legacy "Jos é" displays as "José"
+  const normalized = staff.map((m) => ({
+    ...m,
+    name: fixSemicolonName(String(m.name || '')),
+  }));
+  return NextResponse.json(normalized, {
     headers: { 'Cache-Control': 'no-store, must-revalidate' },
   });
 }

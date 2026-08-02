@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
   const day = searchParams.get('day') as DayOfWeek | null;
   
   const students = await getStudents(day || undefined);
-  return NextResponse.json(students, {
+  // Normalize accents on read so legacy "Jos é" displays as "José"
+  const normalized = students.map((s) => ({
+    ...s,
+    name: fixSemicolonName(String(s.name || '')),
+    grade: normalizeGrade(s.grade || ''),
+  }));
+  return NextResponse.json(normalized, {
     headers: { 'Cache-Control': 'no-store, must-revalidate' },
   });
 }
