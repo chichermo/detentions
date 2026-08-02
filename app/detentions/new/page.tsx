@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X, Calendar as CalendarIcon } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
+import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
@@ -31,6 +32,7 @@ const getDayOfWeekFromDate = (dateStr: string): DayOfWeek => {
 export default function NewDetentionPage() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
+  const [staffNames, setStaffNames] = useState<string[]>([]);
   const [date, setDate] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -47,6 +49,7 @@ export default function NewDetentionPage() {
     if (selectedDay) {
       fetchStudents();
     }
+    fetchStaffNames().then(setStaffNames);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDay]);
 
@@ -301,12 +304,11 @@ export default function NewDetentionPage() {
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Personeel
                   </label>
-                  <input
-                    type="text"
+                  <StaffNameInput
                     value={detention.teacher || ''}
-                    onChange={(e) => updateDetention(index, 'teacher', e.target.value)}
-                    className="input-field"
-                    placeholder="Naam van personeelslid"
+                    onChange={(v) => updateDetention(index, 'teacher', v)}
+                    staffNames={staffNames}
+                    id={`new-staff-${index}`}
                   />
                 </div>
 

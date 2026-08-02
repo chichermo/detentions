@@ -98,7 +98,8 @@ export default function DashboardPage() {
     uniqueStudents: new Set(filteredDetentions.map(d => d.student.split(' - ')[0])).size,
     withChromebook: filteredDetentions.filter(d => d.canUseChromebook).length,
     toPrint: filteredDetentions.filter(d => d.shouldPrint).length,
-    geweigerd: filteredDetentions.filter(d => d.nablijvenGeweigerd).length,
+    nablijvenGeweigerd: filteredDetentions.filter((d) => d.nablijvenGeweigerd && !d.isDoublePeriod).length,
+    strafstudieGeweigerd: filteredDetentions.filter((d) => d.nablijvenGeweigerd && !!d.isDoublePeriod).length,
     strafstudie: filteredDetentions.filter(d => d.isDoublePeriod).length,
     averagePerDay: period === 'week' ? (filteredDetentions.length / 7).toFixed(1) : 
                    period === 'month' ? (filteredDetentions.length / 30).toFixed(1) : 
@@ -199,13 +200,14 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <KpiCard label="Nablijven" value={kpis.total} hint={periodHint} icon={FileText} tone="indigo" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <KpiCard label="Totaal nablijven" value={kpis.total} hint={periodHint} icon={FileText} tone="indigo" />
+          <KpiCard label="Totaal strafstudies" value={kpis.strafstudie} hint={periodHint} icon={BookOpen} tone="rose" />
           <KpiCard label="Leerlingen" value={kpis.uniqueStudents} hint={periodHint} icon={Users} tone="emerald" />
           <KpiCard label="Gemiddeld per dag" value={kpis.averagePerDay} hint={periodHint} icon={Clock} tone="amber" />
           <KpiCard label="Nieuwe deze week" value={kpis.thisWeek} icon={TrendingUp} tone="purple" />
-          <KpiCard label="Geweigerd" value={kpis.geweigerd} hint={periodHint} icon={XCircle} tone="red" />
-          <KpiCard label="Strafstudies" value={kpis.strafstudie} hint={periodHint} icon={BookOpen} tone="rose" />
+          <KpiCard label="Nablijven geweigerd" value={kpis.nablijvenGeweigerd} hint={periodHint} icon={XCircle} tone="red" />
+          <KpiCard label="Strafstudie geweigerd" value={kpis.strafstudieGeweigerd} hint={periodHint} icon={XCircle} tone="rose" />
         </div>
 
         {/* Gráficos */}

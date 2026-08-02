@@ -33,6 +33,14 @@ CREATE TABLE IF NOT EXISTS public.nablijven_students (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.nablijven_staff (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  sort_order INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.nablijven_detentions (
   id TEXT PRIMARY KEY,
   number INTEGER NOT NULL,

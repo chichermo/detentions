@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   Calendar,
   Users,
+  UserCog,
   Search,
   Clock,
   ArrowRight,
@@ -31,6 +32,15 @@ const NAV_ITEMS = [
     icon: Users,
     cardClass: 'nav-card-copper',
     iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
+    linkClass: 'text-[#f0c078]',
+  },
+  {
+    href: '/staff',
+    title: 'Personeel',
+    desc: 'Lijst beheren en importeren',
+    icon: UserCog,
+    cardClass: 'nav-card-copper',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#f0c078] to-[#e8953a] text-[#1a1208]',
     linkClass: 'text-[#f0c078]',
   },
   {

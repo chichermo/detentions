@@ -9,6 +9,7 @@ import { Detention, Student } from '@/types';
 interface DetentionSessionListProps {
   detentions: Detention[];
   students: Student[];
+  staffNames?: string[];
   isMonday: boolean;
   editingId: string | null;
   editingDetention: Partial<Detention> | null;
@@ -33,6 +34,7 @@ function Flag({ on, label }: { on: boolean; label: string }) {
 export default function DetentionSessionList({
   detentions,
   students,
+  staffNames = [],
   isMonday,
   editingId,
   editingDetention,
@@ -67,6 +69,7 @@ export default function DetentionSessionList({
                 <DetentionEditPanel
                   detention={editingDetention}
                   students={students}
+                  staffNames={staffNames}
                   onChange={onChange}
                   isMonday={isMonday}
                   number={detention.number}

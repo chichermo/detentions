@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { Save, X } from 'lucide-react';
 import { Detention, Student } from '@/types';
+import StaffNameInput from '@/app/components/StaffNameInput';
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <span className="detention-field-label">{children}</span>;
@@ -11,6 +12,7 @@ function FieldLabel({ children }: { children: ReactNode }) {
 interface DetentionEditPanelProps {
   detention: Partial<Detention>;
   students: Student[];
+  staffNames?: string[];
   onChange: (field: keyof Detention, value: unknown) => void;
   isMonday?: boolean;
   number?: number;
@@ -21,6 +23,7 @@ interface DetentionEditPanelProps {
 export default function DetentionEditPanel({
   detention,
   students,
+  staffNames = [],
   onChange,
   isMonday,
   number,
@@ -76,12 +79,12 @@ export default function DetentionEditPanel({
 
         <div className="detention-edit-card__field">
           <FieldLabel>Personeel</FieldLabel>
-          <input
-            type="text"
+          <StaffNameInput
             value={detention.teacher || ''}
-            onChange={(e) => onChange('teacher', e.target.value)}
+            onChange={(v) => onChange('teacher', v)}
+            staffNames={staffNames}
             className="input-field w-full"
-            placeholder="Naam personeelslid"
+            id="edit-staff"
           />
         </div>
 

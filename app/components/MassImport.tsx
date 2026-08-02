@@ -3,18 +3,20 @@
 import { useState } from 'react';
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { Student, Detention, DayOfWeek } from '@/types';
+import { Student, Detention, DayOfWeek, StaffMember } from '@/types';
 import {
   buildStudentGrade,
   buildStudentName,
   cellExact,
   parseDayOfWeek,
 } from '@/lib/studentImport';
+import { buildStaffName } from '@/lib/staffImport';
 
 interface MassImportProps {
   onImportStudents?: (students: Student[]) => void;
   onImportDetentions?: (detentions: Detention[]) => void;
-  type: 'students' | 'detentions';
+  onImportStaff?: (staff: StaffMember[]) => void;
+  type: 'students' | 'detentions' | 'staff';
   /** Dag als Excel geen Dag-kolom heeft */
   defaultDay?: DayOfWeek;
 }
@@ -22,6 +24,7 @@ interface MassImportProps {
 export default function MassImport({
   onImportStudents,
   onImportDetentions,
+  onImportStaff,
   type,
   defaultDay = 'MAANDAG',
 }: MassImportProps) {
@@ -31,6 +34,7 @@ export default function MassImport({
   const [success, setSuccess] = useState<string | null>(null);
   const [pendingStudents, setPendingStudents] = useState<Student[] | null>(null);
   const [pendingDetentions, setPendingDetentions] = useState<Partial<Detention>[] | null>(null);
+  const [pendingStaff, setPendingStaff] = useState<StaffMember[] | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,6 +45,7 @@ export default function MassImport({
     setSuccess(null);
     setPendingStudents(null);
     setPendingDetentions(null);
+    setPendingStaff(null);
 
     try {
       const data = await file.arrayBuffer();
@@ -51,7 +56,29 @@ export default function MassImport({
         raw: false,
       });
 
-      if (type === 'students') {
+      if (type === 'staff') {
+        const stamp = Date.now();
+        const seen = new Set<string>();
+        const staff: StaffMember[] = [];
+        jsonData.forEach((row, index) => {
+          const name = buildStaffName(row);
+          if (!name) return;
+          const key = name.toLowerCase();
+          if (seen.has(key)) return;
+          seen.add(key);
+          staff.push({
+            id: `staff-${stamp}-${index}`,
+            name,
+            sortOrder: staff.length,
+          });
+        });
+        if (!staff.length) {
+          throw new Error(
+            'Geen geldige namen gevonden. Verwacht kolom Personeel/Naam of Voornaam+Achternaam.'
+          );
+        }
+        setPendingStaff(staff);
+      } else if (type === 'students') {
         const stamp = Date.now();
         const students: Student[] = jsonData
           .map((row, index) => {
@@ -109,7 +136,36 @@ export default function MassImport({
   const clearPending = () => {
     setPendingStudents(null);
     setPendingDetentions(null);
+    setPendingStaff(null);
     setError(null);
+  };
+
+  const confirmStaff = async () => {
+    if (!pendingStaff?.length) return;
+    setIsSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      if (onImportStaff) {
+        await onImportStaff(pendingStaff);
+        setSuccess(`${pendingStaff.length} personeelsleden klaar voor opslaan`);
+        setPendingStaff(null);
+      } else {
+        const res = await fetch('/api/staff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ staff: pendingStaff }),
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.details || result.error || 'Import mislukt');
+        setSuccess(`${result.saved ?? pendingStaff.length} personeelsleden geïmporteerd`);
+        setPendingStaff(null);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Import mislukt');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const confirmStudents = async () => {
@@ -170,6 +226,10 @@ export default function MassImport({
 
   const previewStudents = pendingStudents || [];
   const previewDetentions = pendingDetentions || [];
+  const previewStaff = pendingStaff || [];
+
+  const typeLabel =
+    type === 'students' ? 'leerlingen' : type === 'staff' ? 'personeel' : 'nablijven';
 
   return (
     <div className="card p-6">
@@ -179,7 +239,7 @@ export default function MassImport({
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-100">
-            Excel import {type === 'students' ? 'leerlingen' : 'nablijven'}
+            Excel import {typeLabel}
           </h3>
           <p className="text-sm text-slate-400">
             Eerst preview, daarna bevestigen — volgorde blijft behouden
@@ -254,6 +314,37 @@ export default function MassImport({
         </div>
       )}
 
+      {previewStaff.length > 0 && type === 'staff' && (
+        <div className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-slate-300">
+              Preview — {previewStaff.length} personeelsleden
+            </h4>
+            <div className="flex gap-2">
+              <button type="button" className="btn-secondary text-sm" onClick={clearPending}>
+                Annuleren
+              </button>
+              <button
+                type="button"
+                className="btn-primary text-sm"
+                disabled={isSaving}
+                onClick={confirmStaff}
+              >
+                {isSaving ? 'Opslaan…' : `Bevestigen (${previewStaff.length})`}
+              </button>
+            </div>
+          </div>
+          <div className="bg-slate-700/50 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
+            {previewStaff.map((s, idx) => (
+              <div key={s.id || idx} className="text-xs text-slate-300 flex gap-3">
+                <span className="text-slate-500 w-6">{idx + 1}.</span>
+                <span className="flex-1">{s.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {previewDetentions.length > 0 && type === 'detentions' && (
         <div className="mt-4">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -291,7 +382,9 @@ export default function MassImport({
           <strong>Formaat:</strong> .xlsx / .xls / .csv — rijen in de volgorde van het bestand.
           {type === 'students'
             ? ' Kolommen: Voornaam+Naam/Achternaam (of volledige Naam), Klas, optioneel Dag.'
-            : ' Kolommen: Datum, Leerling, …'}
+            : type === 'staff'
+              ? ' Kolommen: Personeel/Naam of Voornaam+Achternaam.'
+              : ' Kolommen: Datum, Leerling, …'}
         </p>
       </div>
     </div>

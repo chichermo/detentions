@@ -9,6 +9,13 @@ export interface Student {
   sortOrder?: number;
 }
 
+/** Personeelslid voor nablijven (docent / begeleider / …) */
+export interface StaffMember {
+  id: string;
+  name: string;
+  sortOrder?: number;
+}
+
 export interface Detention {
   id: string;
   number: number;

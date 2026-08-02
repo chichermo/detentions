@@ -8,6 +8,7 @@ import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import DetentionSessionList from '@/app/components/DetentionSessionList';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
+import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { format, parseISO, getDay } from 'date-fns';
@@ -36,6 +37,7 @@ export default function DetentionSessionPage() {
   const date = params.date as string;
   const [detentions, setDetentions] = useState<Detention[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [staffNames, setStaffNames] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingDetention, setEditingDetention] = useState<Partial<Detention> | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -88,6 +90,10 @@ export default function DetentionSessionPage() {
       fetchStudents(getDayOfWeekFromDate(date));
     }
   }, [date, detentions, fetchStudents]);
+
+  useEffect(() => {
+    fetchStaffNames().then(setStaffNames);
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit nablijven wilt verwijderen?')) return;
@@ -377,6 +383,7 @@ export default function DetentionSessionPage() {
                   <DetentionForm
                     detention={newDetention}
                     students={availableStudents}
+                    staffNames={staffNames}
                     onChange={(field, value) => setNewDetention({ ...newDetention, [field]: value })}
                   />
                 </>
@@ -413,6 +420,7 @@ export default function DetentionSessionPage() {
             <DetentionSessionList
               detentions={detentions}
               students={students}
+              staffNames={staffNames}
               isMonday={isMonday}
               editingId={editingId}
               editingDetention={editingDetention}
@@ -464,10 +472,12 @@ export default function DetentionSessionPage() {
 function DetentionForm({
   detention,
   students,
+  staffNames = [],
   onChange,
 }: {
   detention: Partial<Detention>;
   students: Student[];
+  staffNames?: string[];
   onChange: (field: keyof Detention, value: any) => void;
 }) {
   const isMonday = detention.dayOfWeek === 'MAANDAG';
@@ -497,12 +507,11 @@ function DetentionForm({
         <label className="form-label">
           Personeel
         </label>
-        <input
-          type="text"
+        <StaffNameInput
           value={detention.teacher || ''}
-          onChange={(e) => onChange('teacher', e.target.value)}
-          className="input-field"
-          placeholder="Naam van personeelslid"
+          onChange={(v) => onChange('teacher', v)}
+          staffNames={staffNames}
+          id="session-staff"
         />
       </div>
 

@@ -4,6 +4,7 @@
  */
 export const TABLES = {
   students: 'nablijven_students',
+  staff: 'nablijven_staff',
   detentions: 'nablijven_detentions',
   calendarDaySettings: 'nablijven_calendar_day_settings',
   attachments: 'nablijven_attachments',

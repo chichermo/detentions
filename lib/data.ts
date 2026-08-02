@@ -1,4 +1,4 @@
-import { Student, Detention, DetentionSession, DayOfWeek, CalendarDaySetting } from '@/types';
+import { Student, StaffMember, Detention, DetentionSession, DayOfWeek, CalendarDaySetting } from '@/types';
 import { supabase } from './supabase';
 import { TABLES } from './tables';
 
@@ -183,6 +183,119 @@ export async function deleteStudent(id: string): Promise<void> {
     console.error('Error in deleteStudent:', error);
     throw error;
   }
+}
+
+export async function getStaff(): Promise<StaffMember[]> {
+  try {
+    if (useSupabase && supabase) {
+      const { data, error } = await supabase
+        .from(TABLES.staff)
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        if (/sort_order/i.test(error.message || '')) {
+          const second = await supabase.from(TABLES.staff).select('*').order('name');
+          if (second.error) {
+            console.error('Error fetching staff:', second.error);
+            return [];
+          }
+          return (second.data || []).map((s: { id: string; name: string }) => ({
+            id: s.id,
+            name: s.name,
+          }));
+        }
+        console.error('Error fetching staff:', error);
+        return [];
+      }
+
+      return (data || []).map((s: { id: string; name: string; sort_order?: number }) => ({
+        id: s.id,
+        name: s.name,
+        sortOrder: typeof s.sort_order === 'number' ? s.sort_order : undefined,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error in getStaff:', error);
+    return [];
+  }
+}
+
+export async function saveStaffMember(member: StaffMember): Promise<void> {
+  if (!useSupabase || !supabase) {
+    throw new Error('Supabase not configured.');
+  }
+  const payload: Record<string, unknown> = {
+    id: member.id,
+    name: member.name.trim(),
+  };
+  if (typeof member.sortOrder === 'number') {
+    payload.sort_order = member.sortOrder;
+  }
+  const { error } = await supabase.from(TABLES.staff).upsert(payload, { onConflict: 'id' });
+  if (error) {
+    if (/sort_order/i.test(error.message || '') && 'sort_order' in payload) {
+      delete payload.sort_order;
+      const retry = await supabase.from(TABLES.staff).upsert(payload, { onConflict: 'id' });
+      if (retry.error) throw retry.error;
+      return;
+    }
+    throw error;
+  }
+}
+
+export async function saveStaffBulk(
+  members: StaffMember[]
+): Promise<{ saved: number; failed: number; firstError?: string }> {
+  if (!useSupabase || !supabase) {
+    throw new Error('Supabase not configured.');
+  }
+  let saved = 0;
+  let failed = 0;
+  let firstError: string | undefined;
+  const chunkSize = 80;
+
+  for (let i = 0; i < members.length; i += chunkSize) {
+    const chunk = members.slice(i, i + chunkSize).map((m) => {
+      const row: Record<string, unknown> = { id: m.id, name: m.name.trim() };
+      if (typeof m.sortOrder === 'number') row.sort_order = m.sortOrder;
+      return row;
+    });
+    const { error } = await supabase.from(TABLES.staff).upsert(chunk, { onConflict: 'id' });
+      if (error) {
+        // Retry zonder sort_order
+        if (/sort_order/i.test(error.message || '')) {
+          const withoutSort = chunk.map((row) => {
+            const { sort_order: _ignored, ...rest } = row as Record<string, unknown>;
+            return rest;
+          });
+          const retry = await supabase.from(TABLES.staff).upsert(withoutSort, { onConflict: 'id' });
+          if (retry.error) {
+            failed += chunk.length;
+            if (!firstError) firstError = retry.error.message;
+            continue;
+          }
+          saved += chunk.length;
+          continue;
+        }
+        failed += chunk.length;
+        if (!firstError) firstError = error.message;
+        continue;
+      }
+    saved += chunk.length;
+  }
+
+  return { saved, failed, firstError };
+}
+
+export async function deleteStaffMember(id: string): Promise<void> {
+  if (!useSupabase || !supabase) {
+    throw new Error('Supabase not configured.');
+  }
+  const { error } = await supabase.from(TABLES.staff).delete().eq('id', id);
+  if (error) throw error;
 }
 
 function mapDetentionRow(d: Record<string, unknown>): Detention {
