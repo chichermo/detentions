@@ -47,7 +47,6 @@ function ReportTable({
                       <span key={d.id} className="block">
                         {format(parseISO(d.date), 'd MMM yyyy', { locale: nl })}
                         {d.nablijvenGeweigerd && ' · geweigerd'}
-                        {d.didNotAttend && ' · niet opgedagen'}
                         {d.isDoublePeriod && ' · strafstudie'}
                       </span>
                     ))}
@@ -70,7 +69,7 @@ export default function DetailedReportsSection({ detentions }: Props) {
       <div>
         <h2 className="section-title">Gedetailleerde leerlingrapporten</h2>
         <p className="text-slate-400 text-sm mt-1">
-          Strafstudie geldt alleen op maandag, na weigering of niet opdagen op dinsdag/donderdag.
+          Strafstudie geldt alleen op maandag, na weigering op dinsdag/donderdag.
         </p>
       </div>
 
@@ -88,20 +87,14 @@ export default function DetailedReportsSection({ detentions }: Props) {
           emptyMessage="Geen strafstudies geregistreerd."
         />
         <ReportTable
-          title="Niet opgedagen (zonder weigering)"
-          description="Leerlingen die niet zijn komen opdagen zonder nablijven te weigeren."
-          rows={reports.didNotAttendNotRejected}
-          emptyMessage="Geen registraties van niet opdagen zonder weigering."
-        />
-        <ReportTable
-          title="Strafstudie: niet opgedagen of geweigerd"
-          description="Maandag-strafstudie waar de leerling opnieuw niet kwam of weigerde."
+          title="Strafstudie: geweigerd"
+          description="Maandag-strafstudie waar de leerling opnieuw weigerde."
           rows={reports.doubleMissedOrRejected}
-          emptyMessage="Geen problemen bij strafstudie."
+          emptyMessage="Geen geweigerde strafstudies."
         />
         <ReportTable
           title="Openstaande strafstudies"
-          description="Weigering of niet opdagen op di/do zonder gekoppelde maandag-registratie."
+          description="Weigering op di/do zonder gekoppelde maandag-registratie."
           rows={reports.pendingDouble}
           emptyMessage="Geen openstaande strafstudies."
         />

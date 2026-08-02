@@ -373,23 +373,10 @@ export default function NewDetentionPage() {
                       checked={detention.nablijvenGeweigerd || false}
                       onChange={(e) => {
                         updateDetention(index, 'nablijvenGeweigerd', e.target.checked);
-                        if (e.target.checked) updateDetention(index, 'didNotAttend', false);
                       }}
                       className="h-5 w-5 text-red-600 focus:ring-red-500 rounded border-slate-500 bg-slate-700"
                     />
                     <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 bg-orange-600/20 rounded-xl hover:bg-orange-600/30 cursor-pointer transition-colors border border-orange-500/50">
-                    <input
-                      type="checkbox"
-                      checked={detention.didNotAttend || false}
-                      onChange={(e) => {
-                        updateDetention(index, 'didNotAttend', e.target.checked);
-                        if (e.target.checked) updateDetention(index, 'nablijvenGeweigerd', false);
-                      }}
-                      className="h-5 w-5 text-orange-600 focus:ring-orange-500 rounded border-slate-500 bg-slate-700"
-                    />
-                    <span className="text-sm font-medium text-orange-200">Niet opgedagen</span>
                   </label>
                   {selectedDay === 'MAANDAG' && (
                     <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">

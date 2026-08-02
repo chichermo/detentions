@@ -74,7 +74,7 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
       ...getComparison(stats1.total, stats2.total),
     },
     {
-      metric: 'Unieke Leerlingen',
+      metric: 'Leerlingen',
       period1: stats1.uniqueStudents,
       period2: stats2.uniqueStudents,
       ...getComparison(stats1.uniqueStudents, stats2.uniqueStudents),

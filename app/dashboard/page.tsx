@@ -201,7 +201,7 @@ export default function DashboardPage() {
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <KpiCard label="Nablijven" value={kpis.total} hint={periodHint} icon={FileText} tone="indigo" />
-          <KpiCard label="Unieke leerlingen" value={kpis.uniqueStudents} hint={periodHint} icon={Users} tone="emerald" />
+          <KpiCard label="Leerlingen" value={kpis.uniqueStudents} hint={periodHint} icon={Users} tone="emerald" />
           <KpiCard label="Gemiddeld per dag" value={kpis.averagePerDay} hint={periodHint} icon={Clock} tone="amber" />
           <KpiCard label="Nieuwe deze week" value={kpis.thisWeek} icon={TrendingUp} tone="purple" />
           <KpiCard label="Geweigerd" value={kpis.geweigerd} hint={periodHint} icon={XCircle} tone="red" />
@@ -212,7 +212,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
           <ChartCard
             title="Tendens (Laatste 12 Maanden)"
-            subtitle="Nablijven en unieke leerlingen per maand"
+            subtitle="Nablijven en leerlingen per maand"
             empty={monthlyTrends.every((m) => m.count === 0 && m.students === 0)}
           >
             <NablijvenLineChart
@@ -220,7 +220,7 @@ export default function DashboardPage() {
               labelKey="month"
               series={[
                 { dataKey: 'count', name: 'Nablijven', color: NABLIIJVEN_CHART_COLORS.primary },
-                { dataKey: 'students', name: 'Unieke Leerlingen', color: NABLIIJVEN_CHART_COLORS.secondary },
+                { dataKey: 'students', name: 'Leerlingen', color: NABLIIJVEN_CHART_COLORS.secondary },
               ]}
               ariaLabel="Tendens nablijven laatste 12 maanden"
             />

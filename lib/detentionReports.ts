@@ -45,36 +45,20 @@ export function getStudentsWithDoubleDetentions(detentions: Detention[]): Studen
   return groupByStudent(detentions.filter(isDoubleDetention));
 }
 
-/** Niet opdagen zonder geweigerd (normale nablijven) */
-export function getDidNotAttendNotRejected(detentions: Detention[]): StudentReportRow[] {
-  return groupByStudent(
-    detentions.filter(
-      (d) =>
-        isRegularDetention(d) &&
-        !!d.didNotAttend &&
-        !d.nablijvenGeweigerd
-    )
-  );
-}
-
-/** Strafstudie (maandag) waar leerling niet kwam of weigerde */
+/** Strafstudie (maandag) waar leerling weigerde */
 export function getDoubleMissedOrRejected(detentions: Detention[]): StudentReportRow[] {
   return groupByStudent(
-    detentions.filter(
-      (d) =>
-        isDoubleDetention(d) &&
-        (!!d.didNotAttend || !!d.nablijvenGeweigerd)
-    )
+    detentions.filter((d) => isDoubleDetention(d) && !!d.nablijvenGeweigerd)
   );
 }
 
-/** Geweigerd of niet opdagen op di/do → verwachte strafstudie op maandag */
+/** Geweigerd op di/do → verwachte strafstudie op maandag */
 export function getTriggeredDoubleSource(detentions: Detention[]): Detention[] {
   return detentions.filter(
     (d) =>
       isRegularDetention(d) &&
       d.dayOfWeek !== 'MAANDAG' &&
-      (!!d.nablijvenGeweigerd || !!d.didNotAttend)
+      !!d.nablijvenGeweigerd
   );
 }
 
@@ -100,7 +84,6 @@ export function getPendingDoubleDetentions(detentions: Detention[]): StudentRepo
 export interface DetailedReports {
   withDetentions: StudentReportRow[];
   withDoubleDetentions: StudentReportRow[];
-  didNotAttendNotRejected: StudentReportRow[];
   doubleMissedOrRejected: StudentReportRow[];
   pendingDouble: StudentReportRow[];
 }
@@ -109,7 +92,6 @@ export function buildDetailedReports(detentions: Detention[]): DetailedReports {
   return {
     withDetentions: getStudentsWithDetentions(detentions),
     withDoubleDetentions: getStudentsWithDoubleDetentions(detentions),
-    didNotAttendNotRejected: getDidNotAttendNotRejected(detentions),
     doubleMissedOrRejected: getDoubleMissedOrRejected(detentions),
     pendingDouble: getPendingDoubleDetentions(detentions),
   };

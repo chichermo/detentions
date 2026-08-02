@@ -465,7 +465,7 @@ export default function StatisticsPage() {
       ['Nablijven Statistieken'],
       [''],
       ['Periode', filterType === 'day' ? selectedDate : filterType === 'month' ? selectedMonth : filterType === 'year' ? selectedYear : `${customStartDate} - ${customEndDate}`],
-      ['Total nablijven', stats.total],
+      ['Totaal nablijven', stats.total],
       ['Met chromebook', stats.withChromebook],
       ['Te printen', stats.toPrint],
       [''],
@@ -685,8 +685,8 @@ export default function StatisticsPage() {
 
         {/* Resumen de Estadísticas */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-          <KpiCard label="Total nablijven" value={stats.total} icon={BarChart3} tone="indigo" />
-          <KpiCard label="Unieke leerlingen" value={new Set(filteredDetentions.map((d) => d.student.split(' - ')[0])).size} icon={Users} tone="emerald" />
+          <KpiCard label="Totaal nablijven" value={stats.total} icon={BarChart3} tone="indigo" />
+          <KpiCard label="Leerlingen" value={new Set(filteredDetentions.map((d) => d.student.split(' - ')[0])).size} icon={Users} tone="emerald" />
           <KpiCard label="Met Chromebook" value={stats.withChromebook} icon={CalendarIcon} tone="emerald" />
           <KpiCard label="Te printen" value={stats.toPrint} icon={FileText} tone="purple" />
           <KpiCard label="Geweigerd" value={geweigerdDetentions.length} icon={XCircle} tone="red" />
