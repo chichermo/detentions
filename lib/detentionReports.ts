@@ -32,7 +32,7 @@ function isRegularDetention(d: Detention): boolean {
   return !d.isDoublePeriod;
 }
 
-/** Dubbele nablijven = strafstudie op maandag */
+/** Strafstudie op maandag */
 function isDoubleDetention(d: Detention): boolean {
   return d.dayOfWeek === 'MAANDAG' && !!d.isDoublePeriod;
 }
@@ -57,7 +57,7 @@ export function getDidNotAttendNotRejected(detentions: Detention[]): StudentRepo
   );
 }
 
-/** Dubbele nablijven (maandag) waar leerling niet kwam of weigerde */
+/** Strafstudie (maandag) waar leerling niet kwam of weigerde */
 export function getDoubleMissedOrRejected(detentions: Detention[]): StudentReportRow[] {
   return groupByStudent(
     detentions.filter(
@@ -68,7 +68,7 @@ export function getDoubleMissedOrRejected(detentions: Detention[]): StudentRepor
   );
 }
 
-/** Geweigerd of niet opdagen op di/do → verwachte dubbele op maandag */
+/** Geweigerd of niet opdagen op di/do → verwachte strafstudie op maandag */
 export function getTriggeredDoubleSource(detentions: Detention[]): Detention[] {
   return detentions.filter(
     (d) =>
@@ -89,7 +89,7 @@ function hasLinkedDouble(source: Detention, all: Detention[]): boolean {
   );
 }
 
-/** Leerlingen met openstaande dubbele nablijven (nog geen maandag-registratie) */
+/** Leerlingen met openstaande strafstudie (nog geen maandag-registratie) */
 export function getPendingDoubleDetentions(detentions: Detention[]): StudentReportRow[] {
   const sources = getTriggeredDoubleSource(detentions).filter(
     (s) => !hasLinkedDouble(s, detentions)

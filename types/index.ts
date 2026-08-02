@@ -22,11 +22,11 @@ export interface Detention {
   shouldPrint: boolean;
   canUseChromebook: boolean;
   extraNotes?: string;
-  isDoublePeriod?: boolean; // Dubbele nablijven / strafstudie (alleen maandag)
+  isDoublePeriod?: boolean; // Strafstudie (alleen maandag)
   timePeriod?: '16:00-16:50' | '16:50-17:40'; // Tijdvak voor strafstudie (2 periodes van 50 minuten)
   nablijvenGeweigerd?: boolean; // Leerling heeft nablijven geweigerd
   didNotAttend?: boolean; // Niet komen opdagen (zonder geweigerd)
-  sourceDetentionId?: string; // Koppeling naar oorspronkelijke nablijven (dubbele op maandag)
+  sourceDetentionId?: string; // Koppeling naar oorspronkelijke nablijven (strafstudie op maandag)
 }
 
 export interface CalendarDaySetting {

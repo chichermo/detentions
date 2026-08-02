@@ -33,7 +33,7 @@ Binnen de strafstudie kunnen 2 periodes van 50 minuten worden toegewezen:
 
 ### Database Wijzigingen
 Twee nieuwe velden zijn toegevoegd aan de `detentions` tabel:
-- `is_double_period` (boolean): Geeft aan of het een dubbele nablijven is
+- `is_double_period` (boolean): Geeft aan of het een strafstudie is
 - `time_period` (text): Het specifieke tijdvak (optioneel, alleen wanneer `is_double_period` waar is)
 
 ### Migratie

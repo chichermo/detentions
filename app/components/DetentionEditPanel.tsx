@@ -167,13 +167,13 @@ export default function DetentionEditPanel({
                   if (!checked) onChange('timePeriod', undefined);
                 }}
               />
-              Dubbele nablijven (maandag)
+              Strafstudie (maandag)
             </label>
           )}
         </div>
         {!isMonday && (detention.nablijvenGeweigerd || detention.didNotAttend) && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Leerling krijgt dubbele nablijven op de eerstvolgende maandag (strafstudie).
+            Leerling krijgt strafstudie op de eerstvolgende maandag.
           </p>
         )}
 

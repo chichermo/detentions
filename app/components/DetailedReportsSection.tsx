@@ -48,7 +48,7 @@ function ReportTable({
                         {format(parseISO(d.date), 'd MMM yyyy', { locale: nl })}
                         {d.nablijvenGeweigerd && ' · geweigerd'}
                         {d.didNotAttend && ' · niet opgedagen'}
-                        {d.isDoublePeriod && ' · dubbele/strafstudie'}
+                        {d.isDoublePeriod && ' · strafstudie'}
                       </span>
                     ))}
                   </td>
@@ -70,7 +70,7 @@ export default function DetailedReportsSection({ detentions }: Props) {
       <div>
         <h2 className="section-title">Gedetailleerde leerlingrapporten</h2>
         <p className="text-slate-400 text-sm mt-1">
-          Dubbele nablijven gelden alleen op maandag (strafstudie), na weigering of niet opdagen op dinsdag/donderdag.
+          Strafstudie geldt alleen op maandag, na weigering of niet opdagen op dinsdag/donderdag.
         </p>
       </div>
 
@@ -82,10 +82,10 @@ export default function DetailedReportsSection({ detentions }: Props) {
           emptyMessage="Geen leerlingen met nablijven in deze periode."
         />
         <ReportTable
-          title="Leerlingen met dubbele nablijven (maandag)"
-          description="Strafstudie / dubbele periode op maandag."
+          title="Leerlingen met strafstudie (maandag)"
+          description="Strafstudie op maandag (16:00–17:40)."
           rows={reports.withDoubleDetentions}
-          emptyMessage="Geen dubbele nablijven geregistreerd."
+          emptyMessage="Geen strafstudies geregistreerd."
         />
         <ReportTable
           title="Niet opgedagen (zonder weigering)"
@@ -94,16 +94,16 @@ export default function DetailedReportsSection({ detentions }: Props) {
           emptyMessage="Geen registraties van niet opdagen zonder weigering."
         />
         <ReportTable
-          title="Dubbele nablijven: niet opgedagen of geweigerd"
+          title="Strafstudie: niet opgedagen of geweigerd"
           description="Maandag-strafstudie waar de leerling opnieuw niet kwam of weigerde."
           rows={reports.doubleMissedOrRejected}
-          emptyMessage="Geen problemen bij dubbele nablijven."
+          emptyMessage="Geen problemen bij strafstudie."
         />
         <ReportTable
-          title="Openstaande dubbele nablijven"
+          title="Openstaande strafstudies"
           description="Weigering of niet opdagen op di/do zonder gekoppelde maandag-registratie."
           rows={reports.pendingDouble}
-          emptyMessage="Geen openstaande dubbele nablijven."
+          emptyMessage="Geen openstaande strafstudies."
         />
       </div>
     </section>
