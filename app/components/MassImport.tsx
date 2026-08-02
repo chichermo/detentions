@@ -74,7 +74,7 @@ export default function MassImport({
         });
         if (!staff.length) {
           throw new Error(
-            'Geen geldige namen gevonden. Verwacht kolom Personeel/Naam of Voornaam+Achternaam.'
+            'Geen geldige namen gevonden. Verwacht kolommen Voornaam + Naam (of Achternaam).'
           );
         }
         setPendingStaff(staff);
@@ -383,7 +383,7 @@ export default function MassImport({
           {type === 'students'
             ? ' Kolommen: Voornaam+Naam/Achternaam (of volledige Naam), Klas, optioneel Dag.'
             : type === 'staff'
-              ? ' Kolommen: Personeel/Naam of Voornaam+Achternaam.'
+              ? ' Kolommen: Voornaam + Naam (of Achternaam). Resultaat: Voornaam Achternaam.'
               : ' Kolommen: Datum, Leerling, …'}
         </p>
       </div>

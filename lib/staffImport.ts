@@ -1,8 +1,13 @@
 /**
  * Parse personeelsnamen (bulk / Excel).
- * Formaten: "Voornaam Achternaam", "Achternaam;Voornaam", één naam per regel.
+ * Excel: kolommen Voornaam + Naam (of Achternaam) → "Voornaam Achternaam".
+ * Plakken: één naam per regel, of Achternaam;Voornaam.
  */
-import { fixSemicolonName, cellExact } from '@/lib/studentImport';
+import {
+  fixSemicolonName,
+  cellExact,
+  normalizePersonName,
+} from '@/lib/studentImport';
 
 export function parseBulkStaffLines(text: string): string[] {
   const seen = new Set<string>();
@@ -14,8 +19,8 @@ export function parseBulkStaffLines(text: string): string[] {
     if (/[;\t]/.test(line)) {
       const parts = line.split(/[;\t]/).map((p) => p.trim()).filter(Boolean);
       if (parts.length >= 2) {
-        // Achternaam;Voornaam
-        name = fixSemicolonName(`${parts[0]};${parts[1]}`);
+        // Achternaam;Voornaam → Voornaam Achternaam
+        name = normalizePersonName(parts[1], parts[0]);
       } else {
         name = fixSemicolonName(parts[0] || line);
       }
@@ -31,23 +36,51 @@ export function parseBulkStaffLines(text: string): string[] {
   return out;
 }
 
+/**
+ * Excel met 2 kolommen: Voornaam + Naam (achternaam), zoals Smartschool.
+ * Ook: Voornaam + Achternaam, of één kolom met volledige naam.
+ */
 export function buildStaffName(row: Record<string, unknown>): string {
-  const direct = cellExact(row, [
+  const voornaam = cellExact(row, [
+    'Voornaam',
+    'First name',
+    'Firstname',
+    'First Name',
+    'Voor',
+  ]);
+  const achternaam = cellExact(row, [
+    'Achternaam',
+    'Last name',
+    'Lastname',
+    'Last Name',
+    'Familienaam',
+  ]);
+  // "Naam" = achternaam (Smartschool), niet de volledige naam als Voornaam ook bestaat
+  const naam = cellExact(row, ['Naam', 'Name']);
+
+  if (voornaam && (achternaam || naam)) {
+    return normalizePersonName(voornaam, achternaam || naam);
+  }
+  if (voornaam && achternaam) {
+    return normalizePersonName(voornaam, achternaam);
+  }
+
+  const full = cellExact(row, [
     'Personeel',
-    'Naam',
-    'Name',
+    'Volledige naam',
+    'Volledige Naam',
+    'Full name',
     'Leerkracht',
     'Teacher',
     'Docent',
     'Medewerker',
   ]);
-  if (direct) return fixSemicolonName(direct);
+  if (full) return fixSemicolonName(full);
 
-  const first = cellExact(row, ['Voornaam', 'First name', 'FirstName', 'Voor']);
-  const last = cellExact(row, ['Achternaam', 'Last name', 'LastName', 'Naam', 'Familienaam']);
-  if (first || last) {
-    if (first && last) return fixSemicolonName(`${last};${first}`);
-    return fixSemicolonName(first || last);
-  }
+  // Alleen "Naam" zonder voornaam → toch gebruiken (één kolom)
+  if (naam && !voornaam) return fixSemicolonName(naam);
+  if (voornaam) return normalizePersonName(voornaam);
+  if (achternaam) return normalizePersonName(achternaam);
+
   return '';
 }

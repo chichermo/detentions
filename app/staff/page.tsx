@@ -267,6 +267,10 @@ export default function StaffPage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
+            <p className="text-sm text-slate-400 mb-3">
+              Upload een Excel/CSV met twee kolommen: <strong>Voornaam</strong> en{' '}
+              <strong>Naam</strong> (achternaam). Optioneel ook Achternaam i.p.v. Naam.
+            </p>
             <MassImport
               type="staff"
               onImportStaff={async (members) => {
