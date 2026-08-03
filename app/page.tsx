@@ -163,14 +163,15 @@ export default function Home() {
                 <Plus className="h-4 w-4" />
                 <span>Nieuwe sessie</span>
               </Link>
-              <InstallPrompt />
             </div>
           </div>
         </div>
       </header>
 
+      <InstallPrompt />
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-10">
           {NAV_ITEMS.map((item) => (
             <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>
               <div className="relative flex flex-col gap-4">

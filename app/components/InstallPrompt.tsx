@@ -13,6 +13,9 @@ export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    const dismissed = sessionStorage.getItem('pwa-install-dismissed');
+    if (dismissed === '1') return;
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -21,7 +24,6 @@ export default function InstallPrompt() {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Verificar si ya está instalado
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setShowPrompt(false);
     }
@@ -30,6 +32,15 @@ export default function InstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
+
+  const dismiss = () => {
+    setShowPrompt(false);
+    try {
+      sessionStorage.setItem('pwa-install-dismissed', '1');
+    } catch {
+      /* ignore */
+    }
+  };
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -47,26 +58,28 @@ export default function InstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-slide-up">
-      <div className="glass border border-indigo-500/50 rounded-xl p-4 shadow-2xl">
+    <div className="fixed bottom-20 left-4 right-4 md:bottom-4 md:left-auto md:right-4 md:w-96 z-[55] animate-slide-up">
+      <div className="glass border border-[var(--border-strong)] rounded-xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-indigo-500/20 rounded-lg">
-            <Download className="h-5 w-5 text-indigo-400" />
+          <div className="p-2 rounded-lg shrink-0" style={{ background: 'var(--accent-muted)' }}>
+            <Download className="h-5 w-5" style={{ color: '#f0c078' }} />
           </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-slate-100 mb-1">Installeer de App</h3>
-            <p className="text-sm text-slate-400 mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-primary mb-1">Installeer de App</h3>
+            <p className="text-sm text-muted mb-3">
               Installeer Nablijven op je apparaat voor snellere toegang en offline gebruik.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={handleInstall}
                 className="btn-primary text-sm px-4 py-2"
               >
                 Installeren
               </button>
               <button
-                onClick={() => setShowPrompt(false)}
+                type="button"
+                onClick={dismiss}
                 className="btn-ghost text-sm px-4 py-2"
               >
                 Later
@@ -74,8 +87,10 @@ export default function InstallPrompt() {
             </div>
           </div>
           <button
-            onClick={() => setShowPrompt(false)}
-            className="p-1 text-slate-400 hover:text-slate-200"
+            type="button"
+            onClick={dismiss}
+            className="p-1 text-muted hover:text-primary shrink-0"
+            aria-label="Sluiten"
           >
             <X className="h-4 w-4" />
           </button>

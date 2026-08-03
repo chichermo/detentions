@@ -1,6 +1,6 @@
 // Service Worker para PWA - Nablijven Systeem
-const CACHE_NAME = 'nablijven-v3';
-const STATIC_CACHE = 'nablijven-static-v3';
+const CACHE_NAME = 'nablijven-v4';
+const STATIC_CACHE = 'nablijven-static-v4';
 
 /** Solo se pueden cachear peticiones http/https del mismo origen (no chrome-extension, blob, etc.) */
 function isCacheableRequest(request) {
