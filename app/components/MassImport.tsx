@@ -8,6 +8,9 @@ import {
   buildStudentGrade,
   buildStudentName,
   cellExact,
+  fixSemicolonName,
+  normalizeDetentionStudent,
+  normalizeDetentionTeacher,
   parseDayOfWeek,
 } from '@/lib/studentImport';
 import { buildStaffName } from '@/lib/staffImport';
@@ -104,20 +107,27 @@ export default function MassImport({
         setPendingStudents(students);
       } else {
         const detentions: Partial<Detention>[] = jsonData
-          .map((row, index) => ({
-            id: `detention-${Date.now()}-${index}`,
-            number: Number(cellExact(row, ['Nummer', 'Number']) || index + 1),
-            date: cellExact(row, ['Datum', 'Date']),
-            dayOfWeek: parseDayOfWeek(cellExact(row, ['Dag', 'Day']), defaultDay),
-            student: buildStudentName(row) || cellExact(row, ['Leerling', 'Student', 'Naam']),
-            teacher: cellExact(row, ['Personeel', 'Leerkracht', 'Teacher']),
-            reason: cellExact(row, ['Reden', 'Reason']),
-            task: cellExact(row, ['Opdracht', 'Task']),
-            lvsDate: cellExact(row, ['LVS Datum', 'LVS Date', 'lvs_date']),
-            shouldPrint: /^(ja|true|1|yes)$/i.test(cellExact(row, ['Print'])),
-            canUseChromebook: /^(ja|true|1|yes)$/i.test(cellExact(row, ['Chromebook'])),
-            extraNotes: cellExact(row, ['Opmerkingen', 'Notes']),
-          }))
+          .map((row, index) => {
+            const studentRaw =
+              buildStudentName(row) ||
+              fixSemicolonName(cellExact(row, ['Leerling', 'Student', 'Naam']));
+            const teacherRaw = cellExact(row, ['Personeel', 'Leerkracht', 'Teacher']);
+            const teacher = normalizeDetentionTeacher(teacherRaw);
+            return {
+              id: `detention-${Date.now()}-${index}`,
+              number: Number(cellExact(row, ['Nummer', 'Number']) || index + 1),
+              date: cellExact(row, ['Datum', 'Date']),
+              dayOfWeek: parseDayOfWeek(cellExact(row, ['Dag', 'Day']), defaultDay),
+              student: normalizeDetentionStudent(studentRaw),
+              teacher: teacher || undefined,
+              reason: cellExact(row, ['Reden', 'Reason']),
+              task: cellExact(row, ['Opdracht', 'Task']),
+              lvsDate: cellExact(row, ['LVS Datum', 'LVS Date', 'lvs_date']),
+              shouldPrint: /^(ja|true|1|yes)$/i.test(cellExact(row, ['Print'])),
+              canUseChromebook: /^(ja|true|1|yes)$/i.test(cellExact(row, ['Chromebook'])),
+              extraNotes: cellExact(row, ['Opmerkingen', 'Notes']),
+            };
+          })
           .filter((d) => d.student && d.date);
 
         if (!detentions.length) {

@@ -103,6 +103,29 @@ export function normalizePersonName(...parts: Array<string | undefined | null>):
   return unglueCamelCase(cleaned.join(' '));
 }
 
+/**
+ * Detention.student is often "Voornaam Achternaam - Klas".
+ * Normalize both halves so legacy "Jos é - 1Aarde" becomes "José - 1 Aarde".
+ */
+export function normalizeDetentionStudent(value: string): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const sep = ' - ';
+  const idx = raw.indexOf(sep);
+  if (idx === -1) return fixSemicolonName(raw);
+  const namePart = fixSemicolonName(raw.slice(0, idx));
+  const gradePart = normalizeGrade(raw.slice(idx + sep.length));
+  return gradePart ? `${namePart}${sep}${gradePart}` : namePart;
+}
+
+/** Detention.teacher / free-typed personeel name on nablijven. */
+export function normalizeDetentionTeacher(
+  value: string | undefined | null
+): string {
+  if (value == null) return '';
+  return fixSemicolonName(String(value));
+}
+
 /** Tokens of a display name (stable key for matching across days). */
 export function nameTokenKey(name: string): string {
   return String(name || '')

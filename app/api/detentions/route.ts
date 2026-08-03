@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDetentions, saveDetention, deleteDetention } from '@/lib/data';
 import { Detention } from '@/types';
+import {
+  normalizeDetentionStudent,
+  normalizeDetentionTeacher,
+} from '@/lib/studentImport';
 
 export const dynamic = 'force-dynamic';
+
+function normalizeDetentionNames(detention: Detention): Detention {
+  const teacher = normalizeDetentionTeacher(detention.teacher);
+  return {
+    ...detention,
+    student: normalizeDetentionStudent(detention.student || ''),
+    teacher: teacher || undefined,
+  };
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const date = searchParams.get('date');
   
   const detentions = await getDetentions(date || undefined);
-  return NextResponse.json(detentions, {
+  // Normalize accents on read so legacy "Jos é" displays as "José"
+  const normalized = detentions.map(normalizeDetentionNames);
+  return NextResponse.json(normalized, {
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
       'Pragma': 'no-cache',
@@ -19,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const detention: Detention = await request.json();
+    const detention = normalizeDetentionNames(await request.json());
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {
@@ -34,7 +49,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const detention: Detention = await request.json();
+    const detention = normalizeDetentionNames(await request.json());
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {
