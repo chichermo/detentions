@@ -14,6 +14,7 @@ import {
   Download,
   LayoutDashboard,
   Sparkles,
+  Shield,
 } from 'lucide-react';
 import LoadingPage from '@/app/components/ui/LoadingPage';
 import { DetentionSession } from '@/types';
@@ -23,6 +24,7 @@ import InstallPrompt from '@/app/components/InstallPrompt';
 import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
+import { hasFullDetentionsAccess } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
@@ -33,6 +35,7 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-copper',
     iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
     linkClass: 'text-[#f0c078]',
+    fullOnly: false,
   },
   {
     href: '/staff',
@@ -42,6 +45,7 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-copper',
     iconClass: 'nav-icon bg-gradient-to-br from-[#f0c078] to-[#e8953a] text-[#1a1208]',
     linkClass: 'text-[#f0c078]',
+    fullOnly: false,
   },
   {
     href: '/calendar',
@@ -51,6 +55,7 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-violet',
     iconClass: 'nav-icon bg-gradient-to-br from-[#a78bfa] to-[#7c5cc7] text-[#1a1028]',
     linkClass: 'text-[#d4c4fd]',
+    fullOnly: false,
   },
   {
     href: '/dashboard',
@@ -60,6 +65,7 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-sky',
     iconClass: 'nav-icon bg-gradient-to-br from-[#67c6e8] to-[#3d9fc4] text-[#0a1820]',
     linkClass: 'text-[#9dd9f0]',
+    fullOnly: false,
   },
   {
     href: '/statistics',
@@ -69,6 +75,17 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-mint',
     iconClass: 'nav-icon bg-gradient-to-br from-[#5eead4] to-[#2dd4bf] text-[#0a1f1a]',
     linkClass: 'text-[#8ef0d8]',
+    fullOnly: false,
+  },
+  {
+    href: '/rechten',
+    title: 'Rechten',
+    desc: 'Nablijven-portaaltoegang beheren',
+    icon: Shield,
+    cardClass: 'nav-card-copper',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
+    linkClass: 'text-[#f0c078]',
+    fullOnly: true,
   },
 ] as const;
 
@@ -76,8 +93,10 @@ export default function Home() {
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [fullAccess, setFullAccess] = useState(false);
 
   useEffect(() => {
+    setFullAccess(hasFullDetentionsAccess());
     fetchSessions();
   }, []);
 
@@ -122,8 +141,13 @@ export default function Home() {
                   Schoolbeheer
                 </span>
               </div>
-              <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
+              <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-primary tracking-tight inline-flex items-center gap-2">
                 Nablijven
+                <span
+                  className="inline-block h-3 w-3 shrink-0 rounded-full bg-[#2563eb]"
+                  aria-hidden="true"
+                  title="Blauwe stip"
+                />
               </h1>
               <p className="text-secondary mt-2 flex flex-wrap items-center gap-2 text-sm">
                 <span className="time-pill">
@@ -172,7 +196,7 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-10">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter((item) => !item.fullOnly || fullAccess).map((item) => (
             <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>
               <div className="relative flex flex-col gap-4">
                 <div className={item.iconClass}>

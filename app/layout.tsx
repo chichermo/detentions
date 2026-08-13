@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import SyncStatus from '@/app/components/SyncStatus'
 import DataHealthBanner from '@/app/components/DataHealthBanner'
+import AccessScopeGuard from '@/app/components/AccessScopeGuard'
 import Script from 'next/script'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -54,7 +55,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <DataHealthBanner />
-        {children}
+        <AccessScopeGuard>{children}</AccessScopeGuard>
         <SyncStatus />
       </body>
       <Script id="register-sw" strategy="afterInteractive">

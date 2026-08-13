@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { setStoredRole } from '@/lib/auth';
+import { setAccessScope, setStoredRole, type DetentionsAccessScope } from '@/lib/auth';
 import type { UserRole } from '@/lib/roles';
 
 const PORTAL_SESSION_KEY = 'element_portal_session';
@@ -11,6 +11,7 @@ type PortalPayload = {
   username: string;
   role: string;
   exp: number;
+  detentionsScope?: 'full' | 'limited';
 };
 
 const FALLBACK_SECRET = 'element-portal-sso-v1-school-internal';
@@ -78,6 +79,7 @@ export default function PortalEntryClient() {
       const token = searchParams.get('token') || '';
       const roleParam = searchParams.get('role') || '';
       const userParam = searchParams.get('user') || '';
+      const scopeParam = searchParams.get('scope') || '';
 
       const payload = token ? await verifyToken(token) : null;
       if (!payload) {
@@ -89,19 +91,26 @@ export default function PortalEntryClient() {
         ? roleParam
         : 'leerkracht') as UserRole;
 
+      const scope: DetentionsAccessScope =
+        payload.detentionsScope === 'limited' || scopeParam === 'limited'
+          ? 'limited'
+          : 'full';
+
       setStoredRole(role);
+      setAccessScope(scope);
       localStorage.setItem(
         PORTAL_SESSION_KEY,
         JSON.stringify({
           username: payload.username || userParam,
           role,
+          scope,
           from: 'element-portal',
           at: new Date().toISOString(),
         })
       );
 
       setMessage('Welkom — Nablijven openen…');
-      router.replace('/');
+      router.replace(scope === 'limited' ? '/dashboard' : '/');
     };
     run();
   }, [router, searchParams]);

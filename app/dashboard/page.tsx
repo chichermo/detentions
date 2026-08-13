@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { TrendingUp, Users, BarChart3, AlertCircle, Clock, FileText, RefreshCw, XCircle, BookOpen } from 'lucide-react';
+import { TrendingUp, Users, BarChart3, AlertCircle, Clock, FileText, RefreshCw, XCircle, BookOpen, Shield } from 'lucide-react';
 import KpiCard from '@/app/components/ui/KpiCard';
 import PageHeader from '@/app/components/ui/PageHeader';
 import LoadingPage from '@/app/components/ui/LoadingPage';
@@ -14,6 +14,8 @@ import ChartCard from '@/app/components/charts/ChartCard';
 import NablijvenLineChart from '@/app/components/charts/NablijvenLineChart';
 import NablijvenPieChart from '@/app/components/charts/NablijvenPieChart';
 import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
+import { hasFullDetentionsAccess } from '@/lib/auth';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,6 +25,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [period, setPeriod] = useState<'week' | 'month' | 'year' | 'all'>('month');
+  const [fullAccess, setFullAccess] = useState(true);
+
+  useEffect(() => {
+    setFullAccess(hasFullDetentionsAccess());
+  }, []);
 
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -165,6 +172,12 @@ export default function DashboardPage() {
 
   const periodButtons = (
     <>
+      {fullAccess && (
+        <Link href="/rechten" className="btn-secondary text-sm px-3 py-2 flex items-center gap-1.5">
+          <Shield className="h-4 w-4" />
+          <span className="hidden sm:inline">Rechten</span>
+        </Link>
+      )}
       {(['week', 'month', 'year', 'all'] as const).map((p) => (
         <button
           key={p}
@@ -194,7 +207,8 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Overzicht en inzichten"
         icon={BarChart3}
-        onBack={() => router.push('/')}
+        onBack={() => router.push(fullAccess ? '/' : '/calendar')}
+        backLabel={fullAccess ? 'Terug' : 'Naar kalender'}
         actions={periodButtons}
       />
 
