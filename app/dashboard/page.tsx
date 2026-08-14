@@ -207,8 +207,8 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Overzicht en inzichten"
         icon={BarChart3}
-        onBack={() => router.push(fullAccess ? '/' : '/calendar')}
-        backLabel={fullAccess ? 'Terug' : 'Naar kalender'}
+        onBack={() => router.push('/')}
+        backLabel="Terug"
         actions={periodButtons}
       />
 

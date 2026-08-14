@@ -31,7 +31,7 @@ import {
   saveCalendarDay,
   getDaySettingFromList,
 } from '@/lib/calendarDaysClient';
-import { getStoredRole, hasFullDetentionsAccess } from '@/lib/auth';
+import { getStoredRole } from '@/lib/auth';
 import { getRoleDefinition } from '@/lib/roles';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
@@ -50,7 +50,6 @@ export default function CalendarPage() {
     'beheerder' | 'coordinator' | 'leerkracht' | 'secretariaat' | 'directie' | 'gast'
   >('leerkracht');
   const [mounted, setMounted] = useState(false);
-  const [fullAccess, setFullAccess] = useState(true);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -78,7 +77,6 @@ export default function CalendarPage() {
   useEffect(() => {
     setMounted(true);
     setRole(getStoredRole());
-    setFullAccess(hasFullDetentionsAccess());
   }, []);
 
   // Al cambiar de mes, cerrar modal si el día ya no aplica
@@ -137,24 +135,24 @@ export default function CalendarPage() {
       return;
     }
 
-    // Sesión existente sin bloqueo → abrir sesión (alleen bij volledige toegang)
-    if (session && fullAccess) {
+    // Sesión existente sin bloqueo → abrir sesión
+    if (session) {
       router.push(`/detentions/${dateStr}`);
       return;
     }
 
-    // Día libre / beperkte toegang → popup
+    // Día libre → popup para sessie of beheer
     setSelectedDate(dateStr);
     setDayModalOpen(true);
   };
 
   const handleOpenSession = () => {
-    if (!selectedDate || !fullAccess) return;
+    if (!selectedDate) return;
     router.push(`/detentions/${selectedDate}`);
   };
 
   const handleCreateSession = () => {
-    if (!selectedDate || !fullAccess) return;
+    if (!selectedDate) return;
     const cfg = getDayConfig(selectedDate);
     if (cfg?.blocked) return;
     if (cfg && !cfg.allowDetentions) return;
@@ -222,7 +220,7 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               <button
-                onClick={() => router.push(fullAccess ? '/' : '/dashboard')}
+                onClick={() => router.push('/')}
                 className="btn-ghost p-2 shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -368,14 +366,7 @@ export default function CalendarPage() {
                   <button
                     key={session.date}
                     type="button"
-                    onClick={() => {
-                      if (fullAccess) {
-                        router.push(`/detentions/${session.date}`);
-                      } else {
-                        setSelectedDate(session.date);
-                        setDayModalOpen(true);
-                      }
-                    }}
+                    onClick={() => router.push(`/detentions/${session.date}`)}
                     className="w-full text-left border border-slate-700 rounded-xl p-4 hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all"
                   >
                     <h3 className="font-bold text-slate-100">
@@ -450,7 +441,7 @@ export default function CalendarPage() {
         )}
 
         <div className="mb-4 flex flex-wrap gap-3">
-          {fullAccess && selectedSession ? (
+          {selectedSession ? (
             <button
               type="button"
               onClick={handleOpenSession}
@@ -460,16 +451,11 @@ export default function CalendarPage() {
               <ExternalLink className="h-4 w-4" />
               Sessie openen ({selectedSession.detentions.length})
             </button>
-          ) : fullAccess && canCreateOnSelected ? (
+          ) : canCreateOnSelected ? (
             <button type="button" onClick={handleCreateSession} className="btn-primary">
               Nieuwe sessie aanmaken
             </button>
-          ) : !fullAccess && selectedSession ? (
-            <p className="text-sm text-slate-400">
-              {selectedSession.detentions.length} nablijven op deze dag (alleen overzicht).
-            </p>
-          ) : fullAccess &&
-            selectedSession === undefined &&
+          ) : selectedSession === undefined &&
             isNablijvenDay &&
             selectedConfig &&
             !selectedConfig.allowDetentions &&
@@ -480,7 +466,7 @@ export default function CalendarPage() {
           ) : null}
         </div>
 
-        {mounted && canAdminCalendar && fullAccess && (
+        {mounted && canAdminCalendar && (
           <div className="space-y-4 border-t border-slate-700 pt-5">
             <h3 className="font-bold text-slate-200">Beheer (admin)</h3>
             <label className="flex cursor-pointer items-center gap-3">

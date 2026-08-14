@@ -35,7 +35,7 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-copper',
     iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
     linkClass: 'text-[#f0c078]',
-    fullOnly: false,
+    fullOnly: true,
   },
   {
     href: '/staff',
@@ -45,7 +45,7 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-copper',
     iconClass: 'nav-icon bg-gradient-to-br from-[#f0c078] to-[#e8953a] text-[#1a1208]',
     linkClass: 'text-[#f0c078]',
-    fullOnly: false,
+    fullOnly: true,
   },
   {
     href: '/calendar',

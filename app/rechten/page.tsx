@@ -18,7 +18,7 @@ type PortalUser = {
 
 const SCOPE_OPTIONS: { value: NablijvenPortalScope; label: string }[] = [
   { value: 'none', label: 'Geen toegang' },
-  { value: 'limited', label: 'Enkel kalender & dashboard' },
+  { value: 'limited', label: 'Zonder leerlingen- en personeelslijsten' },
   { value: 'full', label: 'Volledig portaal' },
 ];
 
@@ -49,7 +49,7 @@ export default function RechtenPage() {
 
   useEffect(() => {
     if (!hasFullDetentionsAccess()) {
-      router.replace('/dashboard');
+      router.replace('/');
       return;
     }
     setAllowed(true);
@@ -129,8 +129,8 @@ export default function RechtenPage() {
         <div className="card p-4 sm:p-6 mb-6">
           <p className="text-sm text-secondary leading-relaxed">
             Hier stel je in wie Nablijven mag openen vanuit Element, en of dat het{' '}
-            <strong className="text-primary">volledige portaal</strong> is of enkel{' '}
-            <strong className="text-primary">kalender &amp; dashboard</strong>.
+            <strong className="text-primary">volledige portaal</strong> is of Nablijven{' '}
+            <strong className="text-primary">zonder leerlingen- en personeelslijsten</strong>.
           </p>
         </div>
 

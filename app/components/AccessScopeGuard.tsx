@@ -10,7 +10,7 @@ import {
 import LoadingPage from '@/app/components/ui/LoadingPage';
 
 /**
- * Beperkt navigatie wanneer via Element SSO "enkel kalender & dashboard" is toegekend.
+ * Verbergt leerlingen- en personeelslijsten bij beperkte Nablijven-toegang.
  */
 export default function AccessScopeGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,7 +22,7 @@ export default function AccessScopeGuard({ children }: { children: React.ReactNo
     const current = getAccessScope();
     setScope(current);
     if (!isPathAllowedForScope(pathname, current)) {
-      router.replace('/dashboard');
+      router.replace('/');
       return;
     }
     setReady(true);

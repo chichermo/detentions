@@ -44,11 +44,11 @@ export function hasFullDetentionsAccess(): boolean {
   return getAccessScope() === 'full';
 }
 
-/** Routes toegestaan bij beperkte toegang (kalender + dashboard). */
+/** Beperkte toegang: alles behalve leerlingen- en personeelslijsten (en rechtenbeheer). */
 export function isPathAllowedForScope(pathname: string, scope: DetentionsAccessScope): boolean {
   if (scope === 'full') return true;
-  if (pathname === '/portal-entry') return true;
-  if (pathname === '/calendar' || pathname.startsWith('/calendar/')) return true;
-  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) return true;
-  return false;
+  if (pathname === '/students' || pathname.startsWith('/students/')) return false;
+  if (pathname === '/staff' || pathname.startsWith('/staff/')) return false;
+  if (pathname === '/rechten' || pathname.startsWith('/rechten/')) return false;
+  return true;
 }

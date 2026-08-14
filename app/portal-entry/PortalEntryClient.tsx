@@ -110,7 +110,7 @@ export default function PortalEntryClient() {
       );
 
       setMessage('Welkom — Nablijven openen…');
-      router.replace(scope === 'limited' ? '/dashboard' : '/');
+      router.replace('/');
     };
     run();
   }, [router, searchParams]);
