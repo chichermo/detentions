@@ -344,8 +344,8 @@ export default function CalendarPage() {
                     <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />
                   )}
                   {clickable && noStrafstudieDay && !blocked && (
-                    <div className="text-[9px] sm:text-[10px] font-semibold text-orange-300 mt-0.5 leading-tight">
-                      geen strafst.
+                    <div className="text-[8px] sm:text-[10px] font-semibold text-orange-300 mt-0.5 leading-tight break-words">
+                      geen strafstudie
                     </div>
                   )}
                   {session && clickable && (
