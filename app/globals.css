@@ -151,6 +151,20 @@ body {
     border-color: var(--border-default);
   }
 
+  /* Openstaande strafstudies — hele kaart geel ter opvolging */
+  .card-follow-up {
+    background: rgba(250, 204, 21, 0.28) !important;
+    border-color: rgba(250, 204, 21, 0.55) !important;
+  }
+
+  .card-follow-up .table-simple thead {
+    background: rgba(250, 204, 21, 0.18);
+  }
+
+  .card-follow-up .table-simple tbody tr:hover {
+    background: rgba(250, 204, 21, 0.15);
+  }
+
   .card-hover {
     @apply card;
   }

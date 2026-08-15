@@ -26,13 +26,7 @@ function ReportTable({
   const isFollowUp = variant === 'followUp';
 
   return (
-    <div
-      className={
-        isFollowUp
-          ? 'card p-6 border border-yellow-400/50 bg-yellow-400/20'
-          : 'card p-6'
-      }
-    >
+    <div className={isFollowUp ? 'card card-follow-up p-6' : 'card p-6'}>
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <h3 className="text-lg font-bold text-slate-100">{title}</h3>
         {isFollowUp && rows.length > 0 && (
