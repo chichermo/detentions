@@ -11,6 +11,7 @@ interface DetentionSessionListProps {
   students: Student[];
   staffNames?: string[];
   isMonday: boolean;
+  allowStrafstudie?: boolean;
   editingId: string | null;
   editingDetention: Partial<Detention> | null;
   onReorder: (reordered: Detention[]) => void;
@@ -36,6 +37,7 @@ export default function DetentionSessionList({
   students,
   staffNames = [],
   isMonday,
+  allowStrafstudie = true,
   editingId,
   editingDetention,
   onReorder,
@@ -72,6 +74,7 @@ export default function DetentionSessionList({
                   staffNames={staffNames}
                   onChange={onChange}
                   isMonday={isMonday}
+                  allowStrafstudie={allowStrafstudie}
                   number={detention.number}
                   onSave={onSave}
                   onCancel={onCancel}

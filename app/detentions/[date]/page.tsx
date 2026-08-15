@@ -11,6 +11,7 @@ import FileAttachment from '@/app/components/FileAttachment';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
+import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
 import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
@@ -44,6 +45,7 @@ export default function DetentionSessionPage() {
   const [newDetention, setNewDetention] = useState<Partial<Detention> | null>(null);
   const [showAuditHistory, setShowAuditHistory] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const [allowStrafstudie, setAllowStrafstudie] = useState(true);
 
   const fetchDetentions = useCallback(async () => {
     try {
@@ -95,6 +97,23 @@ export default function DetentionSessionPage() {
     fetchStaffNames().then(setStaffNames);
   }, []);
 
+  useEffect(() => {
+    if (!date) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const days = await fetchCalendarDays(date, date);
+        const cfg = getDaySettingFromList(date, days);
+        if (!cancelled) setAllowStrafstudie(cfg?.allowStrafstudie !== false);
+      } catch {
+        if (!cancelled) setAllowStrafstudie(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [date]);
+
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit nablijven wilt verwijderen?')) return;
     
@@ -138,6 +157,15 @@ export default function DetentionSessionPage() {
 
   const handleSaveEdit = async () => {
     if (!editingDetention || !editingId) return;
+
+    if (
+      (editingDetention.dayOfWeek || getDayOfWeekFromDate(date)) === 'MAANDAG' &&
+      !allowStrafstudie &&
+      editingDetention.isDoublePeriod
+    ) {
+      alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
+      return;
+    }
 
     const student = students.find(s => s.name === editingDetention.student);
     const studentDisplayName = student 
@@ -205,6 +233,15 @@ export default function DetentionSessionPage() {
     );
     if (alreadyInSession) {
       alert('Deze leerling heeft al een nablijven voor deze sessie.');
+      return;
+    }
+
+    if (
+      (newDetention.dayOfWeek || getDayOfWeekFromDate(date)) === 'MAANDAG' &&
+      !allowStrafstudie &&
+      newDetention.isDoublePeriod
+    ) {
+      alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
       return;
     }
 
@@ -384,6 +421,7 @@ export default function DetentionSessionPage() {
                     detention={newDetention}
                     students={availableStudents}
                     staffNames={staffNames}
+                    allowStrafstudie={allowStrafstudie}
                     onChange={(field, value) => setNewDetention({ ...newDetention, [field]: value })}
                   />
                 </>
@@ -422,6 +460,7 @@ export default function DetentionSessionPage() {
               students={students}
               staffNames={staffNames}
               isMonday={isMonday}
+              allowStrafstudie={allowStrafstudie}
               editingId={editingId}
               editingDetention={editingDetention}
               onReorder={handleReorder}
@@ -473,11 +512,13 @@ function DetentionForm({
   detention,
   students,
   staffNames = [],
+  allowStrafstudie = true,
   onChange,
 }: {
   detention: Partial<Detention>;
   students: Student[];
   staffNames?: string[];
+  allowStrafstudie?: boolean;
   onChange: (field: keyof Detention, value: any) => void;
 }) {
   const isMonday = detention.dayOfWeek === 'MAANDAG';
@@ -581,7 +622,7 @@ function DetentionForm({
           />
           <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
         </label>
-        {isMonday && (
+        {isMonday && allowStrafstudie && (
           <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">
             <input
               type="checkbox"
@@ -599,6 +640,11 @@ function DetentionForm({
               <span className="text-sm font-bold text-amber-200">Strafstudie (16:00-17:40)</span>
               <p className="text-xs text-amber-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
             </div>
+          </div>
+        )}
+        {isMonday && !allowStrafstudie && (
+          <div className="p-4 rounded-xl border border-orange-500/40 bg-orange-950/30 text-sm text-orange-200 md:col-span-2">
+            Geen strafstudie op deze maandag — alleen gewoon nablijven.
           </div>
         )}
       </div>

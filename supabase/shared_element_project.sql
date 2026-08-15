@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS public.nablijven_calendar_day_settings (
   date TEXT PRIMARY KEY,
   blocked BOOLEAN DEFAULT FALSE,
   allow_detentions BOOLEAN DEFAULT TRUE,
+  allow_strafstudie BOOLEAN DEFAULT TRUE,
   notice_title TEXT,
   notice TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),

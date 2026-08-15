@@ -20,6 +20,18 @@ function isMissingRelationError(error: { code?: string; message?: string } | nul
   );
 }
 
+function isMissingColumnError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const code = String(error.code || '');
+  const msg = String(error.message || '').toLowerCase();
+  return (
+    code === '42703' ||
+    code === 'PGRST204' ||
+    msg.includes('allow_strafstudie') ||
+    (msg.includes('column') && msg.includes('does not exist'))
+  );
+}
+
 function mapStaffRow(s: { id: string; name: string; sort_order?: number; sortOrder?: number }): StaffMember {
   return {
     id: s.id,
@@ -600,6 +612,7 @@ function mapCalendarDayRow(row: Record<string, unknown>): CalendarDaySetting {
     date: row.date as string,
     blocked: (row.blocked as boolean) ?? false,
     allowDetentions: row.allow_detentions !== false,
+    allowStrafstudie: row.allow_strafstudie !== false,
     noticeTitle: (row.notice_title as string) || undefined,
     notice: (row.notice as string) || undefined,
   };
@@ -643,6 +656,7 @@ async function loadCalendarDaysFromAppSettings(): Promise<CalendarDaySetting[]> 
         date: row.date,
         blocked: row.blocked,
         allow_detentions: row.allowDetentions ?? row.allow_detentions,
+        allow_strafstudie: row.allowStrafstudie ?? row.allow_strafstudie,
         notice_title: row.noticeTitle ?? row.notice_title,
         notice: row.notice,
       })
@@ -654,6 +668,7 @@ async function loadCalendarDaysFromAppSettings(): Promise<CalendarDaySetting[]> 
         date: row.date,
         blocked: row.blocked,
         allow_detentions: row.allowDetentions,
+        allow_strafstudie: row.allowStrafstudie,
         notice_title: row.noticeTitle,
         notice: row.notice,
       })
@@ -684,26 +699,43 @@ export async function getCalendarDaySettings(
   endDate?: string
 ): Promise<CalendarDaySetting[]> {
   try {
+    let fromTable: CalendarDaySetting[] = [];
+    let fromSettings: CalendarDaySetting[] = [];
+
+    try {
+      fromSettings = await loadCalendarDaysFromAppSettings();
+    } catch {
+      fromSettings = [];
+    }
+
     if (useSupabase && supabase) {
       let query = supabase.from(TABLES.calendarDaySettings).select('*');
       if (startDate) query = query.gte('date', startDate);
       if (endDate) query = query.lte('date', endDate);
       const { data, error } = await query.order('date');
       if (error) {
-        if (isMissingRelationError(error)) {
-          const fromSettings = await loadCalendarDaysFromAppSettings();
-          return fromSettings.filter((s) => {
-            if (startDate && s.date < startDate) return false;
-            if (endDate && s.date > endDate) return false;
-            return true;
-          });
+        if (!isMissingRelationError(error)) {
+          console.error('Error fetching calendar days:', error);
         }
-        console.error('Error fetching calendar days:', error);
-        return [];
+      } else {
+        fromTable = (data || []).map((r: Record<string, unknown>) => mapCalendarDayRow(r));
       }
-      return (data || []).map((r: Record<string, unknown>) => mapCalendarDayRow(r));
     }
-    return [];
+
+    const merged = new Map<string, CalendarDaySetting>();
+    for (const row of fromTable) merged.set(row.date, row);
+    for (const row of fromSettings) {
+      const prev = merged.get(row.date);
+      merged.set(row.date, prev ? { ...prev, ...row, date: row.date } : row);
+    }
+
+    return Array.from(merged.values())
+      .filter((s) => {
+        if (startDate && s.date < startDate) return false;
+        if (endDate && s.date > endDate) return false;
+        return true;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('Error in getCalendarDaySettings:', error);
     try {
@@ -736,6 +768,7 @@ export async function saveCalendarDaySetting(setting: CalendarDaySetting): Promi
       date: setting.date,
       blocked: setting.blocked,
       allow_detentions: setting.allowDetentions,
+      allow_strafstudie: setting.allowStrafstudie !== false,
       notice_title: setting.noticeTitle || null,
       notice: setting.notice || null,
     },
@@ -744,8 +777,24 @@ export async function saveCalendarDaySetting(setting: CalendarDaySetting): Promi
 
   if (!error) return;
 
-  // Fallback: app_settings (werkt ook als calendar_day_settings-tabel nog ontbreekt)
-  if (isMissingRelationError(error)) {
+  // Fallback: app_settings (werkt ook als calendar_day_settings-tabel of kolom nog ontbreekt)
+  if (isMissingRelationError(error) || isMissingColumnError(error)) {
+    if (isMissingColumnError(error) && !isMissingRelationError(error)) {
+      // Probeer zonder nieuwe kolom te upserten, bewaar allowStrafstudie via app_settings
+      const { error: retryError } = await supabase.from(TABLES.calendarDaySettings).upsert(
+        {
+          date: setting.date,
+          blocked: setting.blocked,
+          allow_detentions: setting.allowDetentions,
+          notice_title: setting.noticeTitle || null,
+          notice: setting.notice || null,
+        },
+        { onConflict: 'date' }
+      );
+      if (retryError && !isMissingRelationError(retryError)) {
+        console.error('Error saving calendar day (retry):', retryError);
+      }
+    }
     await saveCalendarDayToAppSettings(setting);
     return;
   }

@@ -44,6 +44,7 @@ export default function NewDetentionPage() {
   
   // Calcular el día de la semana automáticamente desde la fecha
   const selectedDay = useMemo(() => getDayOfWeekFromDate(date), [date]);
+  const [allowStrafstudie, setAllowStrafstudie] = useState(true);
 
   useEffect(() => {
     if (selectedDay) {
@@ -52,6 +53,32 @@ export default function NewDetentionPage() {
     fetchStaffNames().then(setStaffNames);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDay]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const days = await fetchCalendarDays(date, date);
+        const cfg = getDaySettingFromList(date, days);
+        if (!cancelled) setAllowStrafstudie(cfg?.allowStrafstudie !== false);
+      } catch {
+        if (!cancelled) setAllowStrafstudie(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [date]);
+
+  useEffect(() => {
+    if (!allowStrafstudie) {
+      setDetentions((prev) =>
+        prev.map((d) =>
+          d.isDoublePeriod ? { ...d, isDoublePeriod: false, timePeriod: undefined } : d
+        )
+      );
+    }
+  }, [allowStrafstudie]);
 
   useEffect(() => {
     if (detentions.length === 0) {
@@ -147,6 +174,14 @@ export default function NewDetentionPage() {
       }
       if (cfg && !cfg.allowDetentions) {
         alert('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
+        return;
+      }
+      if (
+        selectedDay === 'MAANDAG' &&
+        cfg?.allowStrafstudie === false &&
+        detentionsToSave.some((d) => d.isDoublePeriod)
+      ) {
+        alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
         return;
       }
     } catch {
@@ -380,7 +415,7 @@ export default function NewDetentionPage() {
                     />
                     <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
                   </label>
-                  {selectedDay === 'MAANDAG' && (
+                  {selectedDay === 'MAANDAG' && allowStrafstudie && (
                     <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">
                       <input
                         type="checkbox"
@@ -398,6 +433,11 @@ export default function NewDetentionPage() {
                         <span className="text-sm font-bold text-amber-200">Strafstudie (16:00-17:40)</span>
                         <p className="text-xs text-amber-300/70 mt-0.5">Alleen beschikbaar op maandag</p>
                       </div>
+                    </div>
+                  )}
+                  {selectedDay === 'MAANDAG' && !allowStrafstudie && (
+                    <div className="p-4 rounded-xl border border-orange-500/40 bg-orange-950/30 text-sm text-orange-200">
+                      Geen strafstudie op deze maandag — alleen gewoon nablijven.
                     </div>
                   )}
                 </div>

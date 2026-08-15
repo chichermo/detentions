@@ -15,6 +15,7 @@ interface DetentionEditPanelProps {
   staffNames?: string[];
   onChange: (field: keyof Detention, value: unknown) => void;
   isMonday?: boolean;
+  allowStrafstudie?: boolean;
   number?: number;
   onSave: () => void;
   onCancel: () => void;
@@ -26,6 +27,7 @@ export default function DetentionEditPanel({
   staffNames = [],
   onChange,
   isMonday,
+  allowStrafstudie = true,
   number,
   onSave,
   onCancel,
@@ -147,7 +149,7 @@ export default function DetentionEditPanel({
             />
             Geweigerd
           </label>
-          {isMonday && (
+          {isMonday && allowStrafstudie && (
             <label className="detention-edit-card__check">
               <input
                 type="checkbox"
@@ -160,6 +162,11 @@ export default function DetentionEditPanel({
               />
               Strafstudie (maandag)
             </label>
+          )}
+          {isMonday && !allowStrafstudie && (
+            <p className="text-xs text-orange-300/90 col-span-full">
+              Geen strafstudie op deze maandag — alleen gewoon nablijven.
+            </p>
           )}
         </div>
         {!isMonday && detention.nablijvenGeweigerd && (

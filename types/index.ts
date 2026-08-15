@@ -40,6 +40,8 @@ export interface CalendarDaySetting {
   date: string; // YYYY-MM-DD
   blocked: boolean;
   allowDetentions: boolean;
+  /** Alleen relevant op maandag; false = wel nablijven, geen strafstudie */
+  allowStrafstudie: boolean;
   noticeTitle?: string;
   notice?: string;
 }

@@ -25,14 +25,13 @@ import {
 } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { apiFetch } from '@/lib/apiClient';
-import { isNablijvenWeekday } from '@/lib/calendarUtils';
+import { isNablijvenWeekday, isMonday } from '@/lib/calendarUtils';
 import {
   fetchCalendarDays,
   saveCalendarDay,
   getDaySettingFromList,
 } from '@/lib/calendarDaysClient';
-import { getStoredRole } from '@/lib/auth';
-import { getRoleDefinition } from '@/lib/roles';
+import { canManageCalendarSettings } from '@/lib/auth';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
 
@@ -46,10 +45,8 @@ export default function CalendarPage() {
   const [adminSaving, setAdminSaving] = useState(false);
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('');
   const [draftNotice, setDraftNotice] = useState('');
-  const [role, setRole] = useState<
-    'beheerder' | 'coordinator' | 'leerkracht' | 'secretariaat' | 'directie' | 'gast'
-  >('leerkracht');
   const [mounted, setMounted] = useState(false);
+  const [canAdminCalendar, setCanAdminCalendar] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -76,7 +73,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     setMounted(true);
-    setRole(getStoredRole());
+    setCanAdminCalendar(canManageCalendarSettings());
   }, []);
 
   // Al cambiar de mes, cerrar modal si el día ya no aplica
@@ -88,9 +85,6 @@ export default function CalendarPage() {
       setDayModalOpen(false);
     }
   }, [currentDate, selectedDate]);
-
-  const permissions = getRoleDefinition(role);
-  const canAdminCalendar = permissions.canBlockDays || permissions.canEditCalendarNotices;
 
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
@@ -166,6 +160,7 @@ export default function CalendarPage() {
       date: selectedDate,
       blocked: selectedConfig?.blocked ?? false,
       allowDetentions: selectedConfig?.allowDetentions ?? true,
+      allowStrafstudie: selectedConfig?.allowStrafstudie ?? true,
       noticeTitle: draftNoticeTitle || undefined,
       notice: draftNotice || undefined,
       ...patch,
@@ -212,6 +207,9 @@ export default function CalendarPage() {
 
   const hasRemark = !!(selectedConfig?.noticeTitle || selectedConfig?.notice);
   const isBlocked = !!selectedConfig?.blocked;
+  const selectedIsMonday = selectedDayDate ? isMonday(selectedDayDate) : false;
+  const noStrafstudie =
+    selectedIsMonday && selectedConfig?.allowStrafstudie === false;
 
   return (
     <div className="app-page">
@@ -286,6 +284,9 @@ export default function CalendarPage() {
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Geblokkeerd
             </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-orange-500/30 border border-orange-500/50" /> Geen strafstudie
+            </span>
             <span className="text-slate-500">· Alleen Ma, Di, Do zijn klikbaar</span>
           </div>
 
@@ -307,6 +308,7 @@ export default function CalendarPage() {
               const clickable = inMonth && nablijvenDay;
               const blocked = cfg?.blocked;
               const hasNotice = !!(cfg?.notice || cfg?.noticeTitle);
+              const noStrafstudieDay = isMonday(day) && cfg?.allowStrafstudie === false;
 
               return (
                 <button
@@ -325,8 +327,9 @@ export default function CalendarPage() {
                     ${clickable ? 'cursor-pointer touch-manipulation active:scale-[0.98] hover:border-indigo-400/60' : ''}
                     ${blocked && clickable ? 'border-red-500/60 bg-red-950/40' : ''}
                     ${hasNotice && !blocked && clickable ? 'border-amber-500/50 bg-amber-950/20' : ''}
-                    ${!blocked && !hasNotice && session && clickable ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
-                    ${!blocked && !hasNotice && !session && clickable ? 'border-slate-600 bg-slate-800/60 hover:border-indigo-500/50' : ''}
+                    ${noStrafstudieDay && !blocked && !hasNotice && clickable ? 'border-orange-500/50 bg-orange-950/25' : ''}
+                    ${!blocked && !hasNotice && !noStrafstudieDay && session && clickable ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
+                    ${!blocked && !hasNotice && !noStrafstudieDay && !session && clickable ? 'border-slate-600 bg-slate-800/60 hover:border-indigo-500/50' : ''}
                     ${isToday && clickable ? 'ring-1 ring-indigo-400' : ''}
                     ${isSelected && clickable ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-slate-900' : ''}
                   `}
@@ -339,6 +342,11 @@ export default function CalendarPage() {
                   {clickable && blocked && <Lock className="h-3 w-3 text-red-400 mt-0.5" />}
                   {clickable && hasNotice && !blocked && (
                     <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />
+                  )}
+                  {clickable && noStrafstudieDay && !blocked && (
+                    <div className="text-[9px] sm:text-[10px] font-semibold text-orange-300 mt-0.5 leading-tight">
+                      geen strafst.
+                    </div>
                   )}
                   {session && clickable && (
                     <div className="text-[10px] sm:text-xs font-semibold text-emerald-300 mt-0.5 truncate">
@@ -487,6 +495,32 @@ export default function CalendarPage() {
               />
               <span className="text-slate-300">Nablijven toestaan op deze dag</span>
             </label>
+            {selectedIsMonday && (
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={selectedConfig?.allowStrafstudie === false}
+                  disabled={
+                    adminSaving ||
+                    selectedConfig?.blocked ||
+                    selectedConfig?.allowDetentions === false
+                  }
+                  onChange={(e) => updateDayConfig({ allowStrafstudie: !e.target.checked })}
+                />
+                <span className="text-slate-300">
+                  Geen strafstudie
+                  <span className="block text-xs text-slate-500 mt-0.5">
+                    Wel gewoon nablijven, geen strafstudie (16:00–17:40)
+                  </span>
+                </span>
+              </label>
+            )}
+            {noStrafstudie && !isBlocked && (
+              <p className="text-sm text-orange-300/90 rounded-lg border border-orange-500/30 bg-orange-950/30 px-3 py-2">
+                Op deze maandag is geen strafstudie mogelijk — alleen gewoon nablijven.
+              </p>
+            )}
             <div>
               <label className="form-label">Titel melding</label>
               <input
