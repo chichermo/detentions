@@ -15,16 +15,47 @@ function ReportTable({
   description,
   rows,
   emptyMessage,
+  variant = 'default',
 }: {
   title: string;
   description: string;
   rows: StudentReportRow[];
   emptyMessage: string;
+  variant?: 'default' | 'followUp';
 }) {
+  const isFollowUp = variant === 'followUp';
+
   return (
-    <div className="card p-6">
-      <h3 className="text-lg font-bold text-slate-100 mb-1">{title}</h3>
-      <p className="text-sm text-slate-400 mb-4">{description}</p>
+    <div
+      className={
+        isFollowUp
+          ? 'card p-6 border border-amber-500/45 bg-amber-500/10 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]'
+          : 'card p-6'
+      }
+    >
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <h3
+          className={
+            isFollowUp
+              ? 'text-lg font-bold text-amber-200'
+              : 'text-lg font-bold text-slate-100'
+          }
+        >
+          {title}
+        </h3>
+        {isFollowUp && rows.length > 0 && (
+          <span className="badge-warning">Opvolgen</span>
+        )}
+      </div>
+      <p
+        className={
+          isFollowUp
+            ? 'text-sm text-amber-100/75 mb-4'
+            : 'text-sm text-slate-400 mb-4'
+        }
+      >
+        {description}
+      </p>
       {rows.length === 0 ? (
         <p className="text-slate-500 text-sm py-4">{emptyMessage}</p>
       ) : (
@@ -39,10 +70,21 @@ function ReportTable({
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.student}>
-                  <td className="font-medium">{row.student}</td>
-                  <td className="text-right">{row.count}</td>
-                  <td className="text-sm text-slate-400">
+                <tr
+                  key={row.student}
+                  className={isFollowUp ? 'bg-amber-500/5' : undefined}
+                >
+                  <td className={`font-medium ${isFollowUp ? 'text-amber-50' : ''}`}>
+                    {row.student}
+                  </td>
+                  <td
+                    className={`text-right ${isFollowUp ? 'font-semibold text-amber-200' : ''}`}
+                  >
+                    {row.count}
+                  </td>
+                  <td
+                    className={`text-sm ${isFollowUp ? 'text-amber-100/80' : 'text-slate-400'}`}
+                  >
                     {row.detentions.map((d) => (
                       <span key={d.id} className="block">
                         {format(parseISO(d.date), 'd MMM yyyy', { locale: nl })}
@@ -97,6 +139,7 @@ export default function DetailedReportsSection({ detentions }: Props) {
           description="Weigering op di/do zonder gekoppelde maandag-registratie."
           rows={reports.pendingDouble}
           emptyMessage="Geen openstaande strafstudies."
+          variant="followUp"
         />
       </div>
     </section>
