@@ -64,8 +64,9 @@ export default function DetentionEditPanel({
 
       <div className="detention-edit-card__grid">
         <div className="detention-edit-card__field detention-edit-card__field--full">
-          <FieldLabel>Leerling</FieldLabel>
+          <FieldLabel>Leerling *</FieldLabel>
           <select
+            required
             value={studentValue}
             onChange={(e) => onChange('student', e.target.value)}
             className="select-field w-full"
@@ -80,20 +81,22 @@ export default function DetentionEditPanel({
         </div>
 
         <div className="detention-edit-card__field">
-          <FieldLabel>Personeel</FieldLabel>
+          <FieldLabel>Personeel *</FieldLabel>
           <StaffNameInput
             value={detention.teacher || ''}
             onChange={(v) => onChange('teacher', v)}
             staffNames={staffNames}
             className="input-field w-full"
             id="edit-staff"
+            required
           />
         </div>
 
         <div className="detention-edit-card__field">
-          <FieldLabel>Reden</FieldLabel>
+          <FieldLabel>Reden *</FieldLabel>
           <input
             type="text"
+            required
             value={detention.reason || ''}
             onChange={(e) => onChange('reason', e.target.value)}
             className="input-field w-full"
@@ -113,9 +116,10 @@ export default function DetentionEditPanel({
         </div>
 
         <div className="detention-edit-card__field">
-          <FieldLabel>Datum LVS</FieldLabel>
+          <FieldLabel>Datum LVS *</FieldLabel>
           <input
             type="date"
+            required
             value={detention.lvsDate || ''}
             onChange={(e) => onChange('lvsDate', e.target.value)}
             className="input-field date-field w-full"

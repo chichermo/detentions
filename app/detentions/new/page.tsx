@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Plus, X, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
+import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
 import { format, parseISO, getDay } from 'date-fns';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
@@ -139,29 +140,35 @@ export default function NewDetentionPage() {
   };
 
   const handleSave = async () => {
-    const detentionsToSave: Detention[] = detentions
-      .filter(d => d.student && d.student.trim() !== '')
-      .map((d, index) => ({
-        id: `detention-${Date.now()}-${index}`,
-        number: d.number || index + 1,
-        date,
-        dayOfWeek: selectedDay,
-        student: getStudentDisplayName(d.student || ''),
-        teacher: d.teacher || '',
-        reason: d.reason || '',
-        task: d.task || '',
-        lvsDate: d.lvsDate || '',
-        shouldPrint: d.shouldPrint || false,
-        canUseChromebook: d.canUseChromebook || false,
-        extraNotes: d.extraNotes || '',
-        isDoublePeriod: d.isDoublePeriod || false,
-        timePeriod: d.timePeriod,
-        nablijvenGeweigerd: d.nablijvenGeweigerd || false,
-        didNotAttend: d.didNotAttend || false,
-      }));
+    for (let i = 0; i < detentions.length; i++) {
+      const err = validateRequiredDetentionFields(detentions[i]);
+      if (err) {
+        alert(`Nablijven #${i + 1}: ${err}`);
+        return;
+      }
+    }
+
+    const detentionsToSave: Detention[] = detentions.map((d, index) => ({
+      id: `detention-${Date.now()}-${index}`,
+      number: d.number || index + 1,
+      date,
+      dayOfWeek: selectedDay,
+      student: getStudentDisplayName(d.student || ''),
+      teacher: (d.teacher || '').trim(),
+      reason: (d.reason || '').trim(),
+      task: d.task || '',
+      lvsDate: d.lvsDate || '',
+      shouldPrint: d.shouldPrint || false,
+      canUseChromebook: d.canUseChromebook || false,
+      extraNotes: d.extraNotes || '',
+      isDoublePeriod: d.isDoublePeriod || false,
+      timePeriod: d.timePeriod,
+      nablijvenGeweigerd: d.nablijvenGeweigerd || false,
+      didNotAttend: d.didNotAttend || false,
+    }));
 
     if (detentionsToSave.length === 0) {
-      alert('Voeg ten minste één leerling toe voordat je opslaat.');
+      alert('Voeg ten minste één nablijven toe voordat je opslaat.');
       return;
     }
 
@@ -246,15 +253,12 @@ export default function NewDetentionPage() {
               <label className="form-label">
                 Datum
               </label>
-              <div className="relative">
-                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted pointer-events-none z-[1]" />
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="input-field date-field w-full pl-10"
-                />
-              </div>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="input-field date-field w-full"
+              />
               <p className="text-sm text-slate-400 mt-2">
                 Dag: {selectedDay}
               </p>
@@ -337,22 +341,24 @@ export default function NewDetentionPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Personeel
+                    Personeel *
                   </label>
                   <StaffNameInput
                     value={detention.teacher || ''}
                     onChange={(v) => updateDetention(index, 'teacher', v)}
                     staffNames={staffNames}
                     id={`new-staff-${index}`}
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Reden
+                    Reden *
                   </label>
                   <input
                     type="text"
+                    required
                     value={detention.reason || ''}
                     onChange={(e) => updateDetention(index, 'reason', e.target.value)}
                     className="input-field"
@@ -375,10 +381,11 @@ export default function NewDetentionPage() {
 
                 <div>
                   <label className="form-label">
-                    Datum LVS
+                    Datum LVS *
                   </label>
                   <input
                     type="date"
+                    required
                     value={detention.lvsDate || ''}
                     onChange={(e) => updateDetention(index, 'lvsDate', e.target.value)}
                     className="input-field date-field w-full"

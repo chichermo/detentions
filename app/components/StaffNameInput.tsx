@@ -9,6 +9,7 @@ type Props = {
   placeholder?: string;
   className?: string;
   id?: string;
+  required?: boolean;
 };
 
 /** Tekstveld + datalist van geïmporteerd personeel (vrij typen blijft mogelijk). */
@@ -19,6 +20,7 @@ export default function StaffNameInput({
   placeholder = 'Naam van personeelslid',
   className = 'input-field',
   id,
+  required,
 }: Props) {
   const autoId = useId();
   const listId = `staff-list-${id || autoId.replace(/:/g, '')}`;
@@ -34,6 +36,7 @@ export default function StaffNameInput({
         className={className}
         placeholder={placeholder}
         autoComplete="off"
+        required={required}
       />
       <datalist id={listId}>
         {staffNames.map((name) => (

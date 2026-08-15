@@ -5,6 +5,7 @@ import {
   normalizeDetentionStudent,
   normalizeDetentionTeacher,
 } from '@/lib/studentImport';
+import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const detention = normalizeDetentionNames(await request.json());
+    const requiredErr = validateRequiredDetentionFields(detention);
+    if (requiredErr) {
+      return NextResponse.json(
+        { success: false, error: requiredErr, details: requiredErr },
+        { status: 400 }
+      );
+    }
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {
@@ -50,6 +58,13 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const detention = normalizeDetentionNames(await request.json());
+    const requiredErr = validateRequiredDetentionFields(detention);
+    if (requiredErr) {
+      return NextResponse.json(
+        { success: false, error: requiredErr, details: requiredErr },
+        { status: 400 }
+      );
+    }
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {

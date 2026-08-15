@@ -12,6 +12,7 @@ import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
+import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
 import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
@@ -158,6 +159,12 @@ export default function DetentionSessionPage() {
   const handleSaveEdit = async () => {
     if (!editingDetention || !editingId) return;
 
+    const requiredErr = validateRequiredDetentionFields(editingDetention);
+    if (requiredErr) {
+      alert(requiredErr);
+      return;
+    }
+
     if (
       (editingDetention.dayOfWeek || getDayOfWeekFromDate(date)) === 'MAANDAG' &&
       !allowStrafstudie &&
@@ -223,8 +230,9 @@ export default function DetentionSessionPage() {
   const handleSaveNew = async () => {
     if (!newDetention) return;
 
-    if (!newDetention.student || String(newDetention.student).trim() === '') {
-      alert('Selecteer een leerling.');
+    const requiredErr = validateRequiredDetentionFields(newDetention);
+    if (requiredErr) {
+      alert(requiredErr);
       return;
     }
 
@@ -546,22 +554,24 @@ function DetentionForm({
 
       <div>
         <label className="form-label">
-          Personeel
+          Personeel *
         </label>
         <StaffNameInput
           value={detention.teacher || ''}
           onChange={(v) => onChange('teacher', v)}
           staffNames={staffNames}
           id="session-staff"
+          required
         />
       </div>
 
       <div>
         <label className="form-label">
-          Reden
+          Reden *
         </label>
         <input
           type="text"
+          required
           value={detention.reason || ''}
           onChange={(e) => onChange('reason', e.target.value)}
           className="input-field"
@@ -584,10 +594,11 @@ function DetentionForm({
 
       <div>
         <label className="form-label">
-          Datum LVS
+          Datum LVS *
         </label>
         <input
           type="date"
+          required
           value={detention.lvsDate || ''}
           onChange={(e) => onChange('lvsDate', e.target.value)}
           className="input-field date-field w-full"

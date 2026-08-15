@@ -318,6 +318,7 @@ body {
     line-height: 1.4;
     color-scheme: dark;
     font-family: var(--font-sans);
+    padding-right: 2.5rem;
   }
 
   input[type='date'].input-field::-webkit-calendar-picker-indicator,
@@ -325,6 +326,8 @@ body {
     filter: invert(0.85) sepia(0.4) saturate(4) hue-rotate(5deg);
     cursor: pointer;
     opacity: 0.9;
+    margin-left: 0.5rem;
+    padding: 0.25rem;
   }
 
   /* Modales y menús — capas fijas sin solapamiento */
