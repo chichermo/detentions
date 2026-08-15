@@ -285,7 +285,7 @@ export default function CalendarPage() {
               <span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Geblokkeerd
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-orange-500/30 border border-orange-500/50" /> Geen strafstudie
+              <span className="w-3 h-3 rounded bg-violet-500/30 border border-violet-500/50" /> Geen strafstudie
             </span>
             <span className="text-slate-500">· Alleen Ma, Di, Do zijn klikbaar</span>
           </div>
@@ -326,8 +326,8 @@ export default function CalendarPage() {
                     ${inMonth && !nablijvenDay ? 'opacity-30 cursor-not-allowed border-slate-800/50 bg-slate-900/30' : ''}
                     ${clickable ? 'cursor-pointer touch-manipulation active:scale-[0.98] hover:border-indigo-400/60' : ''}
                     ${blocked && clickable ? 'border-red-500/60 bg-red-950/40' : ''}
-                    ${hasNotice && !blocked && clickable ? 'border-amber-500/50 bg-amber-950/20' : ''}
-                    ${noStrafstudieDay && !blocked && !hasNotice && clickable ? 'border-orange-500/50 bg-orange-950/25' : ''}
+                    ${hasNotice && !blocked && !noStrafstudieDay && clickable ? 'border-amber-500/50 bg-amber-950/20' : ''}
+                    ${noStrafstudieDay && !blocked && clickable ? 'border-violet-500/50 bg-violet-950/30' : ''}
                     ${!blocked && !hasNotice && !noStrafstudieDay && session && clickable ? 'border-emerald-500/50 bg-emerald-500/15' : ''}
                     ${!blocked && !hasNotice && !noStrafstudieDay && !session && clickable ? 'border-slate-600 bg-slate-800/60 hover:border-indigo-500/50' : ''}
                     ${isToday && clickable ? 'ring-1 ring-indigo-400' : ''}
@@ -344,7 +344,7 @@ export default function CalendarPage() {
                     <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5" />
                   )}
                   {clickable && noStrafstudieDay && !blocked && (
-                    <div className="text-[8px] sm:text-[10px] font-semibold text-orange-300 mt-0.5 leading-tight break-words">
+                    <div className="text-[8px] sm:text-[10px] font-semibold text-violet-300 mt-0.5 leading-tight break-words">
                       geen strafstudie
                     </div>
                   )}
@@ -517,7 +517,7 @@ export default function CalendarPage() {
               </label>
             )}
             {noStrafstudie && !isBlocked && (
-              <p className="text-sm text-orange-300/90 rounded-lg border border-orange-500/30 bg-orange-950/30 px-3 py-2">
+              <p className="text-sm text-violet-300/90 rounded-lg border border-violet-500/30 bg-violet-950/30 px-3 py-2">
                 Op deze maandag is geen strafstudie mogelijk — alleen gewoon nablijven.
               </p>
             )}
