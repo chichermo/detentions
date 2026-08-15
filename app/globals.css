@@ -309,10 +309,10 @@ body {
     box-shadow: 0 0 0 3px var(--accent-muted);
   }
 
-  /* Datumvelden — geen native icoon/artefacten over de tekst */
-  input[type='date'].input-field,
-  input[type='month'].input-field,
-  input[type='datetime-local'].input-field,
+  /* Datumvelden — native kalenderteken overal verbergen */
+  input[type='date'],
+  input[type='month'],
+  input[type='datetime-local'],
   .date-field {
     min-height: 2.75rem;
     line-height: 1.4;
@@ -321,28 +321,46 @@ body {
     position: relative;
   }
 
-  input[type='date'].input-field::-webkit-calendar-picker-indicator,
-  input[type='month'].input-field::-webkit-calendar-picker-indicator {
-    opacity: 0;
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='month']::-webkit-calendar-picker-indicator,
+  input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    /* Onzichtbaar maar klikbaar (opener blijft werken) */
+    opacity: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    color: transparent !important;
+    filter: none !important;
+    cursor: pointer;
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
+    width: auto;
+    height: auto;
     margin: 0;
     padding: 0;
   }
 
-  input[type='date'].input-field::-webkit-clear-button,
-  input[type='date'].input-field::-webkit-inner-spin-button,
-  input[type='month'].input-field::-webkit-clear-button,
-  input[type='month'].input-field::-webkit-inner-spin-button {
-    display: none;
+  input[type='date']::-webkit-clear-button,
+  input[type='date']::-webkit-inner-spin-button,
+  input[type='month']::-webkit-clear-button,
+  input[type='month']::-webkit-inner-spin-button,
+  input[type='datetime-local']::-webkit-clear-button,
+  input[type='datetime-local']::-webkit-inner-spin-button {
+    display: none !important;
     -webkit-appearance: none;
   }
 
-  input[type='date'].input-field::-webkit-datetime-edit,
-  input[type='month'].input-field::-webkit-datetime-edit {
+  input[type='date']::-ms-clear,
+  input[type='date']::-ms-reveal,
+  input[type='month']::-ms-clear,
+  input[type='month']::-ms-reveal {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  input[type='date']::-webkit-datetime-edit,
+  input[type='month']::-webkit-datetime-edit,
+  input[type='datetime-local']::-webkit-datetime-edit {
     padding: 0;
   }
 
