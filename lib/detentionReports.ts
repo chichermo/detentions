@@ -27,7 +27,7 @@ function groupByStudent(detentions: Detention[]): StudentReportRow[] {
     .sort((a, b) => b.count - a.count || a.student.localeCompare(b.student));
 }
 
-/** Nablijven normales (di/do) o cualquier día sin strafstudie */
+/** Nablijven zonder strafstudie (ma/di/do) */
 function isRegularDetention(d: Detention): boolean {
   return !d.isDoublePeriod;
 }
@@ -52,13 +52,10 @@ export function getDoubleMissedOrRejected(detentions: Detention[]): StudentRepor
   );
 }
 
-/** Geweigerd op di/do → verwachte strafstudie op maandag */
+/** Geweigerd op gewone nablijven (ma/di/do) → verwachte strafstudie op (volgende) maandag */
 export function getTriggeredDoubleSource(detentions: Detention[]): Detention[] {
   return detentions.filter(
-    (d) =>
-      isRegularDetention(d) &&
-      d.dayOfWeek !== 'MAANDAG' &&
-      !!d.nablijvenGeweigerd
+    (d) => isRegularDetention(d) && !!d.nablijvenGeweigerd
   );
 }
 

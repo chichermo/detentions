@@ -798,7 +798,7 @@ export default function StatisticsPage() {
               Nablijven geweigerd ({nablijvenGeweigerd.length})
             </h3>
             <p className="text-sm text-slate-400 mb-4">
-              Gewone nablijven (di/do) die geweigerd werden — opvolging via strafstudie.
+              Gewone nablijven (ma/di/do) die geweigerd werden — opvolging via strafstudie.
             </p>
             <div className="overflow-x-auto">
               {nablijvenGeweigerd.length === 0 ? (

@@ -173,7 +173,7 @@ export default function DetentionEditPanel({
             </p>
           )}
         </div>
-        {!isMonday && detention.nablijvenGeweigerd && (
+        {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
             Leerling krijgt strafstudie op de eerstvolgende maandag.
           </p>

@@ -78,7 +78,7 @@ export default function DetailedReportsSection({ detentions }: Props) {
       <div>
         <h2 className="section-title">Gedetailleerde leerlingrapporten</h2>
         <p className="text-slate-400 text-sm mt-1">
-          Strafstudie geldt alleen op maandag, na weigering op dinsdag/donderdag.
+          Strafstudie geldt alleen op maandag, na weigering van gewone nablijven (ma/di/do).
         </p>
       </div>
 
@@ -103,7 +103,7 @@ export default function DetailedReportsSection({ detentions }: Props) {
         />
         <ReportTable
           title="Openstaande strafstudies"
-          description="Weigering op di/do zonder gekoppelde maandag-registratie."
+          description="Weigering op ma/di/do zonder gekoppelde maandag-registratie."
           rows={reports.pendingDouble}
           emptyMessage="Geen openstaande strafstudies."
           variant="followUp"

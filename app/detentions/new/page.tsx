@@ -422,6 +422,11 @@ export default function NewDetentionPage() {
                     />
                     <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
                   </label>
+                  {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
+                    <p className="text-xs text-amber-300/90 px-1">
+                      Leerling krijgt strafstudie op de eerstvolgende maandag.
+                    </p>
+                  )}
                   {selectedDay === 'MAANDAG' && allowStrafstudie && (
                     <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">
                       <input
