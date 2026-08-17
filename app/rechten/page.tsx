@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Shield, Search, RefreshCw } from 'lucide-react';
 import PageHeader from '@/app/components/ui/PageHeader';
 import LoadingPage from '@/app/components/ui/LoadingPage';
-import { hasFullDetentionsAccess } from '@/lib/auth';
+import { canManageListsAndRights } from '@/lib/auth';
 
 type NablijvenPortalScope = 'none' | 'limited' | 'full';
 
@@ -48,7 +48,7 @@ export default function RechtenPage() {
   }, []);
 
   useEffect(() => {
-    if (!hasFullDetentionsAccess()) {
+    if (!canManageListsAndRights()) {
       router.replace('/');
       return;
     }

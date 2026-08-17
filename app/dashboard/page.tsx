@@ -14,7 +14,7 @@ import ChartCard from '@/app/components/charts/ChartCard';
 import NablijvenLineChart from '@/app/components/charts/NablijvenLineChart';
 import NablijvenPieChart from '@/app/components/charts/NablijvenPieChart';
 import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
-import { hasFullDetentionsAccess } from '@/lib/auth';
+import { canManageListsAndRights } from '@/lib/auth';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -25,10 +25,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [period, setPeriod] = useState<'week' | 'month' | 'year' | 'all'>('month');
-  const [fullAccess, setFullAccess] = useState(true);
+  const [canManageLists, setCanManageLists] = useState(false);
 
   useEffect(() => {
-    setFullAccess(hasFullDetentionsAccess());
+    setCanManageLists(canManageListsAndRights());
   }, []);
 
   const fetchData = useCallback(async (silent = false) => {
@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
   const periodButtons = (
     <>
-      {fullAccess && (
+      {canManageLists && (
         <Link href="/rechten" className="btn-secondary text-sm px-3 py-2 flex items-center gap-1.5">
           <Shield className="h-4 w-4" />
           <span className="hidden sm:inline">Rechten</span>

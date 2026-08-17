@@ -8,12 +8,33 @@ const PORTAL_SESSION_KEY = 'element_portal_session';
 
 export type DetentionsAccessScope = 'full' | 'limited';
 
-/** Alleen Admin en Annelore (kalenderbeheer, top 10 personeel, …). */
+/** Alleen Admin, Annelore en Liesbeth: leerlingenlijst, personeel, rechten. */
+const LIST_ADMIN_USERNAMES = new Set([
+  'admin',
+  'annelore.delbecque',
+  'liesbeth.kreps',
+  'liesbeth',
+]);
+
+function normalizeUsername(name: string | null): string {
+  return (name || '').trim().toLowerCase();
+}
+
+/** Leerlingen, personeel en rechten: alleen Admin, Annelore en Liesbeth. */
+export function canManageListsAndRights(): boolean {
+  const username = normalizeUsername(getPortalUsername());
+  if (!username) return false;
+  if (LIST_ADMIN_USERNAMES.has(username)) return true;
+  // SSO-naam kan een extra suffix hebben
+  return username.startsWith('liesbeth.kreps') || username.startsWith('annelore.delbecque');
+}
+
+/** Admin of Annelore: kalenderbeheer, top 10 personeel. */
 const PRIVILEGED_ADMIN_USERNAMES = new Set(['admin', 'annelore.delbecque']);
 
 /** Admin of Annelore via Element-SSO; zonder SSO: lokale rol beheerder. */
 export function isPrivilegedAdminUser(): boolean {
-  const username = getPortalUsername()?.toLowerCase() || '';
+  const username = normalizeUsername(getPortalUsername());
   if (username && PRIVILEGED_ADMIN_USERNAMES.has(username)) return true;
   return getStoredRole() === 'beheerder' && !getPortalUsername();
 }
@@ -82,11 +103,15 @@ export function canViewStaffStatistics(): boolean {
   return isPrivilegedAdminUser();
 }
 
-/** Beperkte toegang: alles behalve leerlingen- en personeelslijsten (en rechtenbeheer). */
-export function isPathAllowedForScope(pathname: string, scope: DetentionsAccessScope): boolean {
-  if (scope === 'full') return true;
-  if (pathname === '/students' || pathname.startsWith('/students/')) return false;
-  if (pathname === '/staff' || pathname.startsWith('/staff/')) return false;
-  if (pathname === '/rechten' || pathname.startsWith('/rechten/')) return false;
+/** Leerlingen, personeel en rechten: alleen Admin, Annelore en Liesbeth. */
+export function isPathAllowedForScope(pathname: string, _scope?: DetentionsAccessScope): boolean {
+  const listPath =
+    pathname === '/students' ||
+    pathname.startsWith('/students/') ||
+    pathname === '/staff' ||
+    pathname.startsWith('/staff/') ||
+    pathname === '/rechten' ||
+    pathname.startsWith('/rechten/');
+  if (listPath) return canManageListsAndRights();
   return true;
 }

@@ -10,7 +10,7 @@ import {
 import LoadingPage from '@/app/components/ui/LoadingPage';
 
 /**
- * Verbergt leerlingen- en personeelslijsten bij beperkte Nablijven-toegang.
+ * Verbergt leerlingen, personeel en rechten voor iedereen behalve Admin, Annelore en Liesbeth.
  */
 export default function AccessScopeGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

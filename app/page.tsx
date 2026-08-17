@@ -24,7 +24,7 @@ import InstallPrompt from '@/app/components/InstallPrompt';
 import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
-import { hasFullDetentionsAccess } from '@/lib/auth';
+import { canManageListsAndRights } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
@@ -93,10 +93,10 @@ export default function Home() {
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [fullAccess, setFullAccess] = useState(false);
+  const [canManageLists, setCanManageLists] = useState(false);
 
   useEffect(() => {
-    setFullAccess(hasFullDetentionsAccess());
+    setCanManageLists(canManageListsAndRights());
     fetchSessions();
   }, []);
 
@@ -196,7 +196,7 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-10">
-          {NAV_ITEMS.filter((item) => !item.fullOnly || fullAccess).map((item) => (
+          {NAV_ITEMS.filter((item) => !item.fullOnly || canManageLists).map((item) => (
             <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>
               <div className="relative flex flex-col gap-4">
                 <div className={item.iconClass}>
