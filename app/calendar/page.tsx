@@ -202,7 +202,7 @@ export default function CalendarPage() {
   }, [selectedDate, isNablijvenDay, calendarDays, selectedSession]);
 
   const modalTitle = selectedDate
-    ? format(parseISO(selectedDate), 'EEEE d MMMM yyyy', { locale: nl })
+    ? `${format(parseISO(selectedDate), 'EEEE', { locale: nl })} ${format(parseISO(selectedDate), 'dd/MM/yyyy')}`
     : 'Dag';
 
   const hasRemark = !!(selectedConfig?.noticeTitle || selectedConfig?.notice);
@@ -316,7 +316,7 @@ export default function CalendarPage() {
                   type="button"
                   aria-pressed={clickable ? isSelected : undefined}
                   aria-disabled={!clickable}
-                  aria-label={format(day, 'd MMMM yyyy', { locale: nl })}
+                  aria-label={format(day, 'dd/MM/yyyy')}
                   onClick={(e) => handleDayClick(day, e)}
                   disabled={!clickable}
                   className={`
@@ -378,7 +378,7 @@ export default function CalendarPage() {
                     className="w-full text-left border border-slate-700 rounded-xl p-4 hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all"
                   >
                     <h3 className="font-bold text-slate-100">
-                      {format(parseISO(session.date), 'EEEE d MMMM', { locale: nl })}
+                      {`${format(parseISO(session.date), 'EEEE', { locale: nl })} ${format(parseISO(session.date), 'dd/MM/yyyy')}`}
                     </h3>
                     <p className="text-sm text-slate-400 mt-1">
                       {session.detentions.length} nablijven · {session.dayOfWeek}
