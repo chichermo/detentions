@@ -323,6 +323,25 @@ body {
     box-shadow: 0 0 0 3px var(--accent-muted);
   }
 
+  .date-field-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  .date-field-wrap .date-field-native {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color-scheme: dark;
+  }
+
   /* Datumvelden — native kalenderteken overal verbergen */
   input[type='date'],
   input[type='month'],

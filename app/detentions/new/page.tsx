@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
+import DateField from '@/app/components/DateField';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
@@ -258,10 +259,9 @@ function NewDetentionPageInner() {
               <label className="form-label">
                 Datum
               </label>
-              <input
-                type="date"
+              <DateField
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={setDate}
                 className="input-field date-field w-full"
               />
               <p className="text-sm text-slate-400 mt-2">
@@ -388,11 +388,10 @@ function NewDetentionPageInner() {
                   <label className="form-label">
                     Datum LVS *
                   </label>
-                  <input
-                    type="date"
+                  <DateField
                     required
                     value={detention.lvsDate || ''}
-                    onChange={(e) => updateDetention(index, 'lvsDate', e.target.value)}
+                    onChange={(v) => updateDetention(index, 'lvsDate', v)}
                     className="input-field date-field w-full"
                   />
                 </div>

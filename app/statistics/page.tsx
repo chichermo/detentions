@@ -16,6 +16,7 @@ import StatisticsSavedFilters, { StatisticsFilterState } from '@/app/components/
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 import { canViewStaffStatistics } from '@/lib/auth';
+import DateField from '@/app/components/DateField';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
@@ -630,10 +631,9 @@ export default function StatisticsPage() {
             {filterType === 'day' && (
               <div>
                 <label className="form-label">Datum</label>
-                <input
-                  type="date"
+                <DateField
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={setSelectedDate}
                   className="input-field date-field w-full"
                 />
               </div>
@@ -669,19 +669,17 @@ export default function StatisticsPage() {
               <>
                 <div>
                   <label className="form-label">Van</label>
-                  <input
-                    type="date"
+                  <DateField
                     value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    onChange={setCustomStartDate}
                     className="input-field date-field w-full"
                   />
                 </div>
                 <div>
                   <label className="form-label">Tot</label>
-                  <input
-                    type="date"
+                  <DateField
                     value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    onChange={setCustomEndDate}
                     className="input-field date-field w-full"
                   />
                 </div>

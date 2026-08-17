@@ -9,6 +9,7 @@ import DetentionSessionList from '@/app/components/DetentionSessionList';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
+import DateField from '@/app/components/DateField';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
@@ -596,11 +597,10 @@ function DetentionForm({
         <label className="form-label">
           Datum LVS *
         </label>
-        <input
-          type="date"
+        <DateField
           required
           value={detention.lvsDate || ''}
-          onChange={(e) => onChange('lvsDate', e.target.value)}
+          onChange={(v) => onChange('lvsDate', v)}
           className="input-field date-field w-full"
         />
       </div>

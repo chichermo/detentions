@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Save, X } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import StaffNameInput from '@/app/components/StaffNameInput';
+import DateField from '@/app/components/DateField';
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <span className="detention-field-label">{children}</span>;
@@ -117,11 +118,10 @@ export default function DetentionEditPanel({
 
         <div className="detention-edit-card__field">
           <FieldLabel>Datum LVS *</FieldLabel>
-          <input
-            type="date"
+          <DateField
             required
             value={detention.lvsDate || ''}
-            onChange={(e) => onChange('lvsDate', e.target.value)}
+            onChange={(v) => onChange('lvsDate', v)}
             className="input-field date-field w-full"
           />
         </div>

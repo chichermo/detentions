@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import { Detention } from '@/types';
 import Modal from '@/app/components/ui/Modal';
+import DateField from '@/app/components/DateField';
 
 interface DuplicateSessionProps {
   detentions: Detention[];
@@ -75,11 +76,10 @@ export default function DuplicateSession({ detentions, currentDate, onDuplicate 
         <label className="form-label" htmlFor="duplicate-date">
           Nieuwe datum
         </label>
-        <input
+        <DateField
           id="duplicate-date"
-          type="date"
           value={newDate}
-          onChange={(e) => setNewDate(e.target.value)}
+          onChange={setNewDate}
           className="input-field date-field w-full"
           min={new Date().toISOString().split('T')[0]}
         />

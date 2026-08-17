@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Search, X, Filter } from 'lucide-react';
+import DateField from '@/app/components/DateField';
 
 interface AdvancedSearchProps {
   onSearch: (filters: SearchFilters) => void;
@@ -130,20 +131,18 @@ export default function AdvancedSearch({ onSearch, placeholder = "Zoeken..." }: 
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">Van Datum</label>
-            <input
-              type="date"
+            <DateField
               value={filters.dateFrom || ''}
-              onChange={(e) => handleFilterChange('dateFrom', e.target.value || undefined)}
+              onChange={(v) => handleFilterChange('dateFrom', v || undefined)}
               className="input-field"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">Tot Datum</label>
-            <input
-              type="date"
+            <DateField
               value={filters.dateTo || ''}
-              onChange={(e) => handleFilterChange('dateTo', e.target.value || undefined)}
+              onChange={(v) => handleFilterChange('dateTo', v || undefined)}
               className="input-field"
             />
           </div>
