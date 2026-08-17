@@ -701,20 +701,46 @@ export default function StatisticsPage() {
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <ChartCard
-            title="Nablijven per Dag"
-            subtitle="Verdeling over weekdagen"
-            empty={dayChartData.every((d) => d.count === 0)}
-          >
-            <NablijvenBarChart
-              data={dayChartData.map((d) => ({
-                label: DAY_LABELS[d.name] ?? d.name,
-                value: d.count,
-              }))}
-              color={NABLIIJVEN_CHART_COLORS.primary}
-              ariaLabel="Nablijven per weekdag"
-            />
-          </ChartCard>
+          <div className="space-y-6">
+            <ChartCard
+              title="Nablijven per Dag"
+              subtitle="Verdeling over weekdagen"
+              empty={dayChartData.every((d) => d.count === 0)}
+            >
+              <NablijvenBarChart
+                data={dayChartData.map((d) => ({
+                  label: DAY_LABELS[d.name] ?? d.name,
+                  value: d.count,
+                }))}
+                color={NABLIIJVEN_CHART_COLORS.primary}
+                ariaLabel="Nablijven per weekdag"
+              />
+            </ChartCard>
+
+            {topReasons.length > 0 && (
+              <div className="card p-6">
+                <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Redenen</h3>
+                <div className="overflow-x-auto">
+                  <table className="table-simple">
+                    <thead>
+                      <tr>
+                        <th>Reden</th>
+                        <th className="text-right">Aantal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topReasons.map((reason, idx) => (
+                        <tr key={idx}>
+                          <td>{reason.name}</td>
+                          <td className="text-right font-semibold">{reason.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
 
           <ChartCard
             title="Top 10 Leerlingen"
@@ -739,9 +765,8 @@ export default function StatisticsPage() {
         </div>
 
         {/* Tablas de Datos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Tabla Top Personeel */}
-          {canViewTopStaff && topTeachers.length > 0 && (
+        {canViewTopStaff && topTeachers.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div className="card p-6">
               <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Personeel</h3>
               <div className="overflow-x-auto">
@@ -763,33 +788,8 @@ export default function StatisticsPage() {
                 </table>
               </div>
             </div>
-          )}
-
-          {/* Tabla Top Redenen */}
-          {topReasons.length > 0 && (
-            <div className="card p-6">
-              <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Redenen</h3>
-              <div className="overflow-x-auto">
-                <table className="table-simple">
-                  <thead>
-                    <tr>
-                      <th>Reden</th>
-                      <th className="text-right">Aantal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topReasons.map((reason, idx) => (
-                      <tr key={idx}>
-                        <td>{reason.name}</td>
-                        <td className="text-right font-semibold">{reason.count}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Overzicht geweigerd: nablijven vs strafstudie */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
