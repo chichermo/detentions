@@ -8,8 +8,15 @@ const PORTAL_SESSION_KEY = 'element_portal_session';
 
 export type DetentionsAccessScope = 'full' | 'limited';
 
-/** Gebruikers die kalenderdag-beheer (blokkeren, meldingen, geen strafstudie) mogen zien. */
-const CALENDAR_ADMIN_USERNAMES = new Set(['admin', 'annelore.delbecque']);
+/** Alleen Admin en Annelore (kalenderbeheer, top 10 personeel, …). */
+const PRIVILEGED_ADMIN_USERNAMES = new Set(['admin', 'annelore.delbecque']);
+
+/** Admin of Annelore via Element-SSO; zonder SSO: lokale rol beheerder. */
+export function isPrivilegedAdminUser(): boolean {
+  const username = getPortalUsername()?.toLowerCase() || '';
+  if (username && PRIVILEGED_ADMIN_USERNAMES.has(username)) return true;
+  return getStoredRole() === 'beheerder' && !getPortalUsername();
+}
 
 export function getStoredRole(): UserRole {
   if (typeof window === 'undefined') return 'leerkracht';
@@ -67,10 +74,12 @@ export function getPortalUsername(): string | null {
  * Andere gebruikers kunnen wel sessies aanmaken.
  */
 export function canManageCalendarSettings(): boolean {
-  const username = getPortalUsername()?.toLowerCase() || '';
-  if (username && CALENDAR_ADMIN_USERNAMES.has(username)) return true;
-  // Fallback zonder SSO: lokale rol beheerder
-  return getStoredRole() === 'beheerder' && !getPortalUsername();
+  return isPrivilegedAdminUser();
+}
+
+/** Top 10 personeel in statistieken: alleen Admin en Annelore. */
+export function canViewStaffStatistics(): boolean {
+  return isPrivilegedAdminUser();
 }
 
 /** Beperkte toegang: alles behalve leerlingen- en personeelslijsten (en rechtenbeheer). */

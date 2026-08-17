@@ -15,6 +15,7 @@ import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
 import StatisticsSavedFilters, { StatisticsFilterState } from '@/app/components/StatisticsSavedFilters';
 import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
+import { canViewStaffStatistics } from '@/lib/auth';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
@@ -25,10 +26,12 @@ export default function StatisticsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [filterType, setFilterType] = useState<FilterType>('month');
   const [pdfReady, setPdfReady] = useState(false);
+  const [canViewTopStaff, setCanViewTopStaff] = useState(false);
 
   // Precargar jspdf-autotable cuando el componente se monte
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      setCanViewTopStaff(canViewStaffStatistics());
       import('jspdf-autotable')
         .then(() => {
           setPdfReady(true);
@@ -340,7 +343,7 @@ export default function StatisticsPage() {
     }
     
     // ========== SECCIÓN 4: TOP 10 LEERKRACHTEN ==========
-    if (topTeachers.length > 0) {
+    if (canViewTopStaff && topTeachers.length > 0) {
       checkPageBreak(40);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
@@ -481,10 +484,9 @@ export default function StatisticsPage() {
       ['Top 10 Leerlingen'],
       ['Leerling', 'Aantal'],
       ...topStudents.map(s => [s.name, s.count]),
-      [''],
-      ['Top 10 Personeel'],
-      ['Personeel', 'Aantal'],
-      ...topTeachers.map(t => [t.name, t.count]),
+      ...(canViewTopStaff
+        ? [[''], ['Top 10 Personeel'], ['Personeel', 'Aantal'], ...topTeachers.map(t => [t.name, t.count])]
+        : []),
     ];
     
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
@@ -741,7 +743,7 @@ export default function StatisticsPage() {
         {/* Tablas de Datos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Tabla Top Personeel */}
-          {topTeachers.length > 0 && (
+          {canViewTopStaff && topTeachers.length > 0 && (
             <div className="card p-6">
               <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Personeel</h3>
               <div className="overflow-x-auto">

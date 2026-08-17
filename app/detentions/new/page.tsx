@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
@@ -30,18 +30,23 @@ const getDayOfWeekFromDate = (dateStr: string): DayOfWeek => {
   return dayMap[dayOfWeek] || 'MAANDAG';
 };
 
-export default function NewDetentionPage() {
+function parseDateParam(value: string | null): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return value;
+}
+
+function NewDetentionPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dateFromUrl = parseDateParam(searchParams.get('date'));
   const [students, setStudents] = useState<Student[]>([]);
   const [staffNames, setStaffNames] = useState<string[]>([]);
-  const [date, setDate] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('date') || format(new Date(), 'yyyy-MM-dd');
-    }
-    return format(new Date(), 'yyyy-MM-dd');
-  });
+  const [date, setDate] = useState(() => dateFromUrl || format(new Date(), 'yyyy-MM-dd'));
   const [detentions, setDetentions] = useState<Partial<Detention>[]>([]);
+
+  useEffect(() => {
+    if (dateFromUrl) setDate(dateFromUrl);
+  }, [dateFromUrl]);
   
   // Calcular el día de la semana automáticamente desde la fecha
   const selectedDay = useMemo(() => getDayOfWeekFromDate(date), [date]);
@@ -482,5 +487,19 @@ export default function NewDetentionPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function NewDetentionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-slate-400">
+          Laden…
+        </div>
+      }
+    >
+      <NewDetentionPageInner />
+    </Suspense>
   );
 }
