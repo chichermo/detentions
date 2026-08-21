@@ -5,7 +5,10 @@ import {
   normalizeDetentionStudent,
   normalizeDetentionTeacher,
 } from '@/lib/studentImport';
-import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
+import {
+  validateRequiredDetentionFields,
+  validateSessionCapacity,
+} from '@/lib/detentionValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +46,19 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (detention.date) {
+      const existing = await getDetentions(detention.date);
+      const others = existing.filter((d) => d.id !== detention.id);
+      const capacityErr = validateSessionCapacity(others.length, 1);
+      if (capacityErr) {
+        return NextResponse.json(
+          { success: false, error: capacityErr, details: capacityErr },
+          { status: 400 }
+        );
+      }
+    }
+
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {

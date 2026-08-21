@@ -9,7 +9,7 @@ import DateField from '@/app/components/DateField';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
-import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
+import { validateRequiredDetentionFields, validateSessionCapacity, MAX_DETECTIONS_PER_SESSION } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO, getDay } from 'date-fns';
 
@@ -45,6 +45,7 @@ function NewDetentionPageInner() {
   const [staffNames, setStaffNames] = useState<string[]>([]);
   const [date, setDate] = useState(() => dateFromUrl || format(new Date(), 'yyyy-MM-dd'));
   const [detentions, setDetentions] = useState<Partial<Detention>[]>([]);
+  const [existingCount, setExistingCount] = useState(0);
 
   useEffect(() => {
     if (dateFromUrl) setDate(dateFromUrl);
@@ -71,6 +72,26 @@ function NewDetentionPageInner() {
         if (!cancelled) setAllowStrafstudie(cfg?.allowStrafstudie !== false);
       } catch {
         if (!cancelled) setAllowStrafstudie(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [date]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!date) {
+        setExistingCount(0);
+        return;
+      }
+      try {
+        const res = await apiFetch(`/api/detentions?date=${encodeURIComponent(date)}`);
+        const data = await res.json();
+        if (!cancelled) setExistingCount(Array.isArray(data) ? data.length : 0);
+      } catch {
+        if (!cancelled) setExistingCount(0);
       }
     })();
     return () => {
@@ -123,6 +144,11 @@ function NewDetentionPageInner() {
   });
 
   const addDetention = () => {
+    const capacityErr = validateSessionCapacity(existingCount + detentions.length, 1);
+    if (capacityErr) {
+      alert(capacityErr);
+      return;
+    }
     setDetentions([...detentions, createEmptyDetention()]);
   };
 
@@ -153,6 +179,12 @@ function NewDetentionPageInner() {
         alert(`Nablijven #${i + 1}: ${err}`);
         return;
       }
+    }
+
+    const capacityErr = validateSessionCapacity(existingCount, detentions.length);
+    if (capacityErr) {
+      alert(capacityErr);
+      return;
     }
 
     const detentionsToSave: Detention[] = detentions.map((d, index) => ({
@@ -267,6 +299,9 @@ function NewDetentionPageInner() {
               />
               <p className="text-sm text-slate-400 mt-2">
                 Dag: {selectedDay}
+                {' · '}
+                {existingCount + detentions.length}/{MAX_DETECTIONS_PER_SESSION} leerlingen
+                {existingCount > 0 ? ` (${existingCount} al op deze datum)` : ''}
               </p>
             </div>
             <div className="flex items-end">
@@ -484,7 +519,13 @@ function NewDetentionPageInner() {
         <div className="mt-8">
           <button
             onClick={addDetention}
-            className="btn-secondary flex items-center gap-2"
+            disabled={existingCount + detentions.length >= MAX_DETECTIONS_PER_SESSION}
+            className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              existingCount + detentions.length >= MAX_DETECTIONS_PER_SESSION
+                ? `Maximum ${MAX_DETECTIONS_PER_SESSION} leerlingen per sessie`
+                : undefined
+            }
           >
             <Plus className="h-5 w-5" />
             Nog een Nablijven Toevoegen

@@ -13,7 +13,7 @@ import DateField from '@/app/components/DateField';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
-import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
+import { validateRequiredDetentionFields, validateSessionCapacity, MAX_DETECTIONS_PER_SESSION } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -207,6 +207,11 @@ export default function DetentionSessionPage() {
   };
 
   const handleAddNew = () => {
+    const capacityErr = validateSessionCapacity(detentions.length, 1);
+    if (capacityErr) {
+      alert(capacityErr);
+      return;
+    }
     const dayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : getDayOfWeekFromDate(date);
     setNewDetention({
       number: detentions.length + 1,
@@ -243,6 +248,12 @@ export default function DetentionSessionPage() {
     );
     if (alreadyInSession) {
       alert('Deze leerling heeft al een nablijven voor deze sessie.');
+      return;
+    }
+
+    const capacityErr = validateSessionCapacity(detentions.length, 1);
+    if (capacityErr) {
+      alert(capacityErr);
       return;
     }
 
@@ -305,6 +316,14 @@ export default function DetentionSessionPage() {
 
   const handleDuplicateSession = async (newDate: string, duplicated: Detention[]) => {
     try {
+      const existingRes = await apiFetch(`/api/detentions?date=${encodeURIComponent(newDate)}`);
+      const existingData = await existingRes.json().catch(() => []);
+      const existingOnTarget = Array.isArray(existingData) ? existingData.length : 0;
+      const capacityErr = validateSessionCapacity(existingOnTarget, duplicated.length);
+      if (capacityErr) {
+        alert(capacityErr);
+        return;
+      }
       for (const detention of duplicated) {
         const { id: _id, ...payload } = detention;
         const response = await apiFetch('/api/detentions', {
@@ -366,7 +385,13 @@ export default function DetentionSessionPage() {
               {!showAddForm && (
                 <button
                   onClick={handleAddNew}
-                  className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2"
+                  disabled={detentions.length >= MAX_DETECTIONS_PER_SESSION}
+                  className="btn-secondary flex items-center gap-2 text-sm px-3 sm:px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={
+                    detentions.length >= MAX_DETECTIONS_PER_SESSION
+                      ? `Maximum ${MAX_DETECTIONS_PER_SESSION} leerlingen per sessie`
+                      : undefined
+                  }
                 >
                   <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="hidden sm:inline">Nieuwe Toevoegen</span>
@@ -389,7 +414,7 @@ export default function DetentionSessionPage() {
                 Nablijven {hasDoublePeriod ? '(Strafstudie: 16u tot 17u40)' : '(van 16u tot 16u50)'}
               </h2>
               <p className="section-subtitle">
-                {detentions.length} nablijven geregistreerd
+                {detentions.length}/{MAX_DETECTIONS_PER_SESSION} nablijven geregistreerd
                 {hasDoublePeriod && ' • Strafstudie actief'}
               </p>
             </div>

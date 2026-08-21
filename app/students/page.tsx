@@ -27,6 +27,8 @@ export default function StudentsPage() {
   const [bulkText, setBulkText] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkPreview, setBulkPreview] = useState<Student[] | null>(null);
+  const [addToAllDays, setAddToAllDays] = useState(true);
+  const [bulkAllDays, setBulkAllDays] = useState(true);
 
   useEffect(() => {
     fetchStudents();
@@ -77,15 +79,22 @@ export default function StudentsPage() {
     }
     const base = students.reduce((max, s) => Math.max(max, s.sortOrder ?? -1), -1) + 1;
     const stamp = Date.now();
-    setBulkPreview(
-      rows.map((r, index) => ({
-        id: `student-${stamp}-${index}`,
-        name: r.name,
-        grade: r.grade,
-        day: selectedDay,
-        sortOrder: base + index,
-      }))
-    );
+    const daysForBulk: DayOfWeek[] = bulkAllDays ? DAYS : [selectedDay];
+    const preview: Student[] = [];
+    let index = 0;
+    for (const day of daysForBulk) {
+      for (const r of rows) {
+        preview.push({
+          id: `student-${stamp}-${index}`,
+          name: r.name,
+          grade: r.grade,
+          day,
+          sortOrder: base + index,
+        });
+        index += 1;
+      }
+    }
+    setBulkPreview(preview);
   };
 
   const handleBulkSave = async () => {
@@ -126,19 +135,28 @@ export default function StudentsPage() {
     const nextOrder =
       editingStudent?.sortOrder ??
       students.reduce((max, s) => Math.max(max, s.sortOrder ?? -1), -1) + 1;
-    const student: Student = {
-      id: editingStudent?.id || `student-${Date.now()}`,
+
+    const daysToSave: DayOfWeek[] =
+      !editingStudent && addToAllDays ? DAYS : [selectedDay];
+
+    const payload: Student[] = daysToSave.map((day, i) => ({
+      id:
+        editingStudent && day === selectedDay
+          ? editingStudent.id
+          : `student-${Date.now()}-${i}`,
       name: formData.name,
       grade: formData.grade,
-      day: selectedDay,
-      sortOrder: nextOrder,
-    };
+      day,
+      sortOrder: nextOrder + i,
+    }));
 
     try {
       const res = await apiFetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(student),
+        body: JSON.stringify(
+          payload.length === 1 ? payload[0] : { students: payload }
+        ),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -151,7 +169,11 @@ export default function StudentsPage() {
       setFormData({ name: '', grade: '' });
       setShowForm(false);
       setEditingStudent(null);
+      setAddToAllDays(true);
       fetchStudents();
+      if (!editingStudent && addToAllDays) {
+        alert(`Leerling toegevoegd op ${DAYS.length} dagen (ma/di/do).`);
+      }
     } catch (error) {
       if (error instanceof OfflineQueuedError) {
         alert(error.message);
@@ -265,13 +287,27 @@ export default function StudentsPage() {
 
         {showBulk && (
           <div className="card p-6 mb-6">
-            <h3 className="text-lg font-bold text-slate-100 mb-2">Bulk toevoegen — {selectedDay}</h3>
+            <h3 className="text-lg font-bold text-slate-100 mb-2">Bulk toevoegen</h3>
             <p className="text-sm text-slate-400 mb-4">
               Eén leerling per regel. Aanbevolen:{' '}
               <code className="text-slate-300">Achternaam;Voornaam;Klas</code> of{' '}
               <code className="text-slate-300">Voornaam Achternaam;Klas</code>.
-              Volgorde blijft behouden.
             </p>
+            <label className="flex items-start gap-3 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={bulkAllDays}
+                onChange={(e) => {
+                  setBulkAllDays(e.target.checked);
+                  setBulkPreview(null);
+                }}
+                className="mt-1 rounded border-slate-600"
+              />
+              <span className="text-sm text-slate-300">
+                Toevoegen op <strong className="text-slate-100">alle drie de dagen</strong> (maandag,
+                dinsdag en donderdag). Uitvinken = alleen {selectedDay}.
+              </span>
+            </label>
             <textarea
               value={bulkText}
               onChange={(e) => {
@@ -285,13 +321,15 @@ export default function StudentsPage() {
             {bulkPreview && bulkPreview.length > 0 && (
               <div className="mt-4 bg-slate-700/50 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
                 <p className="text-xs text-slate-400 mb-2">
-                  Preview — {bulkPreview.length} leerlingen
+                  Preview — {bulkPreview.length} rijen
+                  {bulkAllDays ? ` (${DAYS.length} dagen)` : ` (${selectedDay})`}
                 </p>
                 {sortStudentsByClass(bulkPreview).map((s, idx) => (
                   <div key={s.id} className="text-xs text-slate-300 flex gap-3">
                     <span className="text-slate-500 w-6">{idx + 1}.</span>
                     <span className="flex-1">{s.name}</span>
                     <span className="text-slate-400">{s.grade}</span>
+                    <span className="text-slate-500">{s.day}</span>
                   </div>
                 ))}
               </div>
@@ -395,6 +433,18 @@ export default function StudentsPage() {
                   placeholder="Bijv: 1 aarde, 2 vuur Move"
                 />
               </div>
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={addToAllDays}
+                  onChange={(e) => setAddToAllDays(e.target.checked)}
+                  className="mt-1 rounded border-slate-600"
+                />
+                <span className="text-sm text-slate-300">
+                  Toevoegen op <strong className="text-slate-100">alle drie de dagen</strong>{' '}
+                  (maandag, dinsdag en donderdag)
+                </span>
+              </label>
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
