@@ -9,6 +9,7 @@ import {
   buildStudentName,
   cellExact,
   parseDayOfWeek,
+  sortStudentsByClass,
 } from '@/lib/studentImport';
 
 interface SmartschoolImportProps {
@@ -175,7 +176,7 @@ export default function SmartschoolImport({ onImport, defaultDay = 'MAANDAG' }: 
             </div>
           </div>
           <div className="bg-slate-700/50 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
-            {pending.map((student, idx) => (
+            {sortStudentsByClass(pending).map((student, idx) => (
               <div key={student.id || idx} className="text-xs text-slate-300 flex gap-3">
                 <span className="text-slate-500 w-6">{idx + 1}.</span>
                 <span className="flex-1">{student.name}</span>

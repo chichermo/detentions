@@ -54,6 +54,26 @@ export function normalizeGrade(grade: string): string {
     .trim();
 }
 
+/** Sorteer op klas (grade), daarna op naam — nieuwe leerlingen komen bij hun klas. */
+export function compareStudentsByClass(
+  a: { name: string; grade?: string },
+  b: { name: string; grade?: string }
+): number {
+  const ga = normalizeGrade(a.grade || '');
+  const gb = normalizeGrade(b.grade || '');
+  const gradeCmp = ga.localeCompare(gb, 'nl', { numeric: true, sensitivity: 'base' });
+  if (gradeCmp !== 0) return gradeCmp;
+  return String(a.name || '').localeCompare(String(b.name || ''), 'nl', {
+    sensitivity: 'base',
+  });
+}
+
+export function sortStudentsByClass<T extends { name: string; grade?: string }>(
+  students: T[]
+): T[] {
+  return [...students].sort(compareStudentsByClass);
+}
+
 export function looksLikeClassToken(s: string): boolean {
   const t = String(s || '').trim();
   if (!t) return false;

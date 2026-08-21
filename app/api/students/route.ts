@@ -6,6 +6,7 @@ import {
   fixSemicolonName,
   flipTwoTokenName,
   normalizeGrade,
+  sortStudentsByClass,
 } from '@/lib/studentImport';
 
 export const dynamic = 'force-dynamic';
@@ -16,11 +17,13 @@ export async function GET(request: NextRequest) {
   
   const students = await getStudents(day || undefined);
   // Normalize accents on read so legacy "Jos é" displays as "José"
-  const normalized = students.map((s) => ({
-    ...s,
-    name: fixSemicolonName(String(s.name || '')),
-    grade: normalizeGrade(s.grade || ''),
-  }));
+  const normalized = sortStudentsByClass(
+    students.map((s) => ({
+      ...s,
+      name: fixSemicolonName(String(s.name || '')),
+      grade: normalizeGrade(s.grade || ''),
+    }))
+  );
   return NextResponse.json(normalized, {
     headers: { 'Cache-Control': 'no-store, must-revalidate' },
   });

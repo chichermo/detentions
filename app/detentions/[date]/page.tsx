@@ -14,6 +14,7 @@ import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
 import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
+import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
@@ -420,7 +421,14 @@ export default function DetentionSessionPage() {
               </div>
             </div>
             {(() => {
-              const availableStudents = students.filter(s => !detentions.some(d => (d.student.split(' - ')[0] || d.student).trim() === s.name));
+              const availableStudents = sortStudentsByClass(
+                students.filter(
+                  (s) =>
+                    !detentions.some(
+                      (d) => (d.student.split(' - ')[0] || d.student).trim() === s.name
+                    )
+                )
+              );
               return (
                 <>
                   {availableStudents.length === 0 && (
@@ -545,7 +553,7 @@ function DetentionForm({
           className="select-field w-full"
         >
           <option value="">Selecteer leerling...</option>
-          {students.map((student) => (
+          {sortStudentsByClass(students).map((student) => (
             <option key={student.id} value={student.name}>
               {student.name} - {student.grade}
             </option>

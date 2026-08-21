@@ -10,7 +10,7 @@ import EnhancedTable from '@/app/components/EnhancedTable';
 import MassImport from '@/app/components/MassImport';
 import SmartschoolImport from '@/app/components/SmartschoolImport';
 import FileAttachment from '@/app/components/FileAttachment';
-import { parseBulkStudentLines } from '@/lib/studentImport';
+import { compareStudentsByClass, parseBulkStudentLines, sortStudentsByClass } from '@/lib/studentImport';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
 
@@ -61,14 +61,7 @@ export default function StudentsPage() {
     return filtered;
   };
 
-  const filteredStudents = getFilteredStudents().sort((a, b) => {
-    const ao = a.sortOrder ?? Number.MAX_SAFE_INTEGER;
-    const bo = b.sortOrder ?? Number.MAX_SAFE_INTEGER;
-    if (ao !== bo) return ao - bo;
-    const gradeCmp = (a.grade || '').localeCompare(b.grade || '', 'nl');
-    if (gradeCmp !== 0) return gradeCmp;
-    return a.name.localeCompare(b.name, 'nl');
-  });
+  const filteredStudents = getFilteredStudents().sort(compareStudentsByClass);
 
   const handleImportStudents = async () => {
     await fetchStudents();
@@ -294,7 +287,7 @@ export default function StudentsPage() {
                 <p className="text-xs text-slate-400 mb-2">
                   Preview — {bulkPreview.length} leerlingen
                 </p>
-                {bulkPreview.map((s, idx) => (
+                {sortStudentsByClass(bulkPreview).map((s, idx) => (
                   <div key={s.id} className="text-xs text-slate-300 flex gap-3">
                     <span className="text-slate-500 w-6">{idx + 1}.</span>
                     <span className="flex-1">{s.name}</span>

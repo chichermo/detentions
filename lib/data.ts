@@ -1,6 +1,7 @@
 import { Student, StaffMember, Detention, DetentionSession, DayOfWeek, CalendarDaySetting } from '@/types';
 import { supabase } from './supabase';
 import { TABLES } from './tables';
+import { sortStudentsByClass } from './studentImport';
 
 // Detectar si Supabase está configurado
 const useSupabase = supabase !== null;
@@ -117,39 +118,25 @@ export async function getStudents(day?: DayOfWeek): Promise<Student[]> {
         query = query.eq('day', day);
       }
       
+      // Primair op klas, daarna naam (sort_order niet meer leidend)
       const { data, error } = await query
-        .order('sort_order', { ascending: true })
         .order('grade', { ascending: true })
         .order('name', { ascending: true });
       
       if (error) {
-        // Kolom sort_order bestaat mogelijk nog niet — fallback
-        if (/sort_order/i.test(error.message || '')) {
-          let fallback = supabase.from(TABLES.students).select('*');
-          if (day) fallback = fallback.eq('day', day);
-          const second = await fallback.order('grade').order('name');
-          if (second.error) {
-            console.error('Error fetching students:', second.error);
-            return [];
-          }
-          return (second.data || []).map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            grade: s.grade || '',
-            day: s.day as DayOfWeek,
-          }));
-        }
         console.error('Error fetching students:', error);
         return [];
       }
       
-      return (data || []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        grade: s.grade || '',
-        day: s.day as DayOfWeek,
-        sortOrder: typeof s.sort_order === 'number' ? s.sort_order : undefined,
-      }));
+      return sortStudentsByClass(
+        (data || []).map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          grade: s.grade || '',
+          day: s.day as DayOfWeek,
+          sortOrder: typeof s.sort_order === 'number' ? s.sort_order : undefined,
+        }))
+      );
     }
     
     // Fallback: retornar array vacío si no hay Supabase

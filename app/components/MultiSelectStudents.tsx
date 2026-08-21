@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Check, X, Search, ChevronDown } from 'lucide-react';
 import { Student } from '@/types';
+import { sortStudentsByClass } from '@/lib/studentImport';
 
 interface MultiSelectStudentsProps {
   students: Student[];
@@ -21,12 +22,15 @@ export default function MultiSelectStudents({
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredStudents = useMemo(() => {
-    if (!searchTerm) return students;
-    const term = searchTerm.toLowerCase();
-    return students.filter(s => 
-      s.name.toLowerCase().includes(term) ||
-      s.grade?.toLowerCase().includes(term)
-    );
+    const term = searchTerm.toLowerCase().trim();
+    const list = !term
+      ? students
+      : students.filter(
+          (s) =>
+            s.name.toLowerCase().includes(term) ||
+            s.grade?.toLowerCase().includes(term)
+        );
+    return sortStudentsByClass(list);
   }, [students, searchTerm]);
 
   const toggleStudent = (studentId: string) => {

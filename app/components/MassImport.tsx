@@ -12,6 +12,7 @@ import {
   normalizeDetentionStudent,
   normalizeDetentionTeacher,
   parseDayOfWeek,
+  sortStudentsByClass,
 } from '@/lib/studentImport';
 import { buildStaffName } from '@/lib/staffImport';
 
@@ -317,9 +318,9 @@ export default function MassImport({
             </div>
           </div>
           <div className="bg-slate-700/50 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
-            {previewStudents.map((s, idx) => (
+            {sortStudentsByClass(previewStudents).map((s, idx) => (
               <div key={s.id || idx} className="text-xs text-slate-300 flex gap-3">
-                <span className="text-slate-500 w-6">{(s.sortOrder ?? idx) + 1}.</span>
+                <span className="text-slate-500 w-6">{idx + 1}.</span>
                 <span className="flex-1">{s.name}</span>
                 <span className="text-slate-400">{s.grade}</span>
                 <span className="text-slate-500">{s.day}</span>

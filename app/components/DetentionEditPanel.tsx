@@ -5,6 +5,7 @@ import { Save, X } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import StaffNameInput from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
+import { sortStudentsByClass } from '@/lib/studentImport';
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <span className="detention-field-label">{children}</span>;
@@ -73,7 +74,7 @@ export default function DetentionEditPanel({
             className="select-field w-full"
           >
             <option value="">Selecteer leerling...</option>
-            {students.map((s) => (
+            {sortStudentsByClass(students).map((s) => (
               <option key={s.id} value={s.name}>
                 {s.name} - {s.grade}
               </option>

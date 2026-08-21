@@ -10,6 +10,7 @@ import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
 import { validateRequiredDetentionFields } from '@/lib/detentionValidation';
+import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO, getDay } from 'date-fns';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
@@ -334,9 +335,14 @@ function NewDetentionPageInner() {
                     className="select-field w-full"
                   >
                     <option value="">Selecteer leerling...</option>
-                    {students
-                      .filter(s => !detentions.some((d, j) => j !== index && (d.student || '').trim() === s.name))
-                      .map((student) => (
+                    {sortStudentsByClass(
+                      students.filter(
+                        (s) =>
+                          !detentions.some(
+                            (d, j) => j !== index && (d.student || '').trim() === s.name
+                          )
+                      )
+                    ).map((student) => (
                         <option key={student.id} value={student.name}>
                           {student.name} - {student.grade}
                         </option>
