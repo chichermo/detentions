@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Trash2, FileText, Plus, Save, X, Copy, Printer } from 'lucide-react';
 import DuplicateSession from '@/app/components/DuplicateSession';
@@ -13,7 +13,13 @@ import DateField from '@/app/components/DateField';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
-import { validateRequiredDetentionFields, validateSessionCapacity, MAX_DETECTIONS_PER_SESSION } from '@/lib/detentionValidation';
+import {
+  validateRequiredDetentionFields,
+  validateSessionCapacity,
+  validateUniqueStudentOnDate,
+  getDetentionStudentName,
+  MAX_DETECTIONS_PER_SESSION,
+} from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO, getDay } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -185,7 +191,14 @@ export default function DetentionSessionPage() {
       ...editingDetention as Detention,
       id: editingId,
       student: studentDisplayName,
+      date,
     };
+
+    const dupErr = validateUniqueStudentOnDate(updatedDetention, detentions, editingId);
+    if (dupErr) {
+      alert(dupErr);
+      return;
+    }
 
     try {
       await apiFetch('/api/detentions', {
@@ -244,10 +257,13 @@ export default function DetentionSessionPage() {
     }
 
     const alreadyInSession = detentions.some(
-      d => (d.student.split(' - ')[0] || d.student).trim() === newDetention.student?.trim()
+      (d) =>
+        d.id !== newDetention.id &&
+        getDetentionStudentName(d.student).toLowerCase() ===
+          (newDetention.student || '').trim().toLowerCase()
     );
     if (alreadyInSession) {
-      alert('Deze leerling heeft al een nablijven voor deze sessie.');
+      alert('Deze leerling heeft al een nablijven of strafstudie op deze datum.');
       return;
     }
 
@@ -313,6 +329,15 @@ export default function DetentionSessionPage() {
   const currentDayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : getDayOfWeekFromDate(date);
   const hasDoublePeriod = detentions.some(d => d.isDoublePeriod);
   const isMonday = currentDayOfWeek === 'MAANDAG';
+
+  const studentsForSession = useMemo(() => {
+    const taken = new Set(
+      detentions
+        .filter((d) => d.id !== editingId)
+        .map((d) => getDetentionStudentName(d.student).toLowerCase())
+    );
+    return students.filter((s) => !taken.has(s.name.trim().toLowerCase()));
+  }, [students, detentions, editingId]);
 
   const handleDuplicateSession = async (newDate: string, duplicated: Detention[]) => {
     try {
@@ -447,10 +472,12 @@ export default function DetentionSessionPage() {
             </div>
             {(() => {
               const availableStudents = sortStudentsByClass(
-                students.filter(
+                studentsForSession.filter(
                   (s) =>
                     !detentions.some(
-                      (d) => (d.student.split(' - ')[0] || d.student).trim() === s.name
+                      (d) =>
+                        getDetentionStudentName(d.student).toLowerCase() ===
+                        s.name.trim().toLowerCase()
                     )
                 )
               );
@@ -499,7 +526,7 @@ export default function DetentionSessionPage() {
           <div className="card p-4 sm:p-6 print:shadow-none">
             <DetentionSessionList
               detentions={detentions}
-              students={students}
+              students={studentsForSession}
               staffNames={staffNames}
               isMonday={isMonday}
               allowStrafstudie={allowStrafstudie}

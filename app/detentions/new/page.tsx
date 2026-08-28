@@ -9,7 +9,14 @@ import DateField from '@/app/components/DateField';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
-import { validateRequiredDetentionFields, validateSessionCapacity, MAX_DETECTIONS_PER_SESSION } from '@/lib/detentionValidation';
+import {
+  validateRequiredDetentionFields,
+  validateSessionCapacity,
+  validateNoDuplicateStudentsInBatch,
+  validateUniqueStudentOnDate,
+  getDetentionStudentName,
+  MAX_DETECTIONS_PER_SESSION,
+} from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO, getDay } from 'date-fns';
 
@@ -45,7 +52,7 @@ function NewDetentionPageInner() {
   const [staffNames, setStaffNames] = useState<string[]>([]);
   const [date, setDate] = useState(() => dateFromUrl || format(new Date(), 'yyyy-MM-dd'));
   const [detentions, setDetentions] = useState<Partial<Detention>[]>([]);
-  const [existingCount, setExistingCount] = useState(0);
+  const [existingOnDate, setExistingOnDate] = useState<Detention[]>([]);
 
   useEffect(() => {
     if (dateFromUrl) setDate(dateFromUrl);
@@ -83,15 +90,15 @@ function NewDetentionPageInner() {
     let cancelled = false;
     (async () => {
       if (!date) {
-        setExistingCount(0);
+        setExistingOnDate([]);
         return;
       }
       try {
         const res = await apiFetch(`/api/detentions?date=${encodeURIComponent(date)}`);
         const data = await res.json();
-        if (!cancelled) setExistingCount(Array.isArray(data) ? data.length : 0);
+        if (!cancelled) setExistingOnDate(Array.isArray(data) ? data : []);
       } catch {
-        if (!cancelled) setExistingCount(0);
+        if (!cancelled) setExistingOnDate([]);
       }
     })();
     return () => {
@@ -144,7 +151,7 @@ function NewDetentionPageInner() {
   });
 
   const addDetention = () => {
-    const capacityErr = validateSessionCapacity(existingCount + detentions.length, 1);
+    const capacityErr = validateSessionCapacity(existingOnDate.length + detentions.length, 1);
     if (capacityErr) {
       alert(capacityErr);
       return;
@@ -181,7 +188,7 @@ function NewDetentionPageInner() {
       }
     }
 
-    const capacityErr = validateSessionCapacity(existingCount, detentions.length);
+    const capacityErr = validateSessionCapacity(existingOnDate.length, detentions.length);
     if (capacityErr) {
       alert(capacityErr);
       return;
@@ -209,6 +216,20 @@ function NewDetentionPageInner() {
     if (detentionsToSave.length === 0) {
       alert('Voeg ten minste één nablijven toe voordat je opslaat.');
       return;
+    }
+
+    const batchDupErr = validateNoDuplicateStudentsInBatch(detentionsToSave);
+    if (batchDupErr) {
+      alert(batchDupErr);
+      return;
+    }
+
+    for (const d of detentionsToSave) {
+      const dupErr = validateUniqueStudentOnDate(d, existingOnDate);
+      if (dupErr) {
+        alert(dupErr);
+        return;
+      }
     }
 
     try {
@@ -300,8 +321,8 @@ function NewDetentionPageInner() {
               <p className="text-sm text-slate-400 mt-2">
                 Dag: {selectedDay}
                 {' · '}
-                {existingCount + detentions.length}/{MAX_DETECTIONS_PER_SESSION} leerlingen
-                {existingCount > 0 ? ` (${existingCount} al op deze datum)` : ''}
+                {existingOnDate.length + detentions.length}/{MAX_DETECTIONS_PER_SESSION} leerlingen
+                {existingOnDate.length > 0 ? ` (${existingOnDate.length} al op deze datum)` : ''}
               </p>
             </div>
             <div className="flex items-end">
@@ -371,12 +392,16 @@ function NewDetentionPageInner() {
                   >
                     <option value="">Selecteer leerling...</option>
                     {sortStudentsByClass(
-                      students.filter(
-                        (s) =>
-                          !detentions.some(
-                            (d, j) => j !== index && (d.student || '').trim() === s.name
-                          )
-                      )
+                      students.filter((s) => {
+                        const key = s.name.trim().toLowerCase();
+                        const inBatch = detentions.some(
+                          (d, j) => j !== index && (d.student || '').trim().toLowerCase() === key
+                        );
+                        const onDate = existingOnDate.some(
+                          (d) => getDetentionStudentName(d.student).toLowerCase() === key
+                        );
+                        return !inBatch && !onDate;
+                      })
                     ).map((student) => (
                         <option key={student.id} value={student.name}>
                           {student.name} - {student.grade}
@@ -519,10 +544,10 @@ function NewDetentionPageInner() {
         <div className="mt-8">
           <button
             onClick={addDetention}
-            disabled={existingCount + detentions.length >= MAX_DETECTIONS_PER_SESSION}
+            disabled={existingOnDate.length + detentions.length >= MAX_DETECTIONS_PER_SESSION}
             className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             title={
-              existingCount + detentions.length >= MAX_DETECTIONS_PER_SESSION
+              existingOnDate.length + detentions.length >= MAX_DETECTIONS_PER_SESSION
                 ? `Maximum ${MAX_DETECTIONS_PER_SESSION} leerlingen per sessie`
                 : undefined
             }

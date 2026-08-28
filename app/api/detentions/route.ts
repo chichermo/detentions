@@ -8,6 +8,7 @@ import {
 import {
   validateRequiredDetentionFields,
   validateSessionCapacity,
+  validateUniqueStudentOnDate,
 } from '@/lib/detentionValidation';
 
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,13 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      const dupErr = validateUniqueStudentOnDate(detention, existing, detention.id);
+      if (dupErr) {
+        return NextResponse.json(
+          { success: false, error: dupErr, details: dupErr },
+          { status: 400 }
+        );
+      }
     }
 
     await saveDetention(detention);
@@ -81,6 +89,18 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (detention.date) {
+      const existing = await getDetentions(detention.date);
+      const dupErr = validateUniqueStudentOnDate(detention, existing, detention.id);
+      if (dupErr) {
+        return NextResponse.json(
+          { success: false, error: dupErr, details: dupErr },
+          { status: 400 }
+        );
+      }
+    }
+
     await saveDetention(detention);
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {
