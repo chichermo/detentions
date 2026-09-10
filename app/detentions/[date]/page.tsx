@@ -21,25 +21,11 @@ import {
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
-import { format, parseISO, getDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
+import { getDayOfWeekFromDate, parseSessionDate } from '@/lib/calendarUtils';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
-
-function getDayOfWeekFromDate(dateStr: string): DayOfWeek {
-  try {
-    const d = parseISO(dateStr);
-    const dayNum = getDay(d);
-    const dayMap: Record<number, DayOfWeek> = {
-      1: 'MAANDAG',
-      2: 'DINSDAG',
-      4: 'DONDERDAG',
-    };
-    return dayMap[dayNum] ?? 'MAANDAG';
-  } catch {
-    return 'MAANDAG';
-  }
-}
 
 export default function DetentionSessionPage() {
   const router = useRouter();
@@ -173,44 +159,109 @@ export default function DetentionSessionPage() {
       return;
     }
 
-    if (
-      (editingDetention.dayOfWeek || getDayOfWeekFromDate(date)) === 'MAANDAG' &&
-      !allowStrafstudie &&
-      editingDetention.isDoublePeriod
-    ) {
+    const parsed = parseSessionDate(String(editingDetention.date || date));
+    if (!parsed) {
+      alert('Kies een maandag, dinsdag of donderdag. Het nablijven kan alleen op die dagen.');
+      return;
+    }
+
+    const dateChanged = parsed.date !== date;
+    let targetDetentions = detentions;
+    let allowStrafOnTarget = allowStrafstudie;
+
+    try {
+      const days = await fetchCalendarDays(parsed.date, parsed.date);
+      const cfg = getDaySettingFromList(parsed.date, days);
+      if (cfg?.blocked) {
+        alert('Deze dag is geblokkeerd. Geen nablijven mogelijk.');
+        return;
+      }
+      if (cfg && !cfg.allowDetentions) {
+        alert('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
+        return;
+      }
+      allowStrafOnTarget = cfg?.allowStrafstudie !== false;
+    } catch {
+      /* offline: doorgaan */
+    }
+
+    if (dateChanged) {
+      try {
+        const res = await apiFetch(`/api/detentions?date=${encodeURIComponent(parsed.date)}`);
+        const data = await res.json().catch(() => []);
+        targetDetentions = Array.isArray(data) ? data : [];
+      } catch (error) {
+        if (error instanceof OfflineQueuedError) {
+          alert(error.message);
+          return;
+        }
+        alert('Kon de nieuwe dag niet controleren. Probeer het opnieuw.');
+        return;
+      }
+      const capacityErr = validateSessionCapacity(targetDetentions.length, 1);
+      if (capacityErr) {
+        alert(capacityErr);
+        return;
+      }
+    }
+
+    const isTargetMonday = parsed.dayOfWeek === 'MAANDAG';
+    let isDoublePeriod = !!editingDetention.isDoublePeriod && isTargetMonday;
+    if (isTargetMonday && !allowStrafOnTarget && isDoublePeriod) {
       alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
       return;
     }
 
-    const student = students.find(s => s.name === editingDetention.student);
-    const studentDisplayName = student 
+    const original = detentions.find((d) => d.id === editingId);
+    const student = students.find((s) => s.name === editingDetention.student);
+    const studentDisplayName = student
       ? `${student.name} - ${student.grade}`
-      : editingDetention.student || '';
+      : original?.student || editingDetention.student || '';
 
     const updatedDetention: Detention = {
       ...editingDetention as Detention,
       id: editingId,
       student: studentDisplayName,
-      date,
+      date: parsed.date,
+      dayOfWeek: parsed.dayOfWeek,
+      isDoublePeriod,
+      timePeriod: isDoublePeriod ? editingDetention.timePeriod : undefined,
+      number: dateChanged
+        ? targetDetentions.length + 1
+        : editingDetention.number || original?.number || 1,
     };
 
-    const dupErr = validateUniqueStudentOnDate(updatedDetention, detentions, editingId);
+    const dupErr = validateUniqueStudentOnDate(updatedDetention, targetDetentions, editingId);
     if (dupErr) {
       alert(dupErr);
       return;
     }
 
     try {
-      await apiFetch('/api/detentions', {
+      const response = await apiFetch('/api/detentions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedDetention),
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        alert(data?.details || data?.error || 'Fout bij opslaan. Probeer het opnieuw.');
+        return;
+      }
       setEditingId(null);
       setEditingDetention(null);
-      fetchDetentions();
+      if (dateChanged) {
+        router.push(`/detentions/${parsed.date}`);
+      } else {
+        fetchDetentions();
+      }
     } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        alert(error.message);
+        return;
+      }
       console.error('Error saving detention:', error);
+      alert('Fout bij opslaan. Controleer je verbinding en probeer het opnieuw.');
     }
   };
 
@@ -536,9 +587,24 @@ export default function DetentionSessionPage() {
               onEdit={handleEdit}
               onSave={handleSaveEdit}
               onCancel={handleCancelEdit}
-              onChange={(field, value) =>
-                setEditingDetention((prev) => (prev ? { ...prev, [field]: value } : null))
-              }
+              onChange={(field, value) => {
+                setEditingDetention((prev) => {
+                  if (!prev) return null;
+                  const next = { ...prev, [field]: value };
+                  if (field === 'date' && typeof value === 'string') {
+                    const parsed = parseSessionDate(value);
+                    if (parsed) {
+                      next.dayOfWeek = parsed.dayOfWeek;
+                      if (parsed.dayOfWeek !== 'MAANDAG') {
+                        next.isDoublePeriod = false;
+                        next.timePeriod = undefined;
+                      }
+                      fetchStudents(parsed.dayOfWeek);
+                    }
+                  }
+                  return next;
+                });
+              }}
               onDelete={handleDelete}
               onShowHistory={(id) => {
                 setSelectedRecordId(id);

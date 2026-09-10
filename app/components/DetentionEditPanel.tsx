@@ -6,6 +6,7 @@ import { Detention, Student } from '@/types';
 import StaffNameInput from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
 import { sortStudentsByClass } from '@/lib/studentImport';
+import { isMonday as isMondayDate, parseSessionDate } from '@/lib/calendarUtils';
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <span className="detention-field-label">{children}</span>;
@@ -38,6 +39,12 @@ export default function DetentionEditPanel({
     detention.student?.includes(' - ')
       ? detention.student.split(' - ')[0]
       : detention.student || '';
+  const parsedDate = parseSessionDate(detention.date || '');
+  const editIsMonday = parsedDate
+    ? parsedDate.dayOfWeek === 'MAANDAG'
+    : detention.date && /^\d{4}-\d{2}-\d{2}$/.test(detention.date)
+      ? isMondayDate(new Date(`${detention.date}T12:00:00`))
+      : !!isMonday;
 
   return (
     <div className="detention-edit-card">
@@ -80,6 +87,19 @@ export default function DetentionEditPanel({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="detention-edit-card__field detention-edit-card__field--full">
+          <FieldLabel>Datum nablijven *</FieldLabel>
+          <DateField
+            required
+            value={detention.date || ''}
+            onChange={(v) => onChange('date', v)}
+            className="input-field date-field w-full"
+          />
+          <p className="mt-1.5 text-xs text-slate-400">
+            Alleen maandag, dinsdag of donderdag. Het nablijven verhuist mee op de kalender.
+          </p>
         </div>
 
         <div className="detention-edit-card__field">
@@ -154,7 +174,7 @@ export default function DetentionEditPanel({
             />
             Geweigerd
           </label>
-          {isMonday && allowStrafstudie && (
+          {editIsMonday && allowStrafstudie && (
             <label className="detention-edit-card__check">
               <input
                 type="checkbox"
@@ -168,7 +188,7 @@ export default function DetentionEditPanel({
               Strafstudie (maandag)
             </label>
           )}
-          {isMonday && !allowStrafstudie && (
+          {editIsMonday && !allowStrafstudie && (
             <p className="text-xs text-orange-300/90 col-span-full">
               Geen strafstudie op deze maandag — alleen gewoon nablijven.
             </p>
