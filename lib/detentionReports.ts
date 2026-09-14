@@ -59,23 +59,110 @@ export function getTriggeredDoubleSource(detentions: Detention[]): Detention[] {
   );
 }
 
-function hasLinkedDouble(source: Detention, all: Detention[]): boolean {
-  return all.some(
-    (d) =>
-      isDoubleDetention(d) &&
-      (d.sourceDetentionId === source.id ||
-        (studentKey(d) === studentKey(source) &&
-          parseISO(d.date) >= parseISO(source.date) &&
-          differenceInCalendarDays(parseISO(d.date), parseISO(source.date)) <= 10))
+/** Strafstudie mag tot twee weken later vallen (donderdag → maandag daarna: tot 18 dagen). */
+const FOLLOW_UP_WINDOW_DAYS = 21;
+
+function foldNl(value: string): string {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp: number[][] = Array.from({ length: rows }, (_, i) => {
+    const row = new Array<number>(cols);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 0; j < cols; j++) dp[0][j] = j;
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function containsApproximate(text: string, phrase: string, maxDistance: number): boolean {
+  if (text.includes(phrase)) return true;
+  const plen = phrase.length;
+  if (text.length <= plen + 6) return levenshtein(text, phrase) <= maxDistance;
+  for (let i = 0; i <= text.length - plen + 2; i++) {
+    if (levenshtein(text.slice(i, i + plen), phrase) <= maxDistance) return true;
+  }
+  return false;
+}
+
+/** Melding zoals "weigeren nablijven", met kleine afwijking of extra woorden. */
+export function isRefusalFollowUpReason(reason?: string, extraNotes?: string): boolean {
+  const text = foldNl(`${reason || ''} ${extraNotes || ''}`);
+  if (!text) return false;
+  if (/\b(weiger\w*|geweigerd)\b/.test(text)) return true;
+  return containsApproximate(text, 'weigeren nablijven', 3);
+}
+
+/**
+ * Zoek de strafstudie die bij een geweigerde nablijven hoort.
+ * Alleen een expliciete koppeling, of een latere strafstudie (tot 2 weken)
+ * met melding in de trant van "weigeren nablijven".
+ */
+export function findLinkedDouble(
+  source: Detention,
+  all: Detention[]
+): Detention | undefined {
+  const byId = all.find(
+    (d) => isDoubleDetention(d) && d.sourceDetentionId === source.id
   );
+  if (byId) return byId;
+
+  const sourceDate = parseISO(source.date);
+  const sourceName = studentKey(source);
+  return all
+    .filter((d) => {
+      if (!isDoubleDetention(d) || studentKey(d) !== sourceName) return false;
+      if (!isRefusalFollowUpReason(d.reason, d.extraNotes)) return false;
+      const days = differenceInCalendarDays(parseISO(d.date), sourceDate);
+      return days > 0 && days <= FOLLOW_UP_WINDOW_DAYS;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+}
+
+export interface FollowUpReportRow extends StudentReportRow {
+  hasOpenFollowUp: boolean;
+  linkedBySourceId: Record<string, Detention | undefined>;
+}
+
+/** Alle geweigerde nablijven voor opvolging, open items eerst. */
+export function getFollowUpRows(detentions: Detention[]): FollowUpReportRow[] {
+  const sources = getTriggeredDoubleSource(detentions);
+  return groupByStudent(sources)
+    .map((row) => {
+      const linkedBySourceId: Record<string, Detention | undefined> = {};
+      let hasOpenFollowUp = false;
+      for (const source of row.detentions) {
+        const linked = findLinkedDouble(source, detentions);
+        linkedBySourceId[source.id] = linked;
+        if (!linked) hasOpenFollowUp = true;
+      }
+      return { ...row, hasOpenFollowUp, linkedBySourceId };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.hasOpenFollowUp) - Number(a.hasOpenFollowUp) ||
+        b.count - a.count ||
+        a.student.localeCompare(b.student, 'nl')
+    );
 }
 
 /** Leerlingen met openstaande strafstudie (nog geen maandag-registratie) */
 export function getPendingDoubleDetentions(detentions: Detention[]): StudentReportRow[] {
-  const sources = getTriggeredDoubleSource(detentions).filter(
-    (s) => !hasLinkedDouble(s, detentions)
-  );
-  return groupByStudent(sources);
+  return getFollowUpRows(detentions).filter((row) => row.hasOpenFollowUp);
 }
 
 export interface DetailedReports {
@@ -83,13 +170,16 @@ export interface DetailedReports {
   withDoubleDetentions: StudentReportRow[];
   doubleMissedOrRejected: StudentReportRow[];
   pendingDouble: StudentReportRow[];
+  followUp: FollowUpReportRow[];
 }
 
 export function buildDetailedReports(detentions: Detention[]): DetailedReports {
+  const followUp = getFollowUpRows(detentions);
   return {
     withDetentions: getStudentsWithDetentions(detentions),
     withDoubleDetentions: getStudentsWithDoubleDetentions(detentions),
     doubleMissedOrRejected: getDoubleMissedOrRejected(detentions),
-    pendingDouble: getPendingDoubleDetentions(detentions),
+    pendingDouble: followUp.filter((row) => row.hasOpenFollowUp),
+    followUp,
   };
 }
