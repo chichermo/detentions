@@ -10,7 +10,7 @@ import {
 import LoadingPage from '@/app/components/ui/LoadingPage';
 
 /**
- * Verbergt leerlingen, personeel en rechten voor iedereen behalve Admin, Annelore en Liesbeth.
+ * Verbergt leerlingen, personeel, rechten en logboek voor iedereen behalve Admin, Annelore en Liesbeth.
  */
 export default function AccessScopeGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

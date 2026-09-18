@@ -20,7 +20,7 @@ interface DetentionSessionListProps {
   onCancel: () => void;
   onChange: (field: keyof Detention, value: unknown) => void;
   onDelete: (id: string) => void;
-  onShowHistory: (id: string) => void;
+  onShowHistory?: (id: string) => void;
 }
 
 function Flag({ on, label }: { on: boolean; label: string }) {
@@ -103,6 +103,7 @@ export default function DetentionSessionList({
                       </div>
                     </div>
                     <div className="detention-card__actions">
+                      {onShowHistory && (
                       <button
                         type="button"
                         onClick={() => onShowHistory(detention.id)}
@@ -111,6 +112,7 @@ export default function DetentionSessionList({
                       >
                         <History className="h-5 w-5" />
                       </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => onEdit(detention)}

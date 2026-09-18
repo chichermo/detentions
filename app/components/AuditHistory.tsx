@@ -17,7 +17,7 @@ interface AuditLog {
 }
 
 interface AuditHistoryProps {
-  tableName: 'students' | 'detentions';
+  tableName: 'students' | 'detentions' | 'nablijven_detentions' | 'nablijven_students';
   recordId: string;
 }
 

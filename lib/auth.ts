@@ -20,13 +20,34 @@ function normalizeUsername(name: string | null): string {
   return (name || '').trim().toLowerCase();
 }
 
-/** Leerlingen, personeel en rechten: alleen Admin, Annelore en Liesbeth. */
+/** Leerlingen, personeel, rechten en logboek: alleen Admin, Annelore en Liesbeth. */
 export function canManageListsAndRights(): boolean {
   const username = normalizeUsername(getPortalUsername());
   if (!username) return false;
   if (LIST_ADMIN_USERNAMES.has(username)) return true;
   // SSO-naam kan een extra suffix hebben
   return username.startsWith('liesbeth.kreps') || username.startsWith('annelore.delbecque');
+}
+
+/** Logboek van inplanningen en verwijderingen: dezelfde admin-groep. */
+export function canViewLogboek(): boolean {
+  return canManageListsAndRights();
+}
+
+/** Wie de actie uitvoert (SSO-gebruikersnaam, anders lokale rol). */
+export function getActorLabel(): string {
+  const portal = getPortalUsername();
+  if (portal) return portal;
+  const role = getStoredRole();
+  const labels: Record<UserRole, string> = {
+    beheerder: 'Beheerder',
+    coordinator: 'Coördinator',
+    leerkracht: 'Leerkracht',
+    secretariaat: 'Secretariaat',
+    directie: 'Directie',
+    gast: 'Gast',
+  };
+  return `${labels[role] || role} (lokaal)`;
 }
 
 /** Admin of Annelore: kalenderbeheer, top 10 personeel. */
@@ -103,8 +124,11 @@ export function canViewStaffStatistics(): boolean {
   return isPrivilegedAdminUser();
 }
 
-/** Leerlingen, personeel en rechten: alleen Admin, Annelore en Liesbeth. */
+/** Leerlingen, personeel, rechten en logboek: alleen Admin, Annelore en Liesbeth. */
 export function isPathAllowedForScope(pathname: string, _scope?: DetentionsAccessScope): boolean {
+  const logboekPath = pathname === '/logboek' || pathname.startsWith('/logboek/');
+  if (logboekPath) return canViewLogboek();
+
   const listPath =
     pathname === '/students' ||
     pathname.startsWith('/students/') ||

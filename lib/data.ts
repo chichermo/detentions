@@ -2,6 +2,7 @@ import { Student, StaffMember, Detention, DetentionSession, DayOfWeek, CalendarD
 import { supabase } from './supabase';
 import { TABLES } from './tables';
 import { sortStudentsByClass } from './studentImport';
+import { recordDetentionAudit } from './audit';
 
 // Detectar si Supabase está configurado
 const useSupabase = supabase !== null;
@@ -510,30 +511,46 @@ export async function getDetentionsByDateRange(startDate: string, endDate: strin
   }
 }
 
-export async function saveDetention(detention: Detention): Promise<void> {
+function detentionToRow(detention: Detention) {
+  return {
+    id: detention.id,
+    number: detention.number,
+    date: detention.date,
+    day_of_week: detention.dayOfWeek,
+    student: detention.student,
+    teacher: detention.teacher || null,
+    reason: detention.reason || null,
+    task: detention.task || null,
+    lvs_date: detention.lvsDate || null,
+    should_print: detention.shouldPrint,
+    can_use_chromebook: detention.canUseChromebook,
+    extra_notes: detention.extraNotes || null,
+    is_double_period: detention.isDoublePeriod || false,
+    time_period: detention.timePeriod || null,
+    nablijven_geweigerd: detention.nablijvenGeweigerd || false,
+    did_not_attend: detention.didNotAttend || false,
+    source_detention_id: detention.sourceDetentionId || null,
+  };
+}
+
+export async function saveDetention(detention: Detention, actor?: string | null): Promise<void> {
   try {
     if (useSupabase && supabase) {
+      const { data: existing, error: existingError } = await supabase
+        .from(TABLES.detentions)
+        .select('*')
+        .eq('id', detention.id)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('Error checking existing detention:', existingError);
+      }
+
+      const action = existing ? 'UPDATE' : 'INSERT';
+      const row = detentionToRow(detention);
       const { error } = await supabase
         .from(TABLES.detentions)
-        .upsert({
-          id: detention.id,
-          number: detention.number,
-          date: detention.date,
-          day_of_week: detention.dayOfWeek,
-          student: detention.student,
-          teacher: detention.teacher || null,
-          reason: detention.reason || null,
-          task: detention.task || null,
-          lvs_date: detention.lvsDate || null,
-          should_print: detention.shouldPrint,
-          can_use_chromebook: detention.canUseChromebook,
-          extra_notes: detention.extraNotes || null,
-          is_double_period: detention.isDoublePeriod || false,
-          time_period: detention.timePeriod || null,
-          nablijven_geweigerd: detention.nablijvenGeweigerd || false,
-          did_not_attend: detention.didNotAttend || false,
-          source_detention_id: detention.sourceDetentionId || null,
-        }, {
+        .upsert(row, {
           onConflict: 'id'
         });
       
@@ -541,6 +558,14 @@ export async function saveDetention(detention: Detention): Promise<void> {
         console.error('Error saving detention:', error);
         throw error;
       }
+
+      await recordDetentionAudit({
+        recordId: detention.id,
+        action,
+        actor,
+        oldData: existing || null,
+        newData: row,
+      });
     } else {
       throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }
@@ -550,9 +575,15 @@ export async function saveDetention(detention: Detention): Promise<void> {
   }
 }
 
-export async function deleteDetention(id: string): Promise<void> {
+export async function deleteDetention(id: string, actor?: string | null): Promise<void> {
   try {
     if (useSupabase && supabase) {
+      const { data: existing } = await supabase
+        .from(TABLES.detentions)
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
       const { error } = await supabase
         .from(TABLES.detentions)
         .delete()
@@ -562,6 +593,13 @@ export async function deleteDetention(id: string): Promise<void> {
         console.error('Error deleting detention:', error);
         throw error;
       }
+
+      await recordDetentionAudit({
+        recordId: id,
+        action: 'DELETE',
+        actor,
+        oldData: existing || null,
+      });
     } else {
       throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }

@@ -24,6 +24,7 @@ import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { getDayOfWeekFromDate, parseSessionDate } from '@/lib/calendarUtils';
+import { canViewLogboek } from '@/lib/auth';
 
 const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
 
@@ -41,6 +42,7 @@ export default function DetentionSessionPage() {
   const [showAuditHistory, setShowAuditHistory] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [allowStrafstudie, setAllowStrafstudie] = useState(true);
+  const [canViewHistory, setCanViewHistory] = useState(false);
 
   const fetchDetentions = useCallback(async () => {
     try {
@@ -72,6 +74,10 @@ export default function DetentionSessionPage() {
     } catch (error) {
       console.error('Error fetching students:', error);
     }
+  }, []);
+
+  useEffect(() => {
+    setCanViewHistory(canViewLogboek());
   }, []);
 
   useEffect(() => {
@@ -606,10 +612,14 @@ export default function DetentionSessionPage() {
                 });
               }}
               onDelete={handleDelete}
-              onShowHistory={(id) => {
-                setSelectedRecordId(id);
-                setShowAuditHistory(true);
-              }}
+              onShowHistory={
+                canViewHistory
+                  ? (id) => {
+                      setSelectedRecordId(id);
+                      setShowAuditHistory(true);
+                    }
+                  : undefined
+              }
             />
           </div>
         )}
@@ -617,7 +627,7 @@ export default function DetentionSessionPage() {
         {showAuditHistory && selectedRecordId && (
           <div className="mt-6 space-y-6">
             <AuditHistory
-              tableName="detentions"
+              tableName="nablijven_detentions"
               recordId={selectedRecordId}
             />
             <FileAttachment

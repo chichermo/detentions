@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Sparkles,
   Shield,
+  ClipboardList,
 } from 'lucide-react';
 import LoadingPage from '@/app/components/ui/LoadingPage';
 import { DetentionSession } from '@/types';
@@ -85,6 +86,16 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-copper',
     iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
     linkClass: 'text-[#f0c078]',
+    fullOnly: true,
+  },
+  {
+    href: '/logboek',
+    title: 'Logboek',
+    desc: 'Wie plant of verwijdert nablijven',
+    icon: ClipboardList,
+    cardClass: 'nav-card-sky',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#67c6e8] to-[#3d9fc4] text-[#0a1820]',
+    linkClass: 'text-[#9dd9f0]',
     fullOnly: true,
   },
 ] as const;
@@ -195,7 +206,7 @@ export default function Home() {
       <InstallPrompt />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
           {NAV_ITEMS.filter((item) => !item.fullOnly || canManageLists).map((item) => (
             <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>
               <div className="relative flex flex-col gap-4">

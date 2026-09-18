@@ -1,48 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { listAuditLogs } from '@/lib/audit';
 import { TABLES } from '@/lib/tables';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const table = searchParams.get('table');
     const recordId = searchParams.get('recordId');
+    const action = searchParams.get('action');
+    const limit = Number(searchParams.get('limit') || (recordId ? 100 : 250));
 
-    if (!table || !recordId) {
-      return NextResponse.json(
-        { error: 'Table and recordId are required' },
-        { status: 400 }
-      );
-    }
+    const data = await listAuditLogs({
+      table: table || (recordId ? null : TABLES.detentions),
+      recordId,
+      action,
+      limit,
+    });
 
-    if (!supabase) {
-      return NextResponse.json(
-        { error: 'Supabase not configured' },
-        { status: 500 }
-      );
-    }
-
-    const { data, error } = await supabase
-      .from(TABLES.auditLogs)
-      .select('*')
-      .eq('table_name', table)
-      .eq('record_id', recordId)
-      .order('changed_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching audit logs:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch audit logs' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(data || []);
-  } catch (error: any) {
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Error in audit API:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

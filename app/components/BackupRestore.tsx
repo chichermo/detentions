@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Detention, Student } from '@/types';
+import { withActorHeaders } from '@/lib/apiClient';
 
 type BackupPayload = {
   version?: string;
@@ -38,24 +39,27 @@ export default function BackupRestore() {
       let detentionOk = 0;
 
       for (const student of students) {
-        const res = await fetch('/api/students', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: student.name,
-            grade: student.grade,
-            day: student.day,
-          }),
-        });
+        const res = await fetch(
+          '/api/students',
+          withActorHeaders({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: student.name,
+              grade: student.grade,
+              day: student.day,
+            }),
+          })
+        );
         if (res.ok) studentOk++;
       }
 
       for (const detention of detentions) {
-        const res = await fetch('/api/detentions', {
+        const res = await fetch('/api/detentions', withActorHeaders({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(detention),
-        });
+        }));
         if (res.ok) detentionOk++;
       }
 

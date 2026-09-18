@@ -1,7 +1,21 @@
 'use client';
 
 import { addPendingOperation, saveToLocalDB } from '@/lib/sync';
+import { getActorLabel } from '@/lib/auth';
 import type { Detention, Student } from '@/types';
+
+const ACTOR_HEADER = 'x-nablijven-actor';
+
+export function withActorHeaders(init?: RequestInit): RequestInit {
+  const headers = new Headers(init?.headers);
+  try {
+    const actor = getActorLabel();
+    if (actor) headers.set(ACTOR_HEADER, actor);
+  } catch {
+    /* ignore */
+  }
+  return { ...init, headers };
+}
 
 export class OfflineQueuedError extends Error {
   constructor() {
@@ -68,7 +82,11 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
   }
 
   try {
-    const res = await fetch(url, { ...init, cache: init?.method === 'GET' ? 'no-store' : init?.cache });
+    const withActor = withActorHeaders(init);
+    const res = await fetch(url, {
+      ...withActor,
+      cache: withActor.method === 'GET' || !withActor.method ? 'no-store' : withActor.cache,
+    });
 
     if (res.ok && (!init?.method || init.method === 'GET')) {
       await cacheGetResponse(url, res);

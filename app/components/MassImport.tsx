@@ -15,6 +15,7 @@ import {
   sortStudentsByClass,
 } from '@/lib/studentImport';
 import { buildStaffName } from '@/lib/staffImport';
+import { withActorHeaders } from '@/lib/apiClient';
 
 interface MassImportProps {
   onImportStudents?: (students: Student[]) => void;
@@ -224,11 +225,11 @@ export default function MassImport({
     setError(null);
     try {
       for (const detention of pendingDetentions) {
-        await fetch('/api/detentions', {
+        await fetch('/api/detentions', withActorHeaders({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(detention),
-        });
+        }));
       }
       setSuccess(`${pendingDetentions.length} nablijven geïmporteerd`);
       onImportDetentions(pendingDetentions as Detention[]);

@@ -3,11 +3,23 @@
  */
 
 import { Detention, Student } from '@/types';
+import { getActorLabel } from './auth';
 
 const DB_NAME = 'nablijven-db';
 const STORE_DETENTIONS = 'detentions';
 const STORE_STUDENTS = 'students';
 const STORE_PENDING = 'pending';
+
+function actorSyncHeaders(extra?: Record<string, string>): HeadersInit {
+  const headers: Record<string, string> = { ...(extra || {}) };
+  try {
+    const actor = getActorLabel();
+    if (actor) headers['x-nablijven-actor'] = actor;
+  } catch {
+    /* ignore */
+  }
+  return headers;
+}
 
 let db: IDBDatabase | null = null;
 
@@ -125,18 +137,19 @@ export async function syncPendingOperations(): Promise<void> {
       if (operation.type === 'delete') {
         response = await fetch(`${endpoint}?id=${operation.data.id}`, {
           method: 'DELETE',
+          headers: actorSyncHeaders(),
         });
       } else if (operation.type === 'update') {
         const method = operation.entity === 'student' ? 'POST' : 'PUT';
         response = await fetch(endpoint, {
           method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: actorSyncHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(operation.data),
         });
       } else {
         response = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: actorSyncHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(operation.data),
         });
       }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDetentions, saveDetention, deleteDetention } from '@/lib/data';
 import { Detention } from '@/types';
+import { getActorFromRequest } from '@/lib/audit';
 import {
   normalizeDetentionStudent,
   normalizeDetentionTeacher,
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await saveDetention(detention);
+    await saveDetention(detention, getActorFromRequest(request));
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Fout bij opslaan van nablijven';
@@ -101,7 +102,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    await saveDetention(detention);
+    await saveDetention(detention, getActorFromRequest(request));
     return NextResponse.json({ success: true, detention });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Fout bij bijwerken van nablijven';
@@ -125,7 +126,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    await deleteDetention(id);
+    await deleteDetention(id, getActorFromRequest(request));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting detention:', error);
