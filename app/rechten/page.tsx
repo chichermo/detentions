@@ -135,13 +135,14 @@ export default function RechtenPage() {
         </div>
 
         <div className="relative mb-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none z-10" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Zoek gebruiker…"
-            className="input-field pl-11"
+            className="input-field input-field-with-icon"
+            autoComplete="off"
           />
         </div>
 
