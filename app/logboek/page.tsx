@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BookOpen, Plus, Pencil, Trash2, RefreshCw, Search, User } from 'lucide-react';
 import PageHeader from '@/app/components/ui/PageHeader';
 import LoadingPage from '@/app/components/ui/LoadingPage';
-import { canViewLogboek } from '@/lib/auth';
+import { canViewLogboek, describeAuditActor } from '@/lib/auth';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 
@@ -160,8 +160,16 @@ export default function LogboekPage() {
 
         <div className="card p-4 sm:p-6 mb-6">
           <p className="text-sm text-secondary leading-relaxed">
-            Alleen Admin, Annelore en Liesbeth zien dit overzicht. Nieuwe acties tonen de
-            SSO-gebruikersnaam; oudere rijen zonder naam komen uit de database zonder gebruiker.
+            Alleen Admin, Annelore en Liesbeth zien dit overzicht. Bij <strong>gebruiker</strong>{' '}
+            staat wie het nablijven inplande, wijzigde of verwijderde (SSO-gebruikersnaam via het
+            Element-portaal). <strong>Personeel</strong> is de leerkracht die op het formulier
+            ingevuld werd.
+            <br />
+            <span className="mt-2 block">
+              Oude regels met “Leerkracht (lokaal)” betekenen: iemand werkte rechtstreeks in de
+              app, zonder via het portaal in te loggen. Dan weten we de rol op het apparaat, maar
+              niet welke persoon het was.
+            </span>
           </p>
         </div>
 
@@ -204,6 +212,13 @@ export default function LogboekPage() {
                 const meta = ACTION_META[log.action] || ACTION_META.UPDATE;
                 const Icon = meta.icon;
                 const snap = snapshotOf(log);
+                const actor = describeAuditActor(log.changed_by);
+                const actorVerb =
+                  log.action === 'INSERT'
+                    ? 'Ingepland door'
+                    : log.action === 'DELETE'
+                      ? 'Verwijderd door'
+                      : 'Gewijzigd door';
                 return (
                   <li key={log.id} className="px-4 py-4 sm:px-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -222,12 +237,19 @@ export default function LogboekPage() {
                         </p>
                         <p className="text-sm text-secondary mt-0.5">
                           Sessie {formatSessionDate(snap.date)}
-                          {snap.teacher ? ` · ${snap.teacher}` : ''}
+                          {snap.teacher ? ` · Personeel: ${snap.teacher}` : ''}
                           {snap.reason ? ` · ${snap.reason}` : ''}
                         </p>
-                        <p className="flex items-center gap-1.5 text-xs text-muted mt-2">
-                          <User className="h-3.5 w-3.5" />
-                          {log.changed_by || 'Onbekende gebruiker'}
+                        <p className="flex items-start gap-1.5 text-xs mt-2">
+                          <User className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted" />
+                          <span>
+                            <span className={actor.isKnownUser ? 'text-primary' : 'text-muted'}>
+                              {actorVerb}: {actor.label}
+                            </span>
+                            {actor.note && (
+                              <span className="block text-muted mt-0.5">{actor.note}</span>
+                            )}
+                          </span>
                         </p>
                       </div>
                       {snap.date && (

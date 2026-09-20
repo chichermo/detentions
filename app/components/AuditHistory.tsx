@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { History, User, Clock, FileText, Trash2, Edit, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
+import { describeAuditActor } from '@/lib/auth';
 
 interface AuditLog {
   id: string;
@@ -111,6 +112,7 @@ export default function AuditHistory({ tableName, recordId }: AuditHistoryProps)
           const changedFields = log.action === 'UPDATE' 
             ? getChangedFields(log.old_data, log.new_data)
             : [];
+          const actor = describeAuditActor(log.changed_by);
 
           return (
             <div
@@ -129,12 +131,13 @@ export default function AuditHistory({ tableName, recordId }: AuditHistoryProps)
                         {format(parseISO(log.changed_at), 'dd MMM yyyy, HH:mm', { locale: nl })}
                       </span>
                     </div>
-                    {log.changed_by && (
-                      <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
-                        <User className="h-3 w-3" />
-                        <span>{log.changed_by}</span>
-                      </div>
-                    )}
+                    <div className="flex items-start gap-1 mt-1 text-xs text-slate-400">
+                      <User className="h-3 w-3 mt-0.5 shrink-0" />
+                      <span>
+                        {actor.label}
+                        {actor.note ? ` — ${actor.note}` : ''}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <button

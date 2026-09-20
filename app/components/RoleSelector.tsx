@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { User, ChevronDown } from 'lucide-react';
 import { CHILLOUTS_ROLES, UserRole } from '@/lib/roles';
-import { getStoredRole, setStoredRole } from '@/lib/auth';
+import { getPortalUsername, getStoredRole, setStoredRole } from '@/lib/auth';
 
 export default function RoleSelector() {
   const [role, setRole] = useState<UserRole>('leerkracht');
+  const [username, setUsername] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setRole(getStoredRole());
+    setUsername(getPortalUsername());
   }, []);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function RoleSelector() {
         aria-haspopup="listbox"
       >
         <User className="h-4 w-4" />
-        <span className="hidden sm:inline">{current?.label ?? 'Profiel'}</span>
+        <span className="hidden sm:inline">{username || current?.label || 'Profiel'}</span>
         <ChevronDown className="h-4 w-4 opacity-70" />
       </button>
       {open && (
@@ -49,6 +51,12 @@ export default function RoleSelector() {
             className="absolute right-0 top-full mt-2 z-[80] min-w-[240px] rounded-xl border border-slate-700 bg-slate-900 shadow-2xl py-1"
             role="listbox"
           >
+            {username && (
+              <li className="px-4 py-2.5 border-b border-slate-800">
+                <span className="text-xs text-slate-500 block">Ingelogd als</span>
+                <span className="text-sm font-medium text-slate-200">{username}</span>
+              </li>
+            )}
             {CHILLOUTS_ROLES.map((r) => (
               <li key={r.id}>
                 <button

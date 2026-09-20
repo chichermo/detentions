@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { setAccessScope, setStoredRole, type DetentionsAccessScope } from '@/lib/auth';
+import { persistActorUsername, setAccessScope, setStoredRole, type DetentionsAccessScope } from '@/lib/auth';
 import type { UserRole } from '@/lib/roles';
 
 const PORTAL_SESSION_KEY = 'element_portal_session';
@@ -96,12 +96,14 @@ export default function PortalEntryClient() {
           ? 'limited'
           : 'full';
 
+      const username = String(payload.username || userParam || '').trim();
       setStoredRole(role);
       setAccessScope(scope);
+      persistActorUsername(username);
       localStorage.setItem(
         PORTAL_SESSION_KEY,
         JSON.stringify({
-          username: payload.username || userParam,
+          username,
           role,
           scope,
           from: 'element-portal',

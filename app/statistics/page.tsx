@@ -17,6 +17,7 @@ import * as XLSX from 'xlsx';
 import { createPDF, autoTable } from '@/lib/pdf-export';
 import { canViewStaffStatistics } from '@/lib/auth';
 import DateField from '@/app/components/DateField';
+import StudentSearchFilter from '@/app/components/StudentSearchFilter';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
@@ -49,6 +50,7 @@ export default function StatisticsPage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [customStartDate, setCustomStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [studentQuery, setStudentQuery] = useState('');
 
   const fetchData = async () => {
     try {
@@ -112,6 +114,11 @@ export default function StatisticsPage() {
           return isWithinInterval(detDate, { start: customStart, end: customEnd });
         });
         break;
+    }
+
+    const studentTerm = studentQuery.trim().toLowerCase();
+    if (studentTerm) {
+      filtered = filtered.filter((d) => d.student.toLowerCase().includes(studentTerm));
     }
 
     return filtered;
@@ -246,6 +253,9 @@ export default function StatisticsPage() {
       case 'custom':
         periodText = `Geanalyseerde Periode: ${format(parseISO(customStartDate), 'dd MMMM yyyy', { locale: nl })} tot ${format(parseISO(customEndDate), 'dd MMMM yyyy', { locale: nl })}`;
         break;
+    }
+    if (studentQuery.trim()) {
+      periodText += ` · Leerling: ${studentQuery.trim()}`;
     }
     doc.text(periodText, pageWidth / 2, yPos, { align: 'center' });
     yPos += 15;
@@ -474,6 +484,7 @@ export default function StatisticsPage() {
       ['Nablijven Statistieken'],
       [''],
       ['Periode', filterType === 'day' ? selectedDate : filterType === 'month' ? selectedMonth : filterType === 'year' ? selectedYear : `${customStartDate} - ${customEndDate}`],
+      ...(studentQuery.trim() ? [['Leerling', studentQuery.trim()]] : []),
       ['Totaal nablijven', stats.total],
       ['Met chromebook', stats.withChromebook],
       ['Te printen', stats.toPrint],
@@ -615,6 +626,7 @@ export default function StatisticsPage() {
                 selectedYear,
                 customStartDate,
                 customEndDate,
+                studentQuery,
               }}
               onLoad={(f) => {
                 setFilterType(f.filterType);
@@ -623,6 +635,7 @@ export default function StatisticsPage() {
                 setSelectedYear(f.selectedYear);
                 setCustomStartDate(f.customStartDate);
                 setCustomEndDate(f.customEndDate);
+                setStudentQuery(f.studentQuery || '');
               }}
             />
           </div>
@@ -685,6 +698,12 @@ export default function StatisticsPage() {
                 </div>
               </>
             )}
+            <StudentSearchFilter
+              students={students}
+              detentions={detentions}
+              value={studentQuery}
+              onChange={setStudentQuery}
+            />
           </div>
         </div>
 
@@ -921,7 +940,7 @@ export default function StatisticsPage() {
                 {filteredDetentions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-slate-400">
-                      Geen nablijven gevonden voor de geselecteerde periode.
+                      Geen nablijven gevonden voor de geselecteerde filters.
                     </td>
                   </tr>
                 ) : (

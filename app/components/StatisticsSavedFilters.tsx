@@ -11,6 +11,7 @@ export type StatisticsFilterState = {
   selectedYear: string;
   customStartDate: string;
   customEndDate: string;
+  studentQuery?: string;
 };
 
 interface SavedStatsFilter {

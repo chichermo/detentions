@@ -5,6 +5,7 @@ import { UserRole } from './roles';
 const STORAGE_KEY = 'nablijven_user_role';
 const SCOPE_KEY = 'nablijven_access_scope';
 const PORTAL_SESSION_KEY = 'element_portal_session';
+const ACTOR_USERNAME_KEY = 'nablijven_actor_username';
 
 export type DetentionsAccessScope = 'full' | 'limited';
 
@@ -34,20 +35,44 @@ export function canViewLogboek(): boolean {
   return canManageListsAndRights();
 }
 
-/** Wie de actie uitvoert (SSO-gebruikersnaam, anders lokale rol). */
+export function persistActorUsername(username: string): void {
+  if (typeof window === 'undefined') return;
+  const name = username.trim();
+  if (!name) return;
+  localStorage.setItem(ACTOR_USERNAME_KEY, name);
+}
+
+/** Wie de actie uitvoert: SSO-gebruikersnaam, nooit de lokale rol. */
 export function getActorLabel(): string {
   const portal = getPortalUsername();
   if (portal) return portal;
-  const role = getStoredRole();
-  const labels: Record<UserRole, string> = {
-    beheerder: 'Beheerder',
-    coordinator: 'Coördinator',
-    leerkracht: 'Leerkracht',
-    secretariaat: 'Secretariaat',
-    directie: 'Directie',
-    gast: 'Gast',
-  };
-  return `${labels[role] || role} (lokaal)`;
+  return 'Onbekende gebruiker (niet via portaal)';
+}
+
+export type AuditActorDisplay = {
+  label: string;
+  isKnownUser: boolean;
+  note?: string;
+};
+
+/** Logboek: maak oude "Leerkracht (lokaal)"-labels leesbaar. */
+export function describeAuditActor(changedBy: string | null | undefined): AuditActorDisplay {
+  const raw = String(changedBy || '').trim();
+  if (!raw) {
+    return {
+      label: 'Onbekende gebruiker',
+      isKnownUser: false,
+      note: 'Geen gebruikersnaam opgeslagen.',
+    };
+  }
+  if (/\(lokaal\)\s*$/i.test(raw) || /niet via portaal/i.test(raw)) {
+    return {
+      label: 'Onbekende gebruiker',
+      isKnownUser: false,
+      note: 'Niet via het Element-portaal ingelogd. Alleen de rol op dit apparaat was bekend, niet wie inplande.',
+    };
+  }
+  return { label: raw, isKnownUser: true };
 }
 
 /** Admin of Annelore: kalenderbeheer, top 10 personeel. */
@@ -101,10 +126,13 @@ export function hasFullDetentionsAccess(): boolean {
 export function getPortalUsername(): string | null {
   if (typeof window === 'undefined') return null;
   try {
+    const stored = localStorage.getItem(ACTOR_USERNAME_KEY)?.trim();
+    if (stored) return stored;
     const raw = localStorage.getItem(PORTAL_SESSION_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { username?: string };
-    const name = String(parsed?.username || '').trim();
+    const parsed = JSON.parse(raw) as { username?: string; user?: string };
+    const name = String(parsed?.username || parsed?.user || '').trim();
+    if (name) persistActorUsername(name);
     return name || null;
   } catch {
     return null;
