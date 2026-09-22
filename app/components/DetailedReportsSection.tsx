@@ -14,8 +14,10 @@ import { normalizeDetentionDate } from '@/lib/detentionValidation';
 
 interface Props {
   detentions: Detention[];
-  /** Alleen de twee opvolgingskaders (dashboard/home). */
+  /** Alleen de twee rode opvolgingskaders (Statistieken, bovenaan). */
   followUpOnly?: boolean;
+  /** Rapporttabellen zonder de twee opvolgingskaders. */
+  hideFollowUp?: boolean;
 }
 
 function formatDay(date: string): string {
@@ -144,7 +146,7 @@ function FollowUpTable({
   );
 }
 
-export default function DetailedReportsSection({ detentions, followUpOnly }: Props) {
+export default function DetailedReportsSection({ detentions, followUpOnly, hideFollowUp }: Props) {
   const reports = useMemo(() => buildDetailedReports(detentions), [detentions]);
 
   const followUpTables = (
@@ -184,7 +186,7 @@ export default function DetailedReportsSection({ detentions, followUpOnly }: Pro
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {followUpTables}
+        {!hideFollowUp && followUpTables}
         <ReportTable
           title="Leerlingen met nablijven"
           description="Alle leerlingen met minstens één registratie in de geselecteerde periode."

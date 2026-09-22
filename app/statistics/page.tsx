@@ -583,6 +583,8 @@ export default function StatisticsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <DetailedReportsSection detentions={detentions} followUpOnly />
+
         {/* Filtros */}
         <div className="card p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -776,7 +778,7 @@ export default function StatisticsPage() {
           </ChartCard>
         </div>
 
-        <DetailedReportsSection detentions={filteredDetentions} />
+        <DetailedReportsSection detentions={filteredDetentions} hideFollowUp />
 
         {/* Period Comparison */}
         <div className="mb-8">
