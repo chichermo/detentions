@@ -15,6 +15,7 @@ import {
   validateNoDuplicateStudentsInBatch,
   validateUniqueStudentOnDate,
   getDetentionStudentName,
+  normalizeDetentionDate,
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
@@ -194,10 +195,11 @@ function NewDetentionPageInner() {
       return;
     }
 
+    const sessionDate = normalizeDetentionDate(date) || date;
     const detentionsToSave: Detention[] = detentions.map((d, index) => ({
       id: `detention-${Date.now()}-${index}`,
       number: d.number || index + 1,
-      date,
+      date: sessionDate,
       dayOfWeek: selectedDay,
       student: getStudentDisplayName(d.student || ''),
       teacher: (d.teacher || '').trim(),
@@ -224,12 +226,14 @@ function NewDetentionPageInner() {
       return;
     }
 
+    const alreadyPlanned: Detention[] = [...existingOnDate];
     for (const d of detentionsToSave) {
-      const dupErr = validateUniqueStudentOnDate(d, existingOnDate);
+      const dupErr = validateUniqueStudentOnDate(d, alreadyPlanned);
       if (dupErr) {
         alert(dupErr);
         return;
       }
+      alreadyPlanned.push(d);
     }
 
     try {

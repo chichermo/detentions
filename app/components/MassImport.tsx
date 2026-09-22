@@ -16,6 +16,10 @@ import {
 } from '@/lib/studentImport';
 import { buildStaffName } from '@/lib/staffImport';
 import { withActorHeaders } from '@/lib/apiClient';
+import {
+  validateUniqueStudentOnDate,
+  normalizeDetentionDate,
+} from '@/lib/detentionValidation';
 
 interface MassImportProps {
   onImportStudents?: (students: Student[]) => void;
@@ -224,12 +228,42 @@ export default function MassImport({
     setIsSaving(true);
     setError(null);
     try {
+      const existingRes = await fetch('/api/detentions', { cache: 'no-store' });
+      const existingAll = await existingRes.json().catch(() => []);
+      const dbByDate = new Map<string, Detention[]>();
+      if (Array.isArray(existingAll)) {
+        for (const d of existingAll as Detention[]) {
+          const key = normalizeDetentionDate(d.date);
+          if (!key) continue;
+          dbByDate.set(key, [...(dbByDate.get(key) || []), d]);
+        }
+      }
+      const seenByDate = new Map<string, Detention[]>();
       for (const detention of pendingDetentions) {
-        await fetch('/api/detentions', withActorHeaders({
+        const dateKey = normalizeDetentionDate(String(detention.date || ''));
+        const existing = [
+          ...(dbByDate.get(dateKey) || []),
+          ...(seenByDate.get(dateKey) || []),
+        ];
+        const dupErr = validateUniqueStudentOnDate(detention, existing);
+        if (dupErr) {
+          setError(dupErr);
+          setIsSaving(false);
+          return;
+        }
+        seenByDate.set(dateKey, [...(seenByDate.get(dateKey) || []), detention as Detention]);
+        const response = await fetch('/api/detentions', withActorHeaders({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(detention),
+          body: JSON.stringify({
+            ...detention,
+            date: dateKey || detention.date,
+          }),
         }));
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data?.details || data?.error || 'Fout bij importeren van nablijven');
+        }
       }
       setSuccess(`${pendingDetentions.length} nablijven geïmporteerd`);
       onImportDetentions(pendingDetentions as Detention[]);

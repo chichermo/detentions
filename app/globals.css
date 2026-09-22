@@ -151,18 +151,34 @@ body {
     border-color: var(--border-default);
   }
 
-  /* Openstaande strafstudies — hele kaart geel ter opvolging */
-  .card-follow-up {
-    background: rgba(250, 204, 21, 0.28) !important;
-    border-color: rgba(250, 204, 21, 0.55) !important;
+  /* Opvolging weigeringen + strafstudie weigeren — rood kader (niet geel/amber) */
+  .card-follow-up,
+  .card-follow-up-strafstudie {
+    background: color-mix(in srgb, var(--coral) 22%, rgba(127, 29, 29, 0.78)) !important;
+    border: 3px solid var(--coral) !important;
+    box-shadow:
+      0 0 0 2px #ef4444,
+      inset 7px 0 0 #ef4444,
+      0 24px 48px -28px rgba(0, 0, 0, 0.55);
   }
 
-  .card-follow-up .table-simple thead {
-    background: rgba(250, 204, 21, 0.18);
+  .card.card-follow-up:hover,
+  .card.card-follow-up-strafstudie:hover {
+    border-color: #ef4444 !important;
+    box-shadow:
+      0 0 0 2px var(--coral),
+      inset 7px 0 0 #ef4444,
+      0 24px 48px -28px rgba(0, 0, 0, 0.55);
   }
 
-  .card-follow-up .table-simple tbody tr:hover {
-    background: rgba(250, 204, 21, 0.15);
+  .card-follow-up .table-simple thead,
+  .card-follow-up-strafstudie .table-simple thead {
+    background: rgba(239, 68, 68, 0.22);
+  }
+
+  .card-follow-up .table-simple tbody tr:hover,
+  .card-follow-up-strafstudie .table-simple tbody tr:hover {
+    background: rgba(239, 68, 68, 0.18);
   }
 
   .card-hover {

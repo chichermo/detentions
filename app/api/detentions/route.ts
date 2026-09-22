@@ -7,6 +7,7 @@ import {
   normalizeDetentionTeacher,
 } from '@/lib/studentImport';
 import {
+  normalizeDetentionDate,
   validateRequiredDetentionFields,
   validateSessionCapacity,
   validateUniqueStudentOnDate,
@@ -16,20 +17,40 @@ export const dynamic = 'force-dynamic';
 
 function normalizeDetentionNames(detention: Detention): Detention {
   const teacher = normalizeDetentionTeacher(detention.teacher);
+  const date = normalizeDetentionDate(detention.date) || detention.date;
   return {
     ...detention,
+    date,
     student: normalizeDetentionStudent(detention.student || ''),
     teacher: teacher || undefined,
   };
 }
 
+function withDetentionId(detention: Detention): Detention {
+  if (detention.id) return detention;
+  return {
+    ...detention,
+    id: `detention-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+  };
+}
+
+/** Alle records op dezelfde kalenderdag — ook bij timestamp/timePeriod-varianten. */
+async function existingOnSameDay(date: string): Promise<Detention[]> {
+  const day = normalizeDetentionDate(date);
+  if (!day) return [];
+  const all = await getDetentions();
+  return all.filter((d) => normalizeDetentionDate(d.date) === day);
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const date = searchParams.get('date');
-  
-  const detentions = await getDetentions(date || undefined);
-  // Normalize accents on read so legacy "Jos é" displays as "José"
-  const normalized = detentions.map(normalizeDetentionNames);
+  const detentions = await getDetentions();
+  const day = date ? normalizeDetentionDate(date) : '';
+  const scoped = day
+    ? detentions.filter((d) => normalizeDetentionDate(d.date) === day)
+    : detentions;
+  const normalized = scoped.map(normalizeDetentionNames);
   return NextResponse.json(normalized, {
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -40,7 +61,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const detention = normalizeDetentionNames(await request.json());
+    const detention = withDetentionId(normalizeDetentionNames(await request.json()));
     const requiredErr = validateRequiredDetentionFields(detention);
     if (requiredErr) {
       return NextResponse.json(
@@ -50,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (detention.date) {
-      const existing = await getDetentions(detention.date);
+      const existing = await existingOnSameDay(detention.date);
       const others = existing.filter((d) => d.id !== detention.id);
       const capacityErr = validateSessionCapacity(others.length, 1);
       if (capacityErr) {
@@ -82,7 +103,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const detention = normalizeDetentionNames(await request.json());
+    const detention = withDetentionId(normalizeDetentionNames(await request.json()));
     const requiredErr = validateRequiredDetentionFields(detention);
     if (requiredErr) {
       return NextResponse.json(
@@ -92,7 +113,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (detention.date) {
-      const existing = await getDetentions(detention.date);
+      const existing = await existingOnSameDay(detention.date);
       const dupErr = validateUniqueStudentOnDate(detention, existing, detention.id);
       if (dupErr) {
         return NextResponse.json(

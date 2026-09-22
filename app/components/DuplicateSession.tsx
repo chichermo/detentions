@@ -5,6 +5,8 @@ import { Copy } from 'lucide-react';
 import { Detention } from '@/types';
 import Modal from '@/app/components/ui/Modal';
 import DateField from '@/app/components/DateField';
+import { getDayOfWeekFromDate } from '@/lib/calendarUtils';
+import { normalizeDetentionDate } from '@/lib/detentionValidation';
 
 interface DuplicateSessionProps {
   detentions: Detention[];
@@ -19,10 +21,12 @@ export default function DuplicateSession({ detentions, currentDate, onDuplicate 
   const handleDuplicate = () => {
     if (!newDate) return;
 
+    const targetDate = normalizeDetentionDate(newDate) || newDate;
     const duplicated = detentions.map((detention, index) => ({
       ...detention,
       id: `detention-${Date.now()}-${index}`,
-      date: newDate,
+      date: targetDate,
+      dayOfWeek: getDayOfWeekFromDate(targetDate),
       number: index + 1,
     }));
 

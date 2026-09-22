@@ -4,14 +4,27 @@ import { useMemo } from 'react';
 import { Detention } from '@/types';
 import {
   buildDetailedReports,
+  flattenFollowUpDisplayRows,
   FollowUpReportRow,
   StudentReportRow,
 } from '@/lib/detentionReports';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
+import { normalizeDetentionDate } from '@/lib/detentionValidation';
 
 interface Props {
   detentions: Detention[];
+  /** Alleen de twee opvolgingskaders (dashboard/home). */
+  followUpOnly?: boolean;
+}
+
+function formatDay(date: string): string {
+  const day = normalizeDetentionDate(date);
+  try {
+    return format(parseISO(day || date), 'd MMM yyyy', { locale: nl });
+  } catch {
+    return day || date;
+  }
 }
 
 function ReportTable({
@@ -51,7 +64,7 @@ function ReportTable({
                   <td className="text-sm text-slate-400">
                     {row.detentions.map((d) => (
                       <span key={d.id} className="block">
-                        {format(parseISO(d.date), 'd MMM yyyy', { locale: nl })}
+                        {formatDay(d.date)}
                         {d.nablijvenGeweigerd && ' · geweigerd'}
                         {d.isDoublePeriod && ' · strafstudie'}
                       </span>
@@ -67,23 +80,33 @@ function ReportTable({
   );
 }
 
-function FollowUpTable({ rows }: { rows: FollowUpReportRow[] }) {
+function FollowUpTable({
+  title,
+  description,
+  emptyMessage,
+  rows,
+  frameClass = 'card-follow-up',
+}: {
+  title: string;
+  description: string;
+  emptyMessage: string;
+  rows: FollowUpReportRow[];
+  frameClass?: string;
+}) {
   const openCount = rows.filter((row) => row.hasOpenFollowUp).length;
+  const displayRows = useMemo(() => flattenFollowUpDisplayRows(rows), [rows]);
 
   return (
-    <div className="card card-follow-up p-6">
+    <div className={`card ${frameClass} p-6`}>
       <div className="flex flex-wrap items-center gap-2 mb-1">
-        <h3 className="text-lg font-bold text-slate-100">Opvolging weigeringen</h3>
+        <h3 className="text-lg font-bold text-slate-100">{title}</h3>
         {openCount > 0 && (
-          <span className="badge-warning">{openCount} open</span>
+          <span className="badge-danger">{openCount} open</span>
         )}
       </div>
-      <p className="text-sm text-slate-400 mb-4">
-        Geweigerde nablijven (ma/di/do). Blijft open tot er een strafstudie is met melding
-        “weigeren nablijven” (mag iets afwijken), ook als die tot twee weken later valt.
-      </p>
-      {rows.length === 0 ? (
-        <p className="text-slate-500 text-sm py-4">Geen geweigerde nablijven in deze periode.</p>
+      <p className="text-sm text-slate-300/90 mb-4">{description}</p>
+      {displayRows.length === 0 ? (
+        <p className="text-slate-300/70 text-sm py-4">{emptyMessage}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="table-simple w-full">
@@ -95,29 +118,24 @@ function FollowUpTable({ rows }: { rows: FollowUpReportRow[] }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) =>
-                row.detentions.map((d) => {
-                  const linked = row.linkedBySourceId[d.id];
-                  return (
-                    <tr key={d.id}>
-                      <td className="font-medium">{row.student}</td>
-                      <td>
-                        {format(parseISO(d.date), 'd MMM yyyy', { locale: nl })}
-                        {' · geweigerd'}
-                      </td>
-                      <td className="text-sm">
-                        {linked ? (
-                          <span className="text-slate-300">
-                            Strafstudie {format(parseISO(linked.date), 'd MMM yyyy', { locale: nl })}
-                          </span>
-                        ) : (
-                          <span className="text-amber-200 font-medium">Nog in te plannen</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+              {displayRows.map((row) => (
+                <tr key={row.key}>
+                  <td className="font-medium">{row.student}</td>
+                  <td>
+                    {row.sources.map((d) => formatDay(d.date)).join(', ')}
+                    {' · geweigerd'}
+                  </td>
+                  <td className="text-sm">
+                    {row.linked ? (
+                      <span className="text-slate-100">
+                        Strafstudie {formatDay(row.linked.date)}
+                      </span>
+                    ) : (
+                      <span className="text-red-100 font-medium">Nog in te plannen</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -126,8 +144,35 @@ function FollowUpTable({ rows }: { rows: FollowUpReportRow[] }) {
   );
 }
 
-export default function DetailedReportsSection({ detentions }: Props) {
+export default function DetailedReportsSection({ detentions, followUpOnly }: Props) {
   const reports = useMemo(() => buildDetailedReports(detentions), [detentions]);
+
+  const followUpTables = (
+    <>
+      <FollowUpTable
+        title="Opvolging weigeringen"
+        description="Geweigerde nablijven (ma/di/do). Blijft open tot er een strafstudie is met melding “weigeren nablijven” (mag iets afwijken), ook als die tot twee weken later valt."
+        emptyMessage="Geen geweigerde nablijven in deze periode."
+        rows={reports.followUp}
+        frameClass="card-follow-up"
+      />
+      <FollowUpTable
+        title="Strafstudie weigeren"
+        description="Geweigerde strafstudies (maandag). Blijft open tot er een nieuwe strafstudie is met melding “weigeren” (mag iets afwijken), ook als die tot twee weken later valt."
+        emptyMessage="Geen geweigerde strafstudies in deze periode."
+        rows={reports.strafstudieFollowUp}
+        frameClass="card-follow-up-strafstudie"
+      />
+    </>
+  );
+
+  if (followUpOnly) {
+    return (
+      <section className="mb-8 space-y-6">
+        <div className="grid grid-cols-1 gap-6">{followUpTables}</div>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-8 space-y-6">
@@ -139,7 +184,7 @@ export default function DetailedReportsSection({ detentions }: Props) {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <FollowUpTable rows={reports.followUp} />
+        {followUpTables}
         <ReportTable
           title="Leerlingen met nablijven"
           description="Alle leerlingen met minstens één registratie in de geselecteerde periode."
@@ -151,12 +196,6 @@ export default function DetailedReportsSection({ detentions }: Props) {
           description="Strafstudie op maandag (16:00–17:40)."
           rows={reports.withDoubleDetentions}
           emptyMessage="Geen strafstudies geregistreerd."
-        />
-        <ReportTable
-          title="Strafstudie: geweigerd"
-          description="Maandag-strafstudie waar de leerling opnieuw weigerde."
-          rows={reports.doubleMissedOrRejected}
-          emptyMessage="Geen geweigerde strafstudies."
         />
       </div>
     </section>

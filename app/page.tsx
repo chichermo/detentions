@@ -18,7 +18,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import LoadingPage from '@/app/components/ui/LoadingPage';
-import { DetentionSession } from '@/types';
+import { DetentionSession, Detention } from '@/types';
 import { format } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import InstallPrompt from '@/app/components/InstallPrompt';
@@ -26,6 +26,7 @@ import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
 import { canManageListsAndRights } from '@/lib/auth';
+import DetailedReportsSection from '@/app/components/DetailedReportsSection';
 
 const NAV_ITEMS = [
   {
@@ -102,6 +103,7 @@ const NAV_ITEMS = [
 
 export default function Home() {
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
+  const [allDetentions, setAllDetentions] = useState<Detention[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [canManageLists, setCanManageLists] = useState(false);
@@ -113,9 +115,14 @@ export default function Home() {
 
   const fetchSessions = async () => {
     try {
-      const response = await apiFetch('/api/detentions/sessions', { cache: 'no-store' });
-      const data = await response.json();
+      const [sessionsRes, detentionsRes] = await Promise.all([
+        apiFetch('/api/detentions/sessions', { cache: 'no-store' }),
+        apiFetch('/api/detentions', { cache: 'no-store' }),
+      ]);
+      const data = await sessionsRes.json();
+      const detentionsData = await detentionsRes.json().catch(() => []);
       setSessions(Array.isArray(data) ? data : []);
+      setAllDetentions(Array.isArray(detentionsData) ? detentionsData : []);
     } catch (error) {
       console.error('Error fetching sessions:', error);
     } finally {
@@ -206,6 +213,8 @@ export default function Home() {
       <InstallPrompt />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <DetailedReportsSection detentions={allDetentions} followUpOnly />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
           {NAV_ITEMS.filter((item) => !item.fullOnly || canManageLists).map((item) => (
             <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>

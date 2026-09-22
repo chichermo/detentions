@@ -17,7 +17,9 @@ import {
   validateRequiredDetentionFields,
   validateSessionCapacity,
   validateUniqueStudentOnDate,
+  validateNoDuplicateStudentsInBatch,
   getDetentionStudentName,
+  normalizeDetentionDate,
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
@@ -313,17 +315,6 @@ export default function DetentionSessionPage() {
       return;
     }
 
-    const alreadyInSession = detentions.some(
-      (d) =>
-        d.id !== newDetention.id &&
-        getDetentionStudentName(d.student).toLowerCase() ===
-          (newDetention.student || '').trim().toLowerCase()
-    );
-    if (alreadyInSession) {
-      alert('Deze leerling heeft al een nablijven of strafstudie op deze datum.');
-      return;
-    }
-
     const capacityErr = validateSessionCapacity(detentions.length, 1);
     if (capacityErr) {
       alert(capacityErr);
@@ -363,6 +354,12 @@ export default function DetentionSessionPage() {
       didNotAttend: newDetention.didNotAttend || false,
     };
 
+    const dupErr = validateUniqueStudentOnDate(detentionToSave, detentions);
+    if (dupErr) {
+      alert(dupErr);
+      return;
+    }
+
     try {
       const response = await apiFetch('/api/detentions', {
         method: 'POST',
@@ -398,20 +395,41 @@ export default function DetentionSessionPage() {
 
   const handleDuplicateSession = async (newDate: string, duplicated: Detention[]) => {
     try {
-      const existingRes = await apiFetch(`/api/detentions?date=${encodeURIComponent(newDate)}`);
+      const targetDate = normalizeDetentionDate(newDate) || newDate;
+      const existingRes = await apiFetch('/api/detentions', { cache: 'no-store' });
       const existingData = await existingRes.json().catch(() => []);
-      const existingOnTarget = Array.isArray(existingData) ? existingData.length : 0;
-      const capacityErr = validateSessionCapacity(existingOnTarget, duplicated.length);
+      const existingOnTarget: Detention[] = Array.isArray(existingData)
+        ? existingData.filter((d: Detention) => normalizeDetentionDate(d.date) === targetDate)
+        : [];
+      const capacityErr = validateSessionCapacity(existingOnTarget.length, duplicated.length);
       if (capacityErr) {
         alert(capacityErr);
         return;
       }
+      const batchErr = validateNoDuplicateStudentsInBatch(duplicated);
+      if (batchErr) {
+        alert(batchErr);
+        return;
+      }
+      const planned: Detention[] = [];
       for (const detention of duplicated) {
-        const { id: _id, ...payload } = detention;
+        const payload: Detention = {
+          ...detention,
+          date: targetDate,
+          dayOfWeek: getDayOfWeekFromDate(targetDate),
+        };
+        const dupErr = validateUniqueStudentOnDate(payload, [...existingOnTarget, ...planned]);
+        if (dupErr) {
+          alert(dupErr);
+          return;
+        }
+        planned.push(payload);
+      }
+      for (const payload of planned) {
         const response = await apiFetch('/api/detentions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, date: newDate }),
+          body: JSON.stringify(payload),
         });
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));

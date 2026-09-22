@@ -13,6 +13,18 @@ function studentKey(student: string): string {
   return getDetentionStudentName(student).toLowerCase();
 }
 
+/** Normaliseer datums zodat 2026-09-21 en 2026-09-21T00:00:00 dezelfde dag zijn. */
+export function normalizeDetentionDate(date?: string): string {
+  const raw = String(date || '').trim();
+  const iso = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (iso) return iso[1];
+  const eu = raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (eu) {
+    return `${eu[3]}-${eu[2].padStart(2, '0')}-${eu[1].padStart(2, '0')}`;
+  }
+  return raw;
+}
+
 /** Maximaal aantal nablijven (leerlingen) per sessiedag. */
 export const MAX_DETECTIONS_PER_SESSION = 20;
 
@@ -50,27 +62,44 @@ export function validateSessionCapacity(
   return null;
 }
 
-/** Maximaal één inschrijving per leerling per sessiedatum (nablijven én strafstudie). */
+/**
+ * Maximaal één inschrijving per leerling per sessiedatum.
+ * timePeriod (16:00-16:50 vs 16:50-17:40) telt niet als twee plaatsen:
+ * twee strafstudies op dezelfde dag voor dezelfde leerling is altijd verboden.
+ */
 export function validateUniqueStudentOnDate(
   detention: Partial<Detention>,
   existing: Detention[],
   excludeId?: string
 ): string | null {
   const name = getDetentionStudentName(detention.student || '');
-  if (!name || !detention.date) return null;
+  const date = normalizeDetentionDate(detention.date);
+  if (!name || !date) return null;
 
   const key = studentKey(detention.student || '');
-  const duplicate = existing.find(
+  const sameDay = existing.filter(
     (d) =>
       d.id !== excludeId &&
-      d.date === detention.date &&
+      normalizeDetentionDate(d.date) === date &&
       studentKey(d.student) === key
   );
 
-  if (!duplicate) return null;
+  if (sameDay.length === 0) return null;
+
+  const duplicate = sameDay[0];
+  const newIsStrafstudie = !!detention.isDoublePeriod;
+  const existingStrafstudie = sameDay.some((d) => d.isDoublePeriod);
+
+  if (newIsStrafstudie || existingStrafstudie) {
+    const slotHint =
+      detention.timePeriod || duplicate.timePeriod
+        ? ' Een ander tijdvak (16:00-16:50 / 16:50-17:40) telt niet als aparte strafstudie.'
+        : '';
+    return `${name} heeft al een ${existingStrafstudie ? 'strafstudie' : 'nablijven'} op ${date}. Er kan maar één strafstudie per leerling per dag worden ingepland.${slotHint}`;
+  }
 
   const existingLabel = duplicate.isDoublePeriod ? 'strafstudie' : 'nablijven';
-  return `${name} heeft al een ${existingLabel} op ${detention.date}. Elke leerling kan maar één keer per dag ingepland worden.`;
+  return `${name} heeft al een ${existingLabel} op ${date}. Elke leerling kan maar één keer per dag ingepland worden.`;
 }
 
 /** Geen dubbele leerlingen in één opslagactie (nieuwe sessie). */
