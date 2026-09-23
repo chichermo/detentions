@@ -25,6 +25,22 @@ export function normalizeDetentionDate(date?: string): string {
   return raw;
 }
 
+/** Kalenderdag in België (YYYY-MM-DD). */
+export function todayInBrussels(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Brussels',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+/** True als de sessie vandaag of eerder valt — toekomstige afspraken zijn nog geen weigering. */
+export function isDetentionOnOrBeforeToday(date?: string): boolean {
+  const day = normalizeDetentionDate(date);
+  return !!day && day <= todayInBrussels();
+}
+
 /** Maximaal aantal nablijven (leerlingen) per sessiedag. */
 export const MAX_DETECTIONS_PER_SESSION = 20;
 

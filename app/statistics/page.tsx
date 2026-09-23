@@ -18,6 +18,7 @@ import { createPDF, autoTable } from '@/lib/pdf-export';
 import { canViewStaffStatistics } from '@/lib/auth';
 import DateField from '@/app/components/DateField';
 import StudentSearchFilter from '@/app/components/StudentSearchFilter';
+import ExpandableRankTable from '@/app/components/ExpandableRankTable';
 import { normalizeReasonLabel } from '@/lib/reasonNormalize';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
@@ -178,15 +179,16 @@ export default function StatisticsPage() {
     .slice(0, 10)
     .map(([name, count]) => ({ name, count }));
 
-  const topTeachers = Object.entries(stats.byTeacher)
+  const rankedTeachers = Object.entries(stats.byTeacher)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
     .map(([name, count]) => ({ name, count }));
 
-  const topReasons = Object.entries(stats.byReason)
+  const rankedReasons = Object.entries(stats.byReason)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
     .map(([name, count]) => ({ name, count }));
+
+  const topTeachers = rankedTeachers.slice(0, 10);
+  const topReasons = rankedReasons.slice(0, 10);
 
   // Exportar a PDF
   const exportToPDF = async () => {
@@ -744,28 +746,12 @@ export default function StatisticsPage() {
               />
             </ChartCard>
 
-            {topReasons.length > 0 && (
-              <div className="card p-6">
-                <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Redenen</h3>
-                <div className="overflow-x-auto">
-                  <table className="table-simple">
-                    <thead>
-                      <tr>
-                        <th>Reden</th>
-                        <th className="text-right">Aantal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topReasons.map((reason, idx) => (
-                        <tr key={idx}>
-                          <td>{reason.name}</td>
-                          <td className="text-right font-semibold">{reason.count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            {rankedReasons.length > 0 && (
+              <ExpandableRankTable
+                title="Ranking redenen"
+                nameHeader="Reden"
+                items={rankedReasons}
+              />
             )}
           </div>
 
@@ -792,29 +778,13 @@ export default function StatisticsPage() {
         </div>
 
         {/* Tablas de Datos */}
-        {canViewTopStaff && topTeachers.length > 0 && (
+        {canViewTopStaff && rankedTeachers.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="card p-6">
-              <h3 className="text-lg font-bold text-slate-100 mb-4">Top 10 Personeel</h3>
-              <div className="overflow-x-auto">
-                <table className="table-simple">
-                  <thead>
-                    <tr>
-                      <th>Personeel</th>
-                      <th className="text-right">Aantal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topTeachers.map((teacher, idx) => (
-                      <tr key={idx}>
-                        <td>{teacher.name}</td>
-                        <td className="text-right font-semibold">{teacher.count}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <ExpandableRankTable
+              title="Ranking personeel"
+              nameHeader="Personeel"
+              items={rankedTeachers}
+            />
           </div>
         )}
 

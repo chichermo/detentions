@@ -762,6 +762,11 @@ function DetentionForm({
           />
           <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
         </label>
+        {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+          <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
+            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt — niet omdat dit de strafstudie zelf is.
+          </p>
+        )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
             Leerling krijgt strafstudie op de eerstvolgende maandag. Elke weigering krijgt een eigen strafstudie (niet twee op dezelfde dag).

@@ -194,9 +194,14 @@ export default function DetentionEditPanel({
             </p>
           )}
         </div>
+        {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+          <p className="text-xs text-amber-400/90 col-span-full">
+            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt — niet omdat dit de strafstudie zelf is.
+          </p>
+        )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Leerling krijgt strafstudie op de eerstvolgende maandag.
+            Leerling krijgt strafstudie op de eerstvolgende maandag. Elke weigering krijgt een eigen strafstudie (niet twee op dezelfde dag).
           </p>
         )}
 

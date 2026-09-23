@@ -14,6 +14,7 @@ import {
   validateSessionCapacity,
   validateNoDuplicateStudentsInBatch,
   validateUniqueStudentOnDate,
+  validateStrafstudieCoversRefusals,
   getDetentionStudentName,
   normalizeDetentionDate,
   MAX_DETECTIONS_PER_SESSION,
@@ -234,6 +235,25 @@ function NewDetentionPageInner() {
         return;
       }
       alreadyPlanned.push(d);
+    }
+
+    try {
+      const allRes = await apiFetch('/api/detentions', { cache: 'no-store' });
+      const allDetentions = await allRes.json().catch(() => []);
+      const known = Array.isArray(allDetentions) ? allDetentions : existingOnDate;
+      for (const d of detentionsToSave) {
+        const mergeErr = validateStrafstudieCoversRefusals(
+          d,
+          [...known, ...detentionsToSave.filter((other) => other.id !== d.id)],
+          d.id
+        );
+        if (mergeErr) {
+          alert(mergeErr);
+          return;
+        }
+      }
+    } catch {
+      /* API-check bij opslaan blijft de echte poort */
     }
 
     try {
@@ -496,9 +516,14 @@ function NewDetentionPageInner() {
                     />
                     <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
                   </label>
+                  {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+                    <p className="text-xs text-amber-300/90 px-1">
+                      Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt — niet omdat dit de strafstudie zelf is.
+                    </p>
+                  )}
                   {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
                     <p className="text-xs text-amber-300/90 px-1">
-                      Leerling krijgt strafstudie op de eerstvolgende maandag.
+                      Leerling krijgt strafstudie op de eerstvolgende maandag. Elke weigering krijgt een eigen strafstudie (niet twee op dezelfde dag).
                     </p>
                   )}
                   {selectedDay === 'MAANDAG' && allowStrafstudie && (
