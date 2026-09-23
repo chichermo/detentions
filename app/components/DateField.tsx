@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef } from 'react';
+
 type Props = {
   value: string;
   onChange: (value: string) => void;
@@ -24,26 +26,47 @@ export default function DateField({
   id,
   min,
 }: Props) {
+  const nativeRef = useRef<HTMLInputElement>(null);
+
+  const openPicker = () => {
+    const el = nativeRef.current;
+    if (!el) return;
+    try {
+      if (typeof el.showPicker === 'function') {
+        el.showPicker();
+        return;
+      }
+    } catch {
+      /* showPicker kan falen als de pagina geen user-gesture heeft */
+    }
+    el.focus();
+    el.click();
+  };
+
   return (
     <div className="date-field-wrap">
       <input
         type="text"
         readOnly
-        tabIndex={-1}
         value={toDisplay(value)}
         placeholder="dd/mm/jjjj"
         className={className}
-        aria-hidden="true"
+        id={id}
+        required={required && !value}
+        onClick={openPicker}
+        onFocus={openPicker}
+        aria-label="Datum"
       />
       <input
+        ref={nativeRef}
         type="date"
-        id={id}
         lang="nl-BE"
-        required={required}
         min={min}
         value={value}
+        tabIndex={-1}
         onChange={(e) => onChange(e.target.value)}
         className="date-field-native"
+        aria-hidden="true"
       />
     </div>
   );

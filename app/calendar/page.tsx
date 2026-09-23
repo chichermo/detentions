@@ -34,6 +34,7 @@ import {
 import { canManageCalendarSettings } from '@/lib/auth';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
+import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -377,12 +378,25 @@ export default function CalendarPage() {
                     onClick={() => router.push(`/detentions/${session.date}`)}
                     className="w-full text-left border border-slate-700 rounded-xl p-4 hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all"
                   >
-                    <h3 className="font-bold text-slate-100">
-                      {`${format(parseISO(session.date), 'EEEE', { locale: nl })} ${format(parseISO(session.date), 'dd/MM/yyyy')}`}
-                    </h3>
-                    <p className="text-sm text-slate-400 mt-1">
-                      {session.detentions.length} nablijven · {session.dayOfWeek}
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-slate-100">
+                          {`${format(parseISO(session.date), 'EEEE', { locale: nl })} ${format(parseISO(session.date), 'dd/MM/yyyy')}`}
+                        </h3>
+                        <p className="text-sm text-slate-400 mt-1">
+                          {session.detentions.length} nablijven · {session.dayOfWeek}
+                        </p>
+                      </div>
+                      {session.detentions.length > 0 && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DuplicateToDateButton
+                            detentions={session.detentions}
+                            sourceDate={session.date}
+                            variant="header"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </button>
                 ))}
             </div>

@@ -4,6 +4,7 @@ import { GripVertical, Edit, Trash2, History } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import DragDropDetentions from '@/app/components/DragDropDetentions';
 import DetentionEditPanel from '@/app/components/DetentionEditPanel';
+import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
 import { Detention, Student } from '@/types';
 
 interface DetentionSessionListProps {
@@ -113,6 +114,11 @@ export default function DetentionSessionList({
                         <History className="h-5 w-5" />
                       </button>
                       )}
+                      <DuplicateToDateButton
+                        detentions={[detention]}
+                        sourceDate={detention.date}
+                        variant="card"
+                      />
                       <button
                         type="button"
                         onClick={() => onEdit(detention)}

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, FileText, Plus, Save, X, Copy, Printer } from 'lucide-react';
+import { ArrowLeft, FileText, Plus, Save, X, Printer } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import DetentionSessionList from '@/app/components/DetentionSessionList';
+import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
@@ -16,7 +17,6 @@ import {
   validateRequiredDetentionFields,
   validateSessionCapacity,
   validateUniqueStudentOnDate,
-  validateNoDuplicateStudentsInBatch,
   validateStrafstudieCoversRefusals,
   getDetentionStudentName,
   normalizeDetentionDate,
@@ -45,9 +45,6 @@ export default function DetentionSessionPage() {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [allowStrafstudie, setAllowStrafstudie] = useState(true);
   const [canViewHistory, setCanViewHistory] = useState(false);
-  const [showDuplicateForm, setShowDuplicateForm] = useState(false);
-  const [duplicateDate, setDuplicateDate] = useState('');
-  const [duplicateBusy, setDuplicateBusy] = useState(false);
 
   const fetchDetentions = useCallback(async () => {
     try {
@@ -430,133 +427,6 @@ export default function DetentionSessionPage() {
     return students.filter((s) => !taken.has(s.name.trim().toLowerCase()));
   }, [students, detentions, editingId]);
 
-  const handleDuplicateToDate = async () => {
-    if (duplicateBusy) return;
-    if (detentions.length === 0) {
-      alert('Deze sessie heeft geen nablijven om te kopiëren.');
-      return;
-    }
-
-    const parsed = parseSessionDate(duplicateDate);
-    if (!parsed) {
-      alert('Kies een maandag, dinsdag of donderdag. Het nablijven kan alleen op die dagen.');
-      return;
-    }
-    if (parsed.date === normalizeDetentionDate(date)) {
-      alert('Kies een andere datum dan de huidige sessie.');
-      return;
-    }
-
-    setDuplicateBusy(true);
-    try {
-      let allowStrafOnTarget = true;
-      try {
-        const days = await fetchCalendarDays(parsed.date, parsed.date);
-        const cfg = getDaySettingFromList(parsed.date, days);
-        if (cfg?.blocked) {
-          alert('Deze dag is geblokkeerd. Geen nablijven mogelijk.');
-          return;
-        }
-        if (cfg && !cfg.allowDetentions) {
-          alert('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
-          return;
-        }
-        allowStrafOnTarget = cfg?.allowStrafstudie !== false;
-      } catch {
-        /* offline: verder met clientvalidatie */
-      }
-
-      const existingRes = await apiFetch('/api/detentions', { cache: 'no-store' });
-      const existingData = await existingRes.json().catch(() => []);
-      const allExisting: Detention[] = Array.isArray(existingData) ? existingData : [];
-      const existingOnTarget = allExisting.filter(
-        (d) => normalizeDetentionDate(d.date) === parsed.date
-      );
-
-      const capacityErr = validateSessionCapacity(existingOnTarget.length, detentions.length);
-      if (capacityErr) {
-        alert(capacityErr);
-        return;
-      }
-      const batchErr = validateNoDuplicateStudentsInBatch(detentions);
-      if (batchErr) {
-        alert(batchErr);
-        return;
-      }
-
-      const isTargetMonday = parsed.dayOfWeek === 'MAANDAG';
-      const stamp = Date.now();
-      const planned: Detention[] = [];
-      let strafstudieOmgezet = 0;
-
-      for (let i = 0; i < detentions.length; i++) {
-        const detention = detentions[i];
-        let isDoublePeriod = !!detention.isDoublePeriod && isTargetMonday;
-        if (detention.isDoublePeriod && (!isTargetMonday || !allowStrafOnTarget)) {
-          isDoublePeriod = false;
-          strafstudieOmgezet += 1;
-        }
-
-        const payload: Detention = {
-          ...detention,
-          id: `detention-${stamp}-${i}`,
-          date: parsed.date,
-          dayOfWeek: parsed.dayOfWeek,
-          number: existingOnTarget.length + i + 1,
-          isDoublePeriod,
-          timePeriod: isDoublePeriod ? detention.timePeriod : undefined,
-          sourceDetentionId: undefined,
-        };
-
-        const dupErr = validateUniqueStudentOnDate(payload, [...existingOnTarget, ...planned]);
-        if (dupErr) {
-          alert(dupErr);
-          return;
-        }
-        const mergeErr = validateStrafstudieCoversRefusals(payload, [...allExisting, ...planned]);
-        if (mergeErr) {
-          alert(mergeErr);
-          return;
-        }
-        planned.push(payload);
-      }
-
-      for (const payload of planned) {
-        const response = await apiFetch('/api/detentions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          alert(data?.details || data?.error || 'Fout bij dupliceren. Probeer het opnieuw.');
-          return;
-        }
-      }
-
-      const targetLabel = format(parseISO(parsed.date), 'EEEE d MMMM yyyy', { locale: nl });
-      const extra =
-        strafstudieOmgezet > 0
-          ? isTargetMonday
-            ? ' Strafstudie is omgezet naar gewoon nablijven (niet toegestaan op deze maandag).'
-            : ' Strafstudie is omgezet naar gewoon nablijven (alleen op maandag mogelijk).'
-          : '';
-      alert(`${planned.length} nablijven gekopieerd naar ${targetLabel}.${extra}`);
-      setShowDuplicateForm(false);
-      setDuplicateDate('');
-      router.push(`/detentions/${parsed.date}`);
-    } catch (error) {
-      if (error instanceof OfflineQueuedError) {
-        alert(error.message);
-        return;
-      }
-      console.error('Error duplicating session:', error);
-      alert('Fout bij dupliceren van de sessie. Controleer je verbinding en probeer het opnieuw.');
-    } finally {
-      setDuplicateBusy(false);
-    }
-  };
-
   return (
     <div className="app-page">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50 print:hidden">
@@ -589,48 +459,11 @@ export default function DetentionSessionPage() {
                 <span className="hidden sm:inline">Afdrukken</span>
               </button>
               {detentions.length > 0 && (
-                showDuplicateForm ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-slate-400 hidden sm:inline">Naar</span>
-                    <DateField
-                      id="duplicate-to-date"
-                      value={duplicateDate}
-                      onChange={setDuplicateDate}
-                      className="input-field date-field w-[10.5rem]"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleDuplicateToDate}
-                      disabled={!duplicateDate || duplicateBusy}
-                      className="btn-primary flex items-center gap-2 text-sm px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {duplicateBusy ? 'Bezig…' : 'Kopiëren'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDuplicateForm(false);
-                        setDuplicateDate('');
-                      }}
-                      disabled={duplicateBusy}
-                      className="btn-ghost p-2"
-                      aria-label="Dupliceren annuleren"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowDuplicateForm(true)}
-                    className="btn-secondary flex items-center gap-2 text-sm px-3 py-2"
-                    title="Kopieer deze sessie naar een andere datum"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span className="hidden sm:inline">Dupliceren naar datum</span>
-                    <span className="sm:hidden">Dupliceren</span>
-                  </button>
-                )
+                <DuplicateToDateButton
+                  detentions={detentions}
+                  sourceDate={date}
+                  variant="header"
+                />
               )}
               {!showAddForm && (
                 <button
