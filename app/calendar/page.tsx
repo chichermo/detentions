@@ -31,10 +31,9 @@ import {
   saveCalendarDay,
   getDaySettingFromList,
 } from '@/lib/calendarDaysClient';
-import { canManageCalendarSettings } from '@/lib/auth';
+import { canManageCalendarSettings, canManageListsAndRights } from '@/lib/auth';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
-import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -48,6 +47,7 @@ export default function CalendarPage() {
   const [draftNotice, setDraftNotice] = useState('');
   const [mounted, setMounted] = useState(false);
   const [canAdminCalendar, setCanAdminCalendar] = useState(false);
+  const [landedFromAdminHome, setLandedFromAdminHome] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -75,6 +75,7 @@ export default function CalendarPage() {
   useEffect(() => {
     setMounted(true);
     setCanAdminCalendar(canManageCalendarSettings());
+    setLandedFromAdminHome(canManageListsAndRights());
   }, []);
 
   // Al cambiar de mes, cerrar modal si el día ya no aplica
@@ -219,7 +220,7 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push(landedFromAdminHome ? '/?hub=1' : '/')}
                 className="btn-ghost p-2 shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -378,25 +379,12 @@ export default function CalendarPage() {
                     onClick={() => router.push(`/detentions/${session.date}`)}
                     className="w-full text-left border border-slate-700 rounded-xl p-4 hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-slate-100">
-                          {`${format(parseISO(session.date), 'EEEE', { locale: nl })} ${format(parseISO(session.date), 'dd/MM/yyyy')}`}
-                        </h3>
-                        <p className="text-sm text-slate-400 mt-1">
-                          {session.detentions.length} nablijven · {session.dayOfWeek}
-                        </p>
-                      </div>
-                      {session.detentions.length > 0 && (
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <DuplicateToDateButton
-                            detentions={session.detentions}
-                            sourceDate={session.date}
-                            variant="header"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="font-bold text-slate-100">
+                      {`${format(parseISO(session.date), 'EEEE', { locale: nl })} ${format(parseISO(session.date), 'dd/MM/yyyy')}`}
+                    </h3>
+                    <p className="text-sm text-slate-400 mt-1">
+                      {session.detentions.length} nablijven · {session.dayOfWeek}
+                    </p>
                   </button>
                 ))}
             </div>

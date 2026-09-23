@@ -112,7 +112,15 @@ export default function PortalEntryClient() {
       );
 
       setMessage('Welkom — Nablijven openen…');
-      router.replace('/');
+      const usernameNorm = username.trim().toLowerCase();
+      const openCalendar =
+        usernameNorm === 'admin' ||
+        usernameNorm === 'liesbeth' ||
+        usernameNorm === 'liesbeth.kreps' ||
+        usernameNorm.startsWith('liesbeth.kreps') ||
+        usernameNorm === 'annelore.delbecque' ||
+        usernameNorm.startsWith('annelore.delbecque');
+      router.replace(openCalendar ? '/calendar' : '/');
     };
     run();
   }, [router, searchParams]);

@@ -1,6 +1,6 @@
 // Service Worker para PWA - Nablijven Systeem
-const CACHE_NAME = 'nablijven-v4';
-const STATIC_CACHE = 'nablijven-static-v4';
+const CACHE_NAME = 'nablijven-v5';
+const STATIC_CACHE = 'nablijven-static-v5';
 
 /** Solo se pueden cachear peticiones http/https del mismo origen (no chrome-extension, blob, etc.) */
 function isCacheableRequest(request) {
@@ -25,7 +25,7 @@ function isCacheableRequest(request) {
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(['/', '/manifest.json']).catch(() => {
+      return cache.addAll(['/manifest.json']).catch(() => {
         // Ignorar fallos de precache en entornos restrictivos
       });
     })

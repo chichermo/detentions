@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Calendar,
   Users,
@@ -24,7 +25,6 @@ import nl from 'date-fns/locale/nl';
 import InstallPrompt from '@/app/components/InstallPrompt';
 import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
-import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
 import { apiFetch } from '@/lib/apiClient';
 import { canManageListsAndRights } from '@/lib/auth';
 
@@ -102,15 +102,22 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function Home() {
+  const router = useRouter();
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [canManageLists, setCanManageLists] = useState(false);
 
   useEffect(() => {
-    setCanManageLists(canManageListsAndRights());
+    const lists = canManageListsAndRights();
+    setCanManageLists(lists);
+    const wantHub = new URLSearchParams(window.location.search).get('hub') === '1';
+    if (lists && !wantHub) {
+      router.replace('/calendar');
+      return;
+    }
     fetchSessions();
-  }, []);
+  }, [router]);
 
   const fetchSessions = async () => {
     try {
@@ -265,9 +272,9 @@ export default function Home() {
                 .slice(-10)
                 .reverse()
                 .map((session) => (
-                  <div key={session.date} className="session-row group">
+                  <Link key={session.date} href={`/detentions/${session.date}`} className="session-row group">
                     <div className="flex items-center justify-between gap-4">
-                      <Link href={`/detentions/${session.date}`} className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
                         <h3 className="font-display font-bold text-primary text-base mb-2 group-hover:text-[var(--accent-hover)] transition-colors">
                           {format(new Date(session.date), 'EEEE d MMMM yyyy', { locale: nl })}
                         </h3>
@@ -279,8 +286,8 @@ export default function Home() {
                           </span>
                           <span className="badge-primary">{session.dayOfWeek}</span>
                         </div>
-                      </Link>
-                      <div className="flex flex-wrap gap-2 justify-end shrink-0 items-center">
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-end shrink-0">
                         {session.detentions.filter((d) => d.shouldPrint).length > 0 && (
                           <span className="badge-success">
                             {session.detentions.filter((d) => d.shouldPrint).length} print
@@ -296,16 +303,9 @@ export default function Home() {
                             {session.detentions.filter((d) => d.isDoublePeriod).length} strafstudie
                           </span>
                         )}
-                        {session.detentions.length > 0 && (
-                          <DuplicateToDateButton
-                            detentions={session.detentions}
-                            sourceDate={session.date}
-                            variant="header"
-                          />
-                        )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
             </div>
           )}

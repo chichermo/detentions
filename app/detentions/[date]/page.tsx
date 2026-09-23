@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, FileText, Plus, Save, X, Printer } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import DetentionSessionList from '@/app/components/DetentionSessionList';
-import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
 import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
@@ -458,13 +457,6 @@ export default function DetentionSessionPage() {
                 <Printer className="h-4 w-4" />
                 <span className="hidden sm:inline">Afdrukken</span>
               </button>
-              {detentions.length > 0 && (
-                <DuplicateToDateButton
-                  detentions={detentions}
-                  sourceDate={date}
-                  variant="header"
-                />
-              )}
               {!showAddForm && (
                 <button
                   onClick={handleAddNew}

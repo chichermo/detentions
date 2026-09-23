@@ -114,11 +114,7 @@ export default function DetentionSessionList({
                         <History className="h-5 w-5" />
                       </button>
                       )}
-                      <DuplicateToDateButton
-                        detentions={[detention]}
-                        sourceDate={detention.date}
-                        variant="card"
-                      />
+                      <DuplicateToDateButton detention={detention} />
                       <button
                         type="button"
                         onClick={() => onEdit(detention)}

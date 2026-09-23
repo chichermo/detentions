@@ -14,34 +14,19 @@ import {
 } from '@/lib/copyDetentionsToDate';
 import { getDetentionStudentName } from '@/lib/detentionValidation';
 
-type Variant = 'card' | 'header';
-
 type Props = {
-  detentions: Detention[];
-  sourceDate: string;
-  variant?: Variant;
+  detention: Detention;
   disabled?: boolean;
 };
 
-export default function DuplicateToDateButton({
-  detentions,
-  sourceDate,
-  variant = 'card',
-  disabled,
-}: Props) {
+export default function DuplicateToDateButton({ detention, disabled }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [targetDate, setTargetDate] = useState('');
   const [busy, setBusy] = useState(false);
 
-  if (detentions.length === 0) return null;
-
-  const isSingle = detentions.length === 1;
-  const studentName = isSingle ? getDetentionStudentName(detentions[0].student) : '';
-  const title = isSingle ? 'Nablijven dupliceren' : 'Sessie dupliceren';
-  const description = isSingle
-    ? `Kopieer ${studentName} naar een andere datum.`
-    : `Kopieer deze ${detentions.length} nablijven naar een andere datum.`;
+  const studentName = getDetentionStudentName(detention.student);
+  const fieldId = `duplicate-to-date-${detention.id}`;
 
   const close = () => {
     if (busy) return;
@@ -53,13 +38,9 @@ export default function DuplicateToDateButton({
     if (busy || !targetDate) return;
     setBusy(true);
     try {
-      const result = await copyDetentionsToDate(detentions, sourceDate, targetDate);
+      const result = await copyDetentionsToDate([detention], detention.date, targetDate);
       const targetLabel = format(parseISO(result.targetDate), 'EEEE d MMMM yyyy', { locale: nl });
-      alert(
-        isSingle
-          ? `${studentName} gekopieerd naar ${targetLabel}.${result.extra}`
-          : `${result.count} nablijven gekopieerd naar ${targetLabel}.${result.extra}`
-      );
+      alert(`${studentName} gekopieerd naar ${targetLabel}.${result.extra}`);
       setOpen(false);
       setTargetDate('');
       router.push(`/detentions/${result.targetDate}`);
@@ -72,43 +53,25 @@ export default function DuplicateToDateButton({
 
   return (
     <>
-      {variant === 'card' ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(true);
-          }}
-          className="detention-card__action"
-          title="Dupliceren naar andere datum"
-          disabled={disabled}
-        >
-          <Copy className="h-5 w-5" />
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(true);
-          }}
-          className="btn-secondary flex items-center gap-2 text-sm px-3 py-2"
-          title="Kopieer deze sessie naar een andere datum"
-          disabled={disabled}
-        >
-          <Copy className="h-4 w-4" />
-          <span className="hidden sm:inline">Sessie dupliceren</span>
-          <span className="sm:hidden">Dupliceren</span>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className="detention-card__action"
+        title="Dupliceren naar andere datum"
+        disabled={disabled}
+      >
+        <Copy className="h-5 w-5" />
+      </button>
 
       <Modal
         open={open}
         onClose={close}
-        title={title}
-        description={description}
+        title="Nablijven dupliceren"
+        description={`Kopieer ${studentName} naar een andere datum.`}
         footer={
           <>
             <button type="button" className="btn-secondary flex-1" onClick={close} disabled={busy}>
@@ -125,11 +88,11 @@ export default function DuplicateToDateButton({
           </>
         }
       >
-        <label className="form-label" htmlFor={`duplicate-to-date-${sourceDate}-${detentions[0]?.id || 'session'}`}>
+        <label className="form-label" htmlFor={fieldId}>
           Nieuwe datum (maandag, dinsdag of donderdag)
         </label>
         <DateField
-          id={`duplicate-to-date-${sourceDate}-${detentions[0]?.id || 'session'}`}
+          id={fieldId}
           value={targetDate}
           onChange={setTargetDate}
           className="input-field date-field w-full"
