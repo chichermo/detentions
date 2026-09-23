@@ -151,7 +151,7 @@ body {
     border-color: var(--border-default);
   }
 
-  /* Opvolging weigeringen + strafstudie weigeren — rood kader (niet geel/amber) */
+  /* Opvolging weigeringen + strafstudie weigeren — rode kaders alleen op statistieken */
   .card-follow-up,
   .card-follow-up-strafstudie {
     background: color-mix(in srgb, var(--coral) 22%, rgba(127, 29, 29, 0.78)) !important;
@@ -764,10 +764,6 @@ body {
     width: 1.125rem;
     height: 1.125rem;
     accent-color: var(--accent);
-  }
-
-  .detention-edit-card__check--danger input {
-    accent-color: var(--coral);
   }
 
   .detention-notes-input {

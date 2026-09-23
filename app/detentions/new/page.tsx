@@ -485,16 +485,16 @@ function NewDetentionPageInner() {
                     />
                     <span className="text-sm font-medium text-slate-300">Mag chromebook gebruiken?</span>
                   </label>
-                  <label className="flex items-center gap-3 p-4 bg-red-600/20 rounded-xl hover:bg-red-600/30 cursor-pointer transition-colors border border-red-500/50">
+                  <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
                     <input
                       type="checkbox"
                       checked={detention.nablijvenGeweigerd || false}
                       onChange={(e) => {
                         updateDetention(index, 'nablijvenGeweigerd', e.target.checked);
                       }}
-                      className="h-5 w-5 text-red-600 focus:ring-red-500 rounded border-slate-500 bg-slate-700"
+                      className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
                     />
-                    <span className="text-sm font-medium text-red-200">Nablijven geweigerd?</span>
+                    <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
                   </label>
                   {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
                     <p className="text-xs text-amber-300/90 px-1">
