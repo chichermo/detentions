@@ -52,6 +52,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="manifest" href="/manifest.json" />
+        <Script id="land-calendar" strategy="beforeInteractive">
+          {`(function(){try{var path=location.pathname;if(path!=='/'&&path!=='')return;if(/(^|[?&])hub=1(&|$)/.test(location.search))return;var u=(localStorage.getItem('nablijven_actor_username')||'').toLowerCase();if(!u){var raw=localStorage.getItem('element_portal_session');if(raw){var p=JSON.parse(raw);u=String(p.username||p.user||'').toLowerCase();}}var role=localStorage.getItem('nablijven_user_role')||'';var ok=u==='admin'||u==='liesbeth'||u.indexOf('liesbeth.kreps')===0||u.indexOf('annelore.delbecque')===0||role==='beheerder';if(ok)location.replace('/calendar');}catch(e){}})();`}
+        </Script>
       </head>
       <body className="font-sans antialiased">
         <DataHealthBanner />

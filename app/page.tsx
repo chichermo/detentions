@@ -26,7 +26,7 @@ import InstallPrompt from '@/app/components/InstallPrompt';
 import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
-import { canManageListsAndRights } from '@/lib/auth';
+import { canManageListsAndRights, shouldLandOnCalendar } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
@@ -38,6 +38,7 @@ const NAV_ITEMS = [
     iconClass: 'nav-icon bg-gradient-to-br from-[#a78bfa] to-[#7c5cc7] text-[#1a1028]',
     linkClass: 'text-[#d4c4fd]',
     fullOnly: false,
+    featured: true,
   },
   {
     href: '/dashboard',
@@ -112,7 +113,7 @@ export default function Home() {
     const lists = canManageListsAndRights();
     setCanManageLists(lists);
     const wantHub = new URLSearchParams(window.location.search).get('hub') === '1';
-    if (lists && !wantHub) {
+    if (shouldLandOnCalendar() && !wantHub) {
       router.replace('/calendar');
       return;
     }
@@ -216,7 +217,11 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
           {NAV_ITEMS.filter((item) => !item.fullOnly || canManageLists).map((item) => (
-            <Link key={item.href} href={item.href} className={`nav-card ${item.cardClass} group`}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-card ${item.cardClass} group ${'featured' in item && item.featured ? 'nav-card-featured' : ''}`}
+            >
               <div className="relative flex flex-col gap-4">
                 <div className={item.iconClass}>
                   <item.icon className="h-6 w-6" />

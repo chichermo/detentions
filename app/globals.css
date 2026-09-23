@@ -945,6 +945,10 @@ body {
     @apply card-hover p-6 relative overflow-hidden block;
   }
 
+  .nav-card-featured {
+    grid-column: 1 / -1;
+  }
+
   .nav-card::after {
     content: '';
     position: absolute;

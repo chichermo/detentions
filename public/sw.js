@@ -1,6 +1,6 @@
 // Service Worker para PWA - Nablijven Systeem
-const CACHE_NAME = 'nablijven-v5';
-const STATIC_CACHE = 'nablijven-static-v5';
+const CACHE_NAME = 'nablijven-v6';
+const STATIC_CACHE = 'nablijven-static-v6';
 
 /** Solo se pueden cachear peticiones http/https del mismo origen (no chrome-extension, blob, etc.) */
 function isCacheableRequest(request) {
@@ -15,19 +15,19 @@ function isCacheableRequest(request) {
     if (url.pathname.startsWith('/api/')) {
       return false;
     }
+    if (url.pathname.startsWith('/_next/')) {
+      return false;
+    }
     return true;
   } catch {
     return false;
   }
 }
 
-// Instalación
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(['/manifest.json']).catch(() => {
-        // Ignorar fallos de precache en entornos restrictivos
-      });
+      return cache.addAll(['/manifest.json']).catch(() => {});
     })
   );
   self.skipWaiting();
@@ -39,7 +39,6 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Activación
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -50,27 +49,21 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  return self.clients.claim();
 });
 
-// Fetch - Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Nunca cachear navegación HTML: evita JS antiguo y páginas sin hidratar
   const accept = event.request.headers.get('accept') || '';
   if (event.request.mode === 'navigate' || accept.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
-    );
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
     return;
   }
 
-  // Extensiones del navegador, analytics externos, etc.: pasar sin cachear
   if (!isCacheableRequest(event.request)) {
     if (event.request.url.includes('/api/')) {
       event.respondWith(
@@ -90,22 +83,11 @@ self.addEventListener('fetch', (event) => {
         if (response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache).catch(() => {
-              // Ignorar errores de cache (p. ej. esquemas no soportados)
-            });
+            cache.put(event.request, responseToCache).catch(() => {});
           });
         }
         return response;
       })
-      .catch(() => {
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
-        });
-      })
+      .catch(() => caches.match(event.request))
   );
 });

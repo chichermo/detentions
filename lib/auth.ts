@@ -30,6 +30,12 @@ export function canManageListsAndRights(): boolean {
   return username.startsWith('liesbeth.kreps') || username.startsWith('annelore.delbecque');
 }
 
+/** Admin / Liesbeth: kalender is het eerste scherm. */
+export function shouldLandOnCalendar(): boolean {
+  if (canManageListsAndRights()) return true;
+  return getStoredRole() === 'beheerder';
+}
+
 /** Logboek van inplanningen en verwijderingen: dezelfde admin-groep. */
 export function canViewLogboek(): boolean {
   return canManageListsAndRights();

@@ -38,17 +38,17 @@
   "categories": ["education", "productivity"],
   "shortcuts": [
     {
+      "name": "Kalender",
+      "short_name": "Kalender",
+      "description": "Alle sessies in één overzicht",
+      "url": "/calendar",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Nieuwe Nablijven",
       "short_name": "Nieuw",
       "description": "Registreer een nieuwe nablijven sessie",
       "url": "/detentions/new",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Leerlingen",
-      "short_name": "Leerlingen",
-      "description": "Beheer lijsten van leerlingen",
-      "url": "/students",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {

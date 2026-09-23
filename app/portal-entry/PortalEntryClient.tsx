@@ -112,14 +112,13 @@ export default function PortalEntryClient() {
       );
 
       setMessage('Welkom — Nablijven openen…');
-      const usernameNorm = username.trim().toLowerCase();
       const openCalendar =
-        usernameNorm === 'admin' ||
-        usernameNorm === 'liesbeth' ||
-        usernameNorm === 'liesbeth.kreps' ||
-        usernameNorm.startsWith('liesbeth.kreps') ||
-        usernameNorm === 'annelore.delbecque' ||
-        usernameNorm.startsWith('annelore.delbecque');
+        username.trim().toLowerCase() === 'admin' ||
+        username.trim().toLowerCase() === 'liesbeth' ||
+        username.trim().toLowerCase().startsWith('liesbeth.kreps') ||
+        username.trim().toLowerCase() === 'annelore.delbecque' ||
+        username.trim().toLowerCase().startsWith('annelore.delbecque') ||
+        role === 'beheerder';
       router.replace(openCalendar ? '/calendar' : '/');
     };
     run();

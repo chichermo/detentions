@@ -31,7 +31,7 @@ import {
   saveCalendarDay,
   getDaySettingFromList,
 } from '@/lib/calendarDaysClient';
-import { canManageCalendarSettings, canManageListsAndRights } from '@/lib/auth';
+import { canManageCalendarSettings, shouldLandOnCalendar } from '@/lib/auth';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
 
@@ -75,7 +75,7 @@ export default function CalendarPage() {
   useEffect(() => {
     setMounted(true);
     setCanAdminCalendar(canManageCalendarSettings());
-    setLandedFromAdminHome(canManageListsAndRights());
+    setLandedFromAdminHome(shouldLandOnCalendar());
   }, []);
 
   // Al cambiar de mes, cerrar modal si el día ya no aplica
