@@ -84,13 +84,11 @@ function ReportTable({
 
 function FollowUpTable({
   title,
-  description,
   emptyMessage,
   rows,
   frameClass = 'card-follow-up',
 }: {
   title: string;
-  description: string;
   emptyMessage: string;
   rows: FollowUpReportRow[];
   frameClass?: string;
@@ -100,13 +98,12 @@ function FollowUpTable({
 
   return (
     <div className={`card ${frameClass} p-6`}>
-      <div className="flex flex-wrap items-center gap-2 mb-1">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <h3 className="text-lg font-bold text-slate-100">{title}</h3>
         {openCount > 0 && (
           <span className="badge-danger">{openCount} open</span>
         )}
       </div>
-      <p className="text-sm text-slate-300/90 mb-4">{description}</p>
       {displayRows.length === 0 ? (
         <p className="text-slate-300/70 text-sm py-4">{emptyMessage}</p>
       ) : (
@@ -153,14 +150,12 @@ export default function DetailedReportsSection({ detentions, followUpOnly, hideF
     <>
       <FollowUpTable
         title="Opvolging weigeringen"
-        description="Geweigerde nablijven (ma/di/do). Elke weigering hoort bij een eigen strafstudie op een volgende maandag. Blijft open tot die strafstudie er is (reden “weigeren nablijven”, mag iets afwijken), ook als die tot twee weken later valt."
         emptyMessage="Geen geweigerde nablijven in deze periode."
         rows={reports.followUp}
         frameClass="card-follow-up"
       />
       <FollowUpTable
         title="Strafstudie weigeren"
-        description="Geweigerde strafstudies (maandag). Blijft open tot er een nieuwe strafstudie is met melding “weigeren” (mag iets afwijken), ook als die tot twee weken later valt."
         emptyMessage="Geen geweigerde strafstudies in deze periode."
         rows={reports.strafstudieFollowUp}
         frameClass="card-follow-up-strafstudie"
