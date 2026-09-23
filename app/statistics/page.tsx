@@ -122,7 +122,11 @@ export default function StatisticsPage() {
       filtered = filtered.filter((d) => d.student.toLowerCase().includes(studentTerm));
     }
 
-    return filtered;
+    return filtered.sort((a, b) => {
+      const byDate = String(b.date || '').localeCompare(String(a.date || ''));
+      if (byDate !== 0) return byDate;
+      return Number(a.number || 0) - Number(b.number || 0);
+    });
   };
 
   const filteredDetentions = getFilteredDetentions();
