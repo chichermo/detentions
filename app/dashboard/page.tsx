@@ -15,6 +15,7 @@ import NablijvenLineChart from '@/app/components/charts/NablijvenLineChart';
 import NablijvenPieChart from '@/app/components/charts/NablijvenPieChart';
 import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
 import { canManageListsAndRights } from '@/lib/auth';
+import { normalizeReasonLabel } from '@/lib/reasonNormalize';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -156,8 +157,9 @@ export default function DashboardPage() {
   const topReasons = Object.entries(
     filteredDetentions.reduce((acc, d) => {
       if (d.reason) {
-        const reason = d.reason.length > 30 ? d.reason.substring(0, 30) + '...' : d.reason;
-        acc[reason] = (acc[reason] || 0) + 1;
+        const reason = normalizeReasonLabel(d.reason);
+        const label = reason.length > 30 ? `${reason.substring(0, 30)}...` : reason;
+        acc[label] = (acc[label] || 0) + 1;
       }
       return acc;
     }, {} as Record<string, number>)

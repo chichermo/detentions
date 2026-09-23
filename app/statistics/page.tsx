@@ -18,6 +18,7 @@ import { createPDF, autoTable } from '@/lib/pdf-export';
 import { canViewStaffStatistics } from '@/lib/auth';
 import DateField from '@/app/components/DateField';
 import StudentSearchFilter from '@/app/components/StudentSearchFilter';
+import { normalizeReasonLabel } from '@/lib/reasonNormalize';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
@@ -153,7 +154,8 @@ export default function StatisticsPage() {
     }, {} as Record<string, number>),
     byReason: filteredDetentions.reduce((acc, d) => {
       if (d.reason) {
-        acc[d.reason] = (acc[d.reason] || 0) + 1;
+        const reason = normalizeReasonLabel(d.reason);
+        acc[reason] = (acc[reason] || 0) + 1;
       }
       return acc;
     }, {} as Record<string, number>),
