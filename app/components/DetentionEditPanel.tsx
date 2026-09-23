@@ -164,7 +164,7 @@ export default function DetentionEditPanel({
             />
             Chromebook
           </label>
-          <label className="detention-edit-card__check detention-edit-card__check--danger">
+          <label className="detention-edit-card__check">
             <input
               type="checkbox"
               checked={detention.nablijvenGeweigerd || false}

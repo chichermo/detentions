@@ -16,7 +16,6 @@ import NablijvenPieChart from '@/app/components/charts/NablijvenPieChart';
 import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
 import { canManageListsAndRights } from '@/lib/auth';
 import Link from 'next/link';
-import DetailedReportsSection from '@/app/components/DetailedReportsSection';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -224,8 +223,6 @@ export default function DashboardPage() {
           <KpiCard label="Nablijven geweigerd" value={kpis.nablijvenGeweigerd} hint={periodHint} icon={XCircle} tone="red" />
           <KpiCard label="Strafstudie geweigerd" value={kpis.strafstudieGeweigerd} hint={periodHint} icon={XCircle} tone="rose" />
         </div>
-
-        <DetailedReportsSection detentions={detentions} followUpOnly />
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
