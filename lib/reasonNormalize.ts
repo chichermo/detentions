@@ -11,7 +11,7 @@ function foldReason(value: string): string {
 }
 
 const CHILL_OUT_LABEL = 'Teveel chill-outs';
-const CHILL_OUT_RE = /\bte\s*veel\s*chill\s*outs?\b/;
+const CHILL_OUT_RE = /\bte\s*veel\s*chil+\s*outs?\b/;
 
 export function normalizeReasonLabel(reason: string): string {
   const raw = String(reason || '').trim();
