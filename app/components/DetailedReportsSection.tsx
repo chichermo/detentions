@@ -153,7 +153,7 @@ export default function DetailedReportsSection({ detentions, followUpOnly, hideF
     <>
       <FollowUpTable
         title="Opvolging weigeringen"
-        description="Geweigerde nablijven (ma/di/do). Blijft open tot er een strafstudie is met melding “weigeren nablijven” (mag iets afwijken), ook als die tot twee weken later valt."
+        description="Geweigerde nablijven (ma/di/do). Elke weigering hoort bij een eigen strafstudie op een volgende maandag. Blijft open tot die strafstudie er is (reden “weigeren nablijven”, mag iets afwijken), ook als die tot twee weken later valt."
         emptyMessage="Geen geweigerde nablijven in deze periode."
         rows={reports.followUp}
         frameClass="card-follow-up"

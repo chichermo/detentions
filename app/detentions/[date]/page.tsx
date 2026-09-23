@@ -764,7 +764,7 @@ function DetentionForm({
         </label>
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
-            Leerling krijgt strafstudie op de eerstvolgende maandag. Meerdere weigeringen in dezelfde week horen bij één strafstudie.
+            Leerling krijgt strafstudie op de eerstvolgende maandag. Elke weigering krijgt een eigen strafstudie (niet twee op dezelfde dag).
           </p>
         )}
         {isMonday && allowStrafstudie && (

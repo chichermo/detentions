@@ -121,11 +121,9 @@ function formatNlDateList(dates: string[]): string {
 }
 
 /**
- * Eén strafstudie mag meerdere weigeringen afdekken.
- * Blokkeer een extra strafstudie als deze leerling al een (niet-geweigerde)
- * strafstudie heeft ná alle openstaande weigeringen (binnen 21 dagen).
- * timePeriod (16:00-16:50 vs 16:50-17:40) telt niet als tweede strafstudie;
- * zelfde dag wordt al geblokkeerd door validateUniqueStudentOnDate.
+ * Elke geweigerde nablijven mag een eigen strafstudie krijgen (andere maandag).
+ * Alleen blokkeren als er al minstens evenveel strafstudies zijn als weigeringen.
+ * Twee op dezelfde dag blijft verboden via validateUniqueStudentOnDate.
  */
 export function validateStrafstudieCoversRefusals(
   detention: Partial<Detention>,
@@ -137,7 +135,6 @@ export function validateStrafstudieCoversRefusals(
   const date = normalizeDetentionDate(detention.date);
   if (!name || !date) return null;
 
-  // Bestaande strafstudie mag je blijven bewerken; alleen een extra nieuwe slot blokkeren.
   const previous = excludeId
     ? existing.find((d) => d.id === excludeId)
     : undefined;
@@ -161,20 +158,20 @@ export function validateStrafstudieCoversRefusals(
     if (studentKey(d.student) !== key) return false;
     const strafDate = normalizeDetentionDate(d.date);
     if (!strafDate || strafDate >= date) return false;
-    return refusals.every((r) => {
+    return refusals.some((r) => {
       const srcDate = normalizeDetentionDate(r.date);
       if (!srcDate || srcDate >= strafDate) return false;
       const days = calendarDaysBetween(srcDate, strafDate);
       return days > 0 && days <= STRAFSTUDIE_FOLLOW_UP_DAYS;
     });
   });
-  if (covering.length === 0) return null;
+  if (covering.length < refusals.length) return null;
 
   const existingDate = normalizeDetentionDate(covering[0].date);
   const refusalDates = formatNlDateList(
     refusals.map((r) => normalizeDetentionDate(r.date))
   );
-  return `${name} heeft al een strafstudie op ${existingDate} die de weigering(en) van ${refusalDates} afdekt. Meerdere weigeringen horen bij één strafstudie, niet bij een tweede.`;
+  return `${name} heeft al ${covering.length} strafstudie${covering.length === 1 ? '' : 's'} (o.a. ${existingDate}) voor de weigering(en) van ${refusalDates}.`;
 }
 
 /** Geen dubbele leerlingen in één opslagactie (nieuwe sessie). */

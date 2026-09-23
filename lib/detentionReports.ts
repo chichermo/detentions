@@ -108,30 +108,91 @@ export function isRefusalFollowUpReason(reason?: string, extraNotes?: string): b
   return containsApproximate(text, 'weigeren nablijven', 3);
 }
 
+function reasonMentionsSourceDate(detention: Detention, sourceDate: string): boolean {
+  const day = normalizeDetentionDate(sourceDate);
+  const m = day.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const d = String(Number(m[3]));
+  const mo = String(Number(m[2]));
+  const raw = `${detention.reason || ''} ${detention.extraNotes || ''}`.toLowerCase();
+  const text = foldNl(raw);
+  return (
+    new RegExp(`\\b${d}\\s*0?${mo}\\b`).test(text) ||
+    new RegExp(`\\b${d}\\s*[\\/.-]\\s*0?${mo}\\b`).test(raw)
+  );
+}
+
+function isCandidateFollowUp(
+  candidate: Detention,
+  source: Detention,
+  usedIds: Set<string>
+): boolean {
+  if (usedIds.has(candidate.id) || candidate.id === source.id) return false;
+  if (!isDoubleDetention(candidate) || studentKey(candidate) !== studentKey(source)) {
+    return false;
+  }
+  if (!isRefusalFollowUpReason(candidate.reason, candidate.extraNotes)) return false;
+  const days = differenceInCalendarDays(parseISO(candidate.date), parseISO(source.date));
+  return days > 0 && days <= FOLLOW_UP_WINDOW_DAYS;
+}
+
 /**
- * Zoek de strafstudie die bij een geweigerde nablijven hoort.
- * Alleen een expliciete koppeling, of een latere strafstudie (tot 2 weken)
- * met melding in de trant van "weigeren nablijven".
+ * Elke weigering krijgt hoogstens één strafstudie.
+ * Eerst sourceDetentionId, daarna reden met die datum (bv. 14/9),
+ * daarna de eerstvolgende vrije strafstudie in het venster.
  */
+function assignUniqueFollowUps(
+  sources: Detention[],
+  all: Detention[],
+  findBySourceId: (source: Detention, all: Detention[]) => Detention | undefined
+): Record<string, Detention | undefined> {
+  const linkedBySourceId: Record<string, Detention | undefined> = {};
+  const used = new Set<string>();
+  const sorted = [...sources].sort((a, b) =>
+    normalizeDetentionDate(a.date).localeCompare(normalizeDetentionDate(b.date))
+  );
+
+  for (const source of sorted) {
+    const byId = findBySourceId(source, all);
+    if (byId) {
+      linkedBySourceId[source.id] = byId;
+      used.add(byId.id);
+    }
+  }
+
+  for (const source of sorted) {
+    if (linkedBySourceId[source.id]) continue;
+    const dated = all
+      .filter((d) => isCandidateFollowUp(d, source, used) && reasonMentionsSourceDate(d, source.date))
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (dated) {
+      linkedBySourceId[source.id] = dated;
+      used.add(dated.id);
+    }
+  }
+
+  for (const source of sorted) {
+    if (linkedBySourceId[source.id]) continue;
+    const next = all
+      .filter((d) => isCandidateFollowUp(d, source, used))
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (next) {
+      linkedBySourceId[source.id] = next;
+      used.add(next.id);
+    }
+  }
+
+  return linkedBySourceId;
+}
+
+/** Strafstudie bij één geweigerde nablijven (zonder andere weigeringen mee te nemen). */
 export function findLinkedDouble(
   source: Detention,
   all: Detention[]
 ): Detention | undefined {
-  const byId = all.find(
-    (d) => isDoubleDetention(d) && d.sourceDetentionId === source.id
-  );
-  if (byId) return byId;
-
-  const sourceDate = parseISO(source.date);
-  const sourceName = studentKey(source);
-  return all
-    .filter((d) => {
-      if (!isDoubleDetention(d) || studentKey(d) !== sourceName) return false;
-      if (!isRefusalFollowUpReason(d.reason, d.extraNotes)) return false;
-      const days = differenceInCalendarDays(parseISO(d.date), sourceDate);
-      return days > 0 && days <= FOLLOW_UP_WINDOW_DAYS;
-    })
-    .sort((a, b) => a.date.localeCompare(b.date))[0];
+  return assignUniqueFollowUps([source], all, (s, list) =>
+    list.find((d) => isDoubleDetention(d) && d.sourceDetentionId === s.id)
+  )[source.id];
 }
 
 export interface FollowUpReportRow extends StudentReportRow {
@@ -147,38 +208,22 @@ export interface FollowUpDisplayRow {
   hasOpenFollowUp: boolean;
 }
 
-/**
- * Groepeer weigeringen per leerling + strafstudie-datum.
- * Twee geweigerde nablijven die naar dezelfde strafstudie-dag wijzen
- * (Aisam 14 en 17 sep → 21 sep) worden één regel, met beide weigeringsdatums.
- */
+/** Eén regel per weigering — twee weigeringen mogen niet één strafstudie delen. */
 export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpDisplayRow[] {
   const result: FollowUpDisplayRow[] = [];
   for (const row of rows) {
-    const groups = new Map<string, FollowUpDisplayRow>();
-    for (const source of row.detentions) {
+    const sources = [...row.detentions].sort((a, b) =>
+      normalizeDetentionDate(a.date).localeCompare(normalizeDetentionDate(b.date))
+    );
+    for (const source of sources) {
       const linked = row.linkedBySourceId[source.id];
-      const linkedDay = linked ? normalizeDetentionDate(linked.date) : '';
-      const groupKey = linkedDay ? `linked:${linkedDay}` : 'open';
-      const existing = groups.get(groupKey);
-      if (existing) {
-        existing.sources.push(source);
-        if (!existing.linked && linked) existing.linked = linked;
-        continue;
-      }
-      groups.set(groupKey, {
-        key: `${row.student}::${groupKey}`,
+      result.push({
+        key: source.id,
         student: row.student,
         sources: [source],
         linked,
         hasOpenFollowUp: !linked,
       });
-    }
-    for (const group of groups.values()) {
-      group.sources.sort((a, b) =>
-        normalizeDetentionDate(a.date).localeCompare(normalizeDetentionDate(b.date))
-      );
-      result.push(group);
     }
   }
   return result;
@@ -186,18 +231,13 @@ export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpD
 
 function buildFollowUpRows(
   sources: Detention[],
-  findLinked: (source: Detention, all: Detention[]) => Detention | undefined,
+  findBySourceId: (source: Detention, all: Detention[]) => Detention | undefined,
   all: Detention[]
 ): FollowUpReportRow[] {
   return groupByStudent(sources)
     .map((row) => {
-      const linkedBySourceId: Record<string, Detention | undefined> = {};
-      let hasOpenFollowUp = false;
-      for (const source of row.detentions) {
-        const linked = findLinked(source, all);
-        linkedBySourceId[source.id] = linked;
-        if (!linked) hasOpenFollowUp = true;
-      }
+      const linkedBySourceId = assignUniqueFollowUps(row.detentions, all, findBySourceId);
+      const hasOpenFollowUp = row.detentions.some((source) => !linkedBySourceId[source.id]);
       return { ...row, hasOpenFollowUp, linkedBySourceId };
     })
     .sort(
@@ -210,7 +250,12 @@ function buildFollowUpRows(
 
 /** Alle geweigerde nablijven voor opvolging, open items eerst. */
 export function getFollowUpRows(detentions: Detention[]): FollowUpReportRow[] {
-  return buildFollowUpRows(getTriggeredDoubleSource(detentions), findLinkedDouble, detentions);
+  return buildFollowUpRows(
+    getTriggeredDoubleSource(detentions),
+    (source, list) =>
+      list.find((d) => isDoubleDetention(d) && d.sourceDetentionId === source.id),
+    detentions
+  );
 }
 
 /** Geweigerde strafstudie (maandag) → verwachte nieuwe strafstudie */
@@ -227,29 +272,21 @@ export function findLinkedStrafstudieFollowUp(
   source: Detention,
   all: Detention[]
 ): Detention | undefined {
-  const byId = all.find(
-    (d) => isDoubleDetention(d) && d.id !== source.id && d.sourceDetentionId === source.id
-  );
-  if (byId) return byId;
-
-  const sourceDate = parseISO(source.date);
-  const sourceName = studentKey(source);
-  return all
-    .filter((d) => {
-      if (d.id === source.id) return false;
-      if (!isDoubleDetention(d) || studentKey(d) !== sourceName) return false;
-      if (!isRefusalFollowUpReason(d.reason, d.extraNotes)) return false;
-      const days = differenceInCalendarDays(parseISO(d.date), sourceDate);
-      return days > 0 && days <= FOLLOW_UP_WINDOW_DAYS;
-    })
-    .sort((a, b) => a.date.localeCompare(b.date))[0];
+  return assignUniqueFollowUps([source], all, (s, list) =>
+    list.find(
+      (d) => isDoubleDetention(d) && d.id !== s.id && d.sourceDetentionId === s.id
+    )
+  )[source.id];
 }
 
 /** Alle geweigerde strafstudies voor opvolging, open items eerst. */
 export function getStrafstudieFollowUpRows(detentions: Detention[]): FollowUpReportRow[] {
   return buildFollowUpRows(
     getTriggeredStrafstudieSource(detentions),
-    findLinkedStrafstudieFollowUp,
+    (source, list) =>
+      list.find(
+        (d) => isDoubleDetention(d) && d.id !== source.id && d.sourceDetentionId === source.id
+      ),
     detentions
   );
 }
