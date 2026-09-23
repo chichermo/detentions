@@ -29,26 +29,6 @@ import { canManageListsAndRights } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
-    href: '/students',
-    title: 'Leerlingen',
-    desc: 'Lijsten per weekdag beheren',
-    icon: Users,
-    cardClass: 'nav-card-copper',
-    iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
-    linkClass: 'text-[#f0c078]',
-    fullOnly: true,
-  },
-  {
-    href: '/staff',
-    title: 'Personeel',
-    desc: 'Lijst beheren en importeren',
-    icon: UserCog,
-    cardClass: 'nav-card-copper',
-    iconClass: 'nav-icon bg-gradient-to-br from-[#f0c078] to-[#e8953a] text-[#1a1208]',
-    linkClass: 'text-[#f0c078]',
-    fullOnly: true,
-  },
-  {
     href: '/calendar',
     title: 'Kalender',
     desc: 'Alle sessies in één overzicht',
@@ -77,6 +57,26 @@ const NAV_ITEMS = [
     iconClass: 'nav-icon bg-gradient-to-br from-[#5eead4] to-[#2dd4bf] text-[#0a1f1a]',
     linkClass: 'text-[#8ef0d8]',
     fullOnly: false,
+  },
+  {
+    href: '/students',
+    title: 'Leerlingen',
+    desc: 'Lijsten per weekdag beheren',
+    icon: Users,
+    cardClass: 'nav-card-copper',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#e8953a] to-[#c97a28] text-[#1a1208]',
+    linkClass: 'text-[#f0c078]',
+    fullOnly: true,
+  },
+  {
+    href: '/staff',
+    title: 'Personeel',
+    desc: 'Lijst beheren en importeren',
+    icon: UserCog,
+    cardClass: 'nav-card-copper',
+    iconClass: 'nav-icon bg-gradient-to-br from-[#f0c078] to-[#e8953a] text-[#1a1208]',
+    linkClass: 'text-[#f0c078]',
+    fullOnly: true,
   },
   {
     href: '/rechten',
