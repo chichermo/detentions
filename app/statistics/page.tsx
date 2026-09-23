@@ -20,6 +20,7 @@ import DateField from '@/app/components/DateField';
 import StudentSearchFilter from '@/app/components/StudentSearchFilter';
 import ExpandableRankTable from '@/app/components/ExpandableRankTable';
 import { normalizeReasonLabel } from '@/lib/reasonNormalize';
+import { isStrafstudieWeigering } from '@/lib/detentionReports';
 
 type FilterType = 'day' | 'month' | 'year' | 'custom';
 
@@ -134,9 +135,7 @@ export default function StatisticsPage() {
   const nablijvenGeweigerd = filteredDetentions.filter(
     (d) => d.nablijvenGeweigerd && !d.isDoublePeriod
   );
-  const strafstudieGeweigerd = filteredDetentions.filter(
-    (d) => d.nablijvenGeweigerd && !!d.isDoublePeriod
-  );
+  const strafstudieGeweigerd = filteredDetentions.filter(isStrafstudieWeigering);
   const strafstudieDetentions = filteredDetentions.filter((d) => d.isDoublePeriod);
 
   // Estadísticas calculadas
@@ -884,7 +883,7 @@ export default function StatisticsPage() {
                       <td>{d.student}</td>
                       <td>{d.timePeriod || '16:00-17:40'}</td>
                       <td className="text-center">
-                        {d.nablijvenGeweigerd ? (
+                        {isStrafstudieWeigering(d) ? (
                           <span className="badge-danger">Ja</span>
                         ) : (
                           <span className="text-slate-500">Nee</span>

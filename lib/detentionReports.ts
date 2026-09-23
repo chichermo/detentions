@@ -268,6 +268,11 @@ function isWeigeringChainStrafstudie(d: Detention): boolean {
   return isRefusalFollowUpReason(d.reason, d.extraNotes);
 }
 
+/** Geweigerde strafstudie die volgt op een weigering — niet een losstaande strafstudie. */
+export function isStrafstudieWeigering(d: Detention): boolean {
+  return isDoubleDetention(d) && !!d.nablijvenGeweigerd && isWeigeringChainStrafstudie(d);
+}
+
 /**
  * Geweigerde strafstudie ná een weigering → verwachte nieuwe strafstudie.
  * Losstaande strafstudies (zwaardere feiten) horen hier niet, ook niet als
@@ -275,11 +280,7 @@ function isWeigeringChainStrafstudie(d: Detention): boolean {
  */
 export function getTriggeredStrafstudieSource(detentions: Detention[]): Detention[] {
   return detentions.filter(
-    (d) =>
-      isDoubleDetention(d) &&
-      !!d.nablijvenGeweigerd &&
-      isWeigeringChainStrafstudie(d) &&
-      isDetentionOnOrBeforeToday(d.date)
+    (d) => isStrafstudieWeigering(d) && isDetentionOnOrBeforeToday(d.date)
   );
 }
 

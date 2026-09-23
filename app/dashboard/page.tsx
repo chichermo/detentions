@@ -16,6 +16,7 @@ import NablijvenPieChart from '@/app/components/charts/NablijvenPieChart';
 import { DAY_LABELS, NABLIIJVEN_CHART_COLORS } from '@/lib/chartTheme';
 import { canManageListsAndRights } from '@/lib/auth';
 import { normalizeReasonLabel } from '@/lib/reasonNormalize';
+import { isStrafstudieWeigering } from '@/lib/detentionReports';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -107,7 +108,7 @@ export default function DashboardPage() {
     withChromebook: filteredDetentions.filter(d => d.canUseChromebook).length,
     toPrint: filteredDetentions.filter(d => d.shouldPrint).length,
     nablijvenGeweigerd: filteredDetentions.filter((d) => d.nablijvenGeweigerd && !d.isDoublePeriod).length,
-    strafstudieGeweigerd: filteredDetentions.filter((d) => d.nablijvenGeweigerd && !!d.isDoublePeriod).length,
+    strafstudieGeweigerd: filteredDetentions.filter(isStrafstudieWeigering).length,
     strafstudie: filteredDetentions.filter(d => d.isDoublePeriod).length,
     averagePerDay: period === 'week' ? (filteredDetentions.length / 7).toFixed(1) : 
                    period === 'month' ? (filteredDetentions.length / 30).toFixed(1) : 
