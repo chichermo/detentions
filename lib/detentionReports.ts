@@ -1,6 +1,6 @@
 import { Detention } from '@/types';
 import { parseISO, differenceInCalendarDays } from 'date-fns';
-import { normalizeDetentionDate, isDetentionOnOrBeforeToday } from '@/lib/detentionValidation';
+import { normalizeDetentionDate } from '@/lib/detentionValidation';
 
 export function studentKey(detention: Detention): string {
   return detention.student.split(' - ')[0].trim();
@@ -258,30 +258,14 @@ export function getFollowUpRows(detentions: Detention[]): FollowUpReportRow[] {
   );
 }
 
-/**
- * Strafstudie die hoort bij de weigeringsketen (nablijven geweigerd → strafstudie),
- * niet een losstaande strafstudie voor zwaardere feiten.
- */
-function isWeigeringChainStrafstudie(d: Detention): boolean {
-  if (!isDoubleDetention(d)) return false;
-  if (d.sourceDetentionId) return true;
-  return isRefusalFollowUpReason(d.reason, d.extraNotes);
-}
-
-/** Geweigerde strafstudie die volgt op een weigering — niet een losstaande strafstudie. */
+/** Strafstudie op maandag waarbij geweigerd is aangevinkt. */
 export function isStrafstudieWeigering(d: Detention): boolean {
-  return isDoubleDetention(d) && !!d.nablijvenGeweigerd && isWeigeringChainStrafstudie(d);
+  return isDoubleDetention(d) && !!d.nablijvenGeweigerd;
 }
 
-/**
- * Geweigerde strafstudie ná een weigering → verwachte nieuwe strafstudie.
- * Losstaande strafstudies (zwaardere feiten) horen hier niet, ook niet als
- * “geweigerd” per ongeluk is aangevinkt.
- */
+/** Geweigerde strafstudie → verwachte nieuwe strafstudie. */
 export function getTriggeredStrafstudieSource(detentions: Detention[]): Detention[] {
-  return detentions.filter(
-    (d) => isStrafstudieWeigering(d) && isDetentionOnOrBeforeToday(d.date)
-  );
+  return detentions.filter((d) => isStrafstudieWeigering(d));
 }
 
 /**
