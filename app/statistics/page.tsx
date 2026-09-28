@@ -29,7 +29,7 @@ export default function StatisticsPage() {
   const pathname = usePathname();
   const [detentions, setDetentions] = useState<Detention[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [filterType, setFilterType] = useState<FilterType>('month');
+  const [filterType, setFilterType] = useState<FilterType>('year');
   const [pdfReady, setPdfReady] = useState(false);
   const [canViewTopStaff, setCanViewTopStaff] = useState(false);
 
