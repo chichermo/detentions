@@ -150,8 +150,10 @@ function isCandidateFollowUp(
 
 /**
  * Elke weigering krijgt hoogstens één strafstudie.
- * Eerst sourceDetentionId, daarna reden met die datum (bv. 14/9),
- * daarna de eerstvolgende vrije strafstudie in het venster.
+ * Gewone nablijven: alleen expliciete koppeling (sourceDetentionId) of de
+ * weigeringsdatum in de reden (bv. 29/09). Geen automatische “volgende
+ * strafstudie”, anders wordt een al geplande strafstudie meegenomen.
+ * Geweigerde strafstudie: daarna nog de eerstvolgende vrije herplanning.
  */
 function assignUniqueFollowUps(
   sources: Detention[],
@@ -186,6 +188,7 @@ function assignUniqueFollowUps(
 
   for (const source of sorted) {
     if (linkedBySourceId[source.id]) continue;
+    if (isRegularDetention(source)) continue;
     const next = all
       .filter((d) => isCandidateFollowUp(d, source, used))
       .sort((a, b) => a.date.localeCompare(b.date))[0];

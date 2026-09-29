@@ -201,7 +201,7 @@ export default function DetentionEditPanel({
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Leerling krijgt strafstudie op de eerstvolgende maandag. Elke weigering krijgt een eigen strafstudie (niet twee op dezelfde dag).
+            Elke weigering krijgt een eigen strafstudie. Plan die op een vrije maandag (niet dezelfde als een strafstudie die er al staat) en zet de weigeringsdatum in de reden, bv. Weigeren nablijven 29/09.
           </p>
         )}
 

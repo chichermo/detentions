@@ -523,7 +523,7 @@ function NewDetentionPageInner() {
                   )}
                   {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
                     <p className="text-xs text-amber-300/90 px-1">
-                      Leerling krijgt strafstudie op de eerstvolgende maandag. Elke weigering krijgt een eigen strafstudie (niet twee op dezelfde dag).
+                      Elke weigering krijgt een eigen strafstudie. Plan die op een vrije maandag (niet dezelfde als een strafstudie die er al staat) en zet de weigeringsdatum in de reden, bv. Weigeren nablijven 29/09.
                     </p>
                   )}
                   {selectedDay === 'MAANDAG' && allowStrafstudie && (
