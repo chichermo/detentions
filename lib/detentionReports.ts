@@ -108,6 +108,15 @@ export function isRefusalFollowUpReason(reason?: string, extraNotes?: string): b
   return containsApproximate(text, 'weigeren nablijven', 3);
 }
 
+/** Strafstudie die een geweigerde strafstudie herplant, niet een gewone nablijven-weigering. */
+export function isStrafstudieReplanReason(reason?: string, extraNotes?: string): boolean {
+  const text = foldNl(`${reason || ''} ${extraNotes || ''}`);
+  if (!text) return false;
+  if (/\bherinplanning\b/.test(text)) return true;
+  if (/\bweiger\w*\s+strafstudie/.test(text)) return true;
+  return containsApproximate(text, 'weigeren strafstudie', 3);
+}
+
 function reasonMentionsSourceDate(detention: Detention, sourceDate: string): boolean {
   const day = normalizeDetentionDate(sourceDate);
   const m = day.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -131,6 +140,9 @@ function isCandidateFollowUp(
   if (!isDoubleDetention(candidate) || studentKey(candidate) !== studentKey(source)) {
     return false;
   }
+  if (isRegularDetention(source) && isStrafstudieReplanReason(candidate.reason, candidate.extraNotes)) {
+    return false;
+  }
   if (!isRefusalFollowUpReason(candidate.reason, candidate.extraNotes)) return false;
   const days = differenceInCalendarDays(parseISO(candidate.date), parseISO(source.date));
   return days > 0 && days <= FOLLOW_UP_WINDOW_DAYS;
@@ -144,10 +156,11 @@ function isCandidateFollowUp(
 function assignUniqueFollowUps(
   sources: Detention[],
   all: Detention[],
-  findBySourceId: (source: Detention, all: Detention[]) => Detention | undefined
+  findBySourceId: (source: Detention, all: Detention[]) => Detention | undefined,
+  reservedIds?: Set<string>
 ): Record<string, Detention | undefined> {
   const linkedBySourceId: Record<string, Detention | undefined> = {};
-  const used = new Set<string>();
+  const used = new Set(reservedIds);
   const sorted = [...sources].sort((a, b) =>
     normalizeDetentionDate(a.date).localeCompare(normalizeDetentionDate(b.date))
   );
@@ -190,8 +203,21 @@ export function findLinkedDouble(
   source: Detention,
   all: Detention[]
 ): Detention | undefined {
-  return assignUniqueFollowUps([source], all, (s, list) =>
-    list.find((d) => isDoubleDetention(d) && d.sourceDetentionId === s.id)
+  const reserved = new Set<string>();
+  if (isRegularDetention(source)) {
+    const key = studentKey(source);
+    for (const row of getStrafstudieFollowUpRows(all)) {
+      if (row.student !== key) continue;
+      for (const linked of Object.values(row.linkedBySourceId)) {
+        if (linked?.id) reserved.add(linked.id);
+      }
+    }
+  }
+  return assignUniqueFollowUps(
+    [source],
+    all,
+    (s, list) => list.find((d) => isDoubleDetention(d) && d.sourceDetentionId === s.id),
+    reserved
   )[source.id];
 }
 
@@ -232,11 +258,17 @@ export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpD
 function buildFollowUpRows(
   sources: Detention[],
   findBySourceId: (source: Detention, all: Detention[]) => Detention | undefined,
-  all: Detention[]
+  all: Detention[],
+  reservedIds?: Set<string>
 ): FollowUpReportRow[] {
   return groupByStudent(sources)
     .map((row) => {
-      const linkedBySourceId = assignUniqueFollowUps(row.detentions, all, findBySourceId);
+      const linkedBySourceId = assignUniqueFollowUps(
+        row.detentions,
+        all,
+        findBySourceId,
+        reservedIds
+      );
       const hasOpenFollowUp = row.detentions.some((source) => !linkedBySourceId[source.id]);
       return { ...row, hasOpenFollowUp, linkedBySourceId };
     })
@@ -250,11 +282,18 @@ function buildFollowUpRows(
 
 /** Alle geweigerde nablijven voor opvolging, open items eerst. */
 export function getFollowUpRows(detentions: Detention[]): FollowUpReportRow[] {
+  const reserved = new Set<string>();
+  for (const row of getStrafstudieFollowUpRows(detentions)) {
+    for (const linked of Object.values(row.linkedBySourceId)) {
+      if (linked?.id) reserved.add(linked.id);
+    }
+  }
   return buildFollowUpRows(
     getTriggeredDoubleSource(detentions),
     (source, list) =>
       list.find((d) => isDoubleDetention(d) && d.sourceDetentionId === source.id),
-    detentions
+    detentions,
+    reserved
   );
 }
 
