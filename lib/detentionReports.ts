@@ -252,7 +252,13 @@ export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpD
       });
     }
   }
-  return result;
+  return result.sort((a, b) => {
+    const openDiff = Number(b.hasOpenFollowUp) - Number(a.hasOpenFollowUp);
+    if (openDiff !== 0) return openDiff;
+    const aDate = normalizeDetentionDate(a.sources[0]?.date);
+    const bDate = normalizeDetentionDate(b.sources[0]?.date);
+    return bDate.localeCompare(aDate);
+  });
 }
 
 function buildFollowUpRows(
