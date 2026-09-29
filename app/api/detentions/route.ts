@@ -10,8 +10,10 @@ import {
   normalizeDetentionDate,
   validateRequiredDetentionFields,
   validateSessionCapacity,
+  validateStrafstudieCoversRefusals,
   validateUniqueStudentOnDate,
 } from '@/lib/detentionValidation';
+import { withSuggestedSourceDetention } from '@/lib/detentionReports';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,12 +36,17 @@ function withDetentionId(detention: Detention): Detention {
   };
 }
 
-/** Alle records op dezelfde kalenderdag — ook bij timestamp/timePeriod-varianten. */
-async function existingOnSameDay(date: string): Promise<Detention[]> {
-  const day = normalizeDetentionDate(date);
-  if (!day) return [];
+/** Alle records, plus die op dezelfde kalenderdag (ook bij timestamp/timePeriod-varianten). */
+async function loadDetentionsForDate(date: string): Promise<{
+  all: Detention[];
+  sameDay: Detention[];
+}> {
   const all = await getDetentions();
-  return all.filter((d) => normalizeDetentionDate(d.date) === day);
+  const day = normalizeDetentionDate(date);
+  const sameDay = day
+    ? all.filter((d) => normalizeDetentionDate(d.date) === day)
+    : [];
+  return { all, sameDay };
 }
 
 export async function GET(request: NextRequest) {
@@ -71,8 +78,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (detention.date) {
-      const existing = await existingOnSameDay(detention.date);
-      const others = existing.filter((d) => d.id !== detention.id);
+      const { all, sameDay } = await loadDetentionsForDate(detention.date);
+      const others = sameDay.filter((d) => d.id !== detention.id);
       const capacityErr = validateSessionCapacity(others.length, 1);
       if (capacityErr) {
         return NextResponse.json(
@@ -80,13 +87,22 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      const dupErr = validateUniqueStudentOnDate(detention, existing, detention.id);
+      const dupErr = validateUniqueStudentOnDate(detention, sameDay, detention.id);
       if (dupErr) {
         return NextResponse.json(
           { success: false, error: dupErr, details: dupErr },
           { status: 400 }
         );
       }
+      const mergeErr = validateStrafstudieCoversRefusals(detention, all, detention.id);
+      if (mergeErr) {
+        return NextResponse.json(
+          { success: false, error: mergeErr, details: mergeErr },
+          { status: 400 }
+        );
+      }
+      const previous = all.find((d) => d.id === detention.id);
+      Object.assign(detention, withSuggestedSourceDetention(detention, all, previous));
     }
 
     await saveDetention(detention, getActorFromRequest(request));
@@ -113,14 +129,23 @@ export async function PUT(request: NextRequest) {
     }
 
     if (detention.date) {
-      const existing = await existingOnSameDay(detention.date);
-      const dupErr = validateUniqueStudentOnDate(detention, existing, detention.id);
+      const { all, sameDay } = await loadDetentionsForDate(detention.date);
+      const dupErr = validateUniqueStudentOnDate(detention, sameDay, detention.id);
       if (dupErr) {
         return NextResponse.json(
           { success: false, error: dupErr, details: dupErr },
           { status: 400 }
         );
       }
+      const mergeErr = validateStrafstudieCoversRefusals(detention, all, detention.id);
+      if (mergeErr) {
+        return NextResponse.json(
+          { success: false, error: mergeErr, details: mergeErr },
+          { status: 400 }
+        );
+      }
+      const previous = all.find((d) => d.id === detention.id);
+      Object.assign(detention, withSuggestedSourceDetention(detention, all, previous));
     }
 
     await saveDetention(detention, getActorFromRequest(request));

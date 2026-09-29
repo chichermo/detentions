@@ -769,7 +769,7 @@ function DetentionForm({
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
-            Elke weigering krijgt een eigen strafstudie. Plan die op een vrije maandag (niet dezelfde als een strafstudie die er al staat) en zet de weigeringsdatum in de reden, bv. Weigeren nablijven 29/09.
+            Elke weigering krijgt een eigen strafstudie op een vrije maandag. De koppeling gebeurt automatisch — de datum hoeft niet in de reden.
           </p>
         )}
         {isMonday && allowStrafstudie && (

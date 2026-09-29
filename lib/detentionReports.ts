@@ -264,6 +264,65 @@ export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpD
   });
 }
 
+function openFollowUpSources(
+  rows: FollowUpReportRow[],
+  studentName: string,
+  beforeDate: string
+): Detention[] {
+  const key = studentKey({ student: studentName } as Detention);
+  return flattenFollowUpDisplayRows(rows)
+    .filter((row) => {
+      const source = row.sources[0];
+      if (!row.hasOpenFollowUp || !source) return false;
+      if (studentKey(source) !== key) return false;
+      const day = normalizeDetentionDate(source.date);
+      return !!day && day < beforeDate;
+    })
+    .map((row) => row.sources[0])
+    .sort((a, b) =>
+      normalizeDetentionDate(b.date).localeCompare(normalizeDetentionDate(a.date))
+    );
+}
+
+/**
+ * Koppel een nieuwe strafstudie aan de open weigering van die leerling
+ * (de dag waarop “geweigerd” is aangevinkt). Geen datum in de reden nodig.
+ */
+export function suggestSourceDetentionId(
+  detention: Partial<Detention>,
+  all: Detention[]
+): string | undefined {
+  if (detention.sourceDetentionId) return detention.sourceDetentionId;
+  if (!detention.isDoublePeriod) return undefined;
+  const student = String(detention.student || '');
+  const strafDate = normalizeDetentionDate(detention.date);
+  if (!student || !strafDate) return undefined;
+  const others = all.filter((d) => d.id !== detention.id);
+
+  if (isStrafstudieReplanReason(detention.reason, detention.extraNotes)) {
+    return openFollowUpSources(getStrafstudieFollowUpRows(others), student, strafDate)[0]?.id;
+  }
+  return openFollowUpSources(getFollowUpRows(others), student, strafDate)[0]?.id;
+}
+
+export function withSuggestedSourceDetention(
+  detention: Detention,
+  all: Detention[],
+  previous?: Detention
+): Detention {
+  if (!detention.isDoublePeriod) {
+    return { ...detention, sourceDetentionId: undefined };
+  }
+  if (detention.sourceDetentionId) return detention;
+  const becameStrafstudie = !previous?.isDoublePeriod;
+  const looksLikeFollowUp =
+    isRefusalFollowUpReason(detention.reason, detention.extraNotes) ||
+    isStrafstudieReplanReason(detention.reason, detention.extraNotes);
+  if (!becameStrafstudie && !looksLikeFollowUp) return detention;
+  const suggested = suggestSourceDetentionId(detention, all);
+  return suggested ? { ...detention, sourceDetentionId: suggested } : detention;
+}
+
 function buildFollowUpRows(
   sources: Detention[],
   findBySourceId: (source: Detention, all: Detention[]) => Detention | undefined,
