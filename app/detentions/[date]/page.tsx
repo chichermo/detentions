@@ -24,10 +24,8 @@ import {
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
-import { getDayOfWeekFromDate, parseSessionDate } from '@/lib/calendarUtils';
+import { nablijvenDayLabel, parseSessionDate } from '@/lib/calendarUtils';
 import { canViewLogboek } from '@/lib/auth';
-
-const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
 
 export default function DetentionSessionPage() {
   const router = useRouter();
@@ -43,6 +41,7 @@ export default function DetentionSessionPage() {
   const [showAuditHistory, setShowAuditHistory] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [allowStrafstudie, setAllowStrafstudie] = useState(true);
+  const [nablijvenAllowed, setNablijvenAllowed] = useState(true);
   const [canViewHistory, setCanViewHistory] = useState(false);
 
   const fetchDetentions = useCallback(async () => {
@@ -88,12 +87,13 @@ export default function DetentionSessionPage() {
   }, [date, fetchDetentions]);
 
   useEffect(() => {
-    if (detentions.length > 0) {
-      fetchStudents(detentions[0].dayOfWeek);
-    } else if (date) {
-      fetchStudents(getDayOfWeekFromDate(date));
+    const parsed = parseSessionDate(date);
+    if (!parsed) {
+      setStudents([]);
+      return;
     }
-  }, [date, detentions, fetchStudents]);
+    fetchStudents(parsed.dayOfWeek);
+  }, [date, fetchStudents]);
 
   useEffect(() => {
     fetchStaffNames().then(setStaffNames);
@@ -104,9 +104,17 @@ export default function DetentionSessionPage() {
     let cancelled = false;
     (async () => {
       try {
+        const parsed = parseSessionDate(date);
         const days = await fetchCalendarDays(date, date);
         const cfg = getDaySettingFromList(date, days);
-        if (!cancelled) setAllowStrafstudie(cfg?.allowStrafstudie !== false);
+        if (cancelled) return;
+        if (!parsed || cfg?.blocked || cfg?.allowDetentions === false) {
+          setNablijvenAllowed(false);
+          setAllowStrafstudie(false);
+          return;
+        }
+        setNablijvenAllowed(true);
+        setAllowStrafstudie(parsed.dayOfWeek === 'MAANDAG' && cfg?.allowStrafstudie !== false);
       } catch {
         if (!cancelled) setAllowStrafstudie(true);
       }
@@ -297,12 +305,17 @@ export default function DetentionSessionPage() {
   };
 
   const handleAddNew = () => {
+    const parsed = parseSessionDate(date);
+    if (!parsed || !nablijvenAllowed) {
+      alert('Op deze dag kan geen nablijven worden toegevoegd. Kies een dag op de kalender.');
+      return;
+    }
     const capacityErr = validateSessionCapacity(detentions.length, 1);
     if (capacityErr) {
       alert(capacityErr);
       return;
     }
-    const dayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : getDayOfWeekFromDate(date);
+    const dayOfWeek = parsed.dayOfWeek;
     setNewDetention({
       number: detentions.length + 1,
       date,
@@ -339,26 +352,29 @@ export default function DetentionSessionPage() {
       return;
     }
 
-    if (
-      (newDetention.dayOfWeek || getDayOfWeekFromDate(date)) === 'MAANDAG' &&
-      !allowStrafstudie &&
-      newDetention.isDoublePeriod
-    ) {
+    const parsed = parseSessionDate(date);
+    if (!parsed || !nablijvenAllowed) {
+      alert('Op deze dag kan geen nablijven worden toegevoegd. Kies een dag op de kalender.');
+      return;
+    }
+
+    if (parsed.dayOfWeek === 'MAANDAG' && !allowStrafstudie && newDetention.isDoublePeriod) {
       alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
       return;
     }
 
     const student = students.find(s => s.name === newDetention.student);
-    const studentDisplayName = student 
-      ? `${student.name} - ${student.grade}`
-      : newDetention.student || '';
+    if (!student) {
+      alert(`Kies een leerling van de ${nablijvenDayLabel(parsed.dayOfWeek)}lijst.`);
+      return;
+    }
 
     const detentionToSave: Detention = {
       id: `detention-${Date.now()}`,
       number: newDetention.number || detentions.length + 1,
-      date,
-      dayOfWeek: newDetention.dayOfWeek || 'MAANDAG',
-      student: studentDisplayName,
+      date: parsed.date,
+      dayOfWeek: parsed.dayOfWeek,
+      student: `${student.name} - ${student.grade}`,
       teacher: newDetention.teacher || '',
       reason: newDetention.reason || '',
       task: newDetention.task || '',
@@ -413,7 +429,7 @@ export default function DetentionSessionPage() {
     }
   };
 
-  const currentDayOfWeek = detentions.length > 0 ? detentions[0].dayOfWeek : getDayOfWeekFromDate(date);
+  const currentDayOfWeek = parseSessionDate(date)?.dayOfWeek ?? null;
   const hasDoublePeriod = detentions.some(d => d.isDoublePeriod);
   const isMonday = currentDayOfWeek === 'MAANDAG';
 
@@ -457,7 +473,7 @@ export default function DetentionSessionPage() {
                 <Printer className="h-4 w-4" />
                 <span className="hidden sm:inline">Afdrukken</span>
               </button>
-              {!showAddForm && (
+              {!showAddForm && nablijvenAllowed && (
                 <button
                   onClick={handleAddNew}
                   disabled={detentions.length >= MAX_DETECTIONS_PER_SESSION}
@@ -567,10 +583,16 @@ export default function DetentionSessionPage() {
         {detentions.length === 0 && !showAddForm ? (
           <div className="card p-16 text-center">
             <p className="text-slate-400 font-medium mb-4">Geen nablijven geregistreerd voor deze datum.</p>
-            <button onClick={handleAddNew} className="btn-primary flex items-center gap-2 mx-auto">
-              <Plus className="h-5 w-5" />
-              Eerste Nablijven Toevoegen
-            </button>
+            {nablijvenAllowed ? (
+              <button onClick={handleAddNew} className="btn-primary flex items-center gap-2 mx-auto">
+                <Plus className="h-5 w-5" />
+                Eerste Nablijven Toevoegen
+              </button>
+            ) : (
+              <p className="text-sm text-slate-500">
+                Nieuwe nablijven voeg je toe via een dag op de kalender.
+              </p>
+            )}
           </div>
         ) : (
           <div className="card p-4 sm:p-6 print:shadow-none">

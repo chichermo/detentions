@@ -1,4 +1,5 @@
-import type { Detention } from '@/types';
+import type { DayOfWeek, Detention } from '@/types';
+import { nablijvenDayLabel } from '@/lib/calendarUtils';
 import { normalizeDetentionStudent } from '@/lib/studentImport';
 
 /** Naam uit detention.student ("Voornaam Achternaam - Klas"). */
@@ -11,6 +12,20 @@ export function getDetentionStudentName(student: string): string {
 
 function studentKey(student: string): string {
   return getDetentionStudentName(student).toLowerCase();
+}
+
+export function isStudentOnDayList(
+  students: { name: string }[],
+  studentName: string
+): boolean {
+  const key = getDetentionStudentName(studentName).trim().toLowerCase();
+  if (!key) return false;
+  return students.some((s) => s.name.trim().toLowerCase() === key);
+}
+
+export function studentNotOnDayListMessage(studentName: string, day: DayOfWeek): string {
+  const name = getDetentionStudentName(studentName) || 'Deze leerling';
+  return `${name} staat niet op de leerlingenlijst voor ${nablijvenDayLabel(day)}. Enkel leerlingen van die dag kunnen ingepland worden.`;
 }
 
 /** Normaliseer datums zodat 2026-09-21 en 2026-09-21T00:00:00 dezelfde dag zijn. */

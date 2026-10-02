@@ -11,10 +11,29 @@ export function getDayOfWeekFromDate(dateStr: string): DayOfWeek {
   return dayMap[dayOfWeek] ?? 'MAANDAG';
 }
 
-/** Días en los que normalmente hay nablijven (lun, mar, jue) */
+/** Nablijven alleen op maandag, dinsdag en donderdag. */
 export function isNablijvenWeekday(date: Date): boolean {
   const d = getDay(date);
   return d === 1 || d === 2 || d === 4;
+}
+
+export function nablijvenDayLabel(day: DayOfWeek): string {
+  if (day === 'MAANDAG') return 'maandag';
+  if (day === 'DINSDAG') return 'dinsdag';
+  return 'donderdag';
+}
+
+export const NABLIJVEN_DATE_ERROR =
+  'Kies een maandag, dinsdag of donderdag. Het nablijven kan alleen op die dagen.';
+
+/** Eerstvolgende maandag, dinsdag of donderdag, vandaag inbegrepen. */
+export function upcomingNablijvenDate(from: Date = new Date()): string {
+  let d = from;
+  for (let i = 0; i < 7; i++) {
+    if (isNablijvenWeekday(d)) return format(d, 'yyyy-MM-dd');
+    d = addDays(d, 1);
+  }
+  return format(from, 'yyyy-MM-dd');
 }
 
 export function isMonday(date: Date): boolean {

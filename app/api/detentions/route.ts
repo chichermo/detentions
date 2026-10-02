@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDetentions, saveDetention, deleteDetention } from '@/lib/data';
+import { getCalendarDaySetting, getDetentions, getStudents, saveDetention, deleteDetention } from '@/lib/data';
 import { Detention } from '@/types';
 import { getActorFromRequest } from '@/lib/audit';
 import {
@@ -7,12 +7,15 @@ import {
   normalizeDetentionTeacher,
 } from '@/lib/studentImport';
 import {
+  isStudentOnDayList,
   normalizeDetentionDate,
+  studentNotOnDayListMessage,
   validateRequiredDetentionFields,
   validateSessionCapacity,
   validateStrafstudieCoversRefusals,
   validateUniqueStudentOnDate,
 } from '@/lib/detentionValidation';
+import { NABLIJVEN_DATE_ERROR, parseSessionDate } from '@/lib/calendarUtils';
 import { withSuggestedSourceDetention } from '@/lib/detentionReports';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +29,43 @@ function normalizeDetentionNames(detention: Detention): Detention {
     student: normalizeDetentionStudent(detention.student || ''),
     teacher: teacher || undefined,
   };
+}
+
+async function validateDetentionSchedule(detention: Detention): Promise<string | null> {
+  const parsed = parseSessionDate(detention.date);
+  if (!parsed) return NABLIJVEN_DATE_ERROR;
+
+  detention.date = parsed.date;
+  detention.dayOfWeek = parsed.dayOfWeek;
+
+  const cfg = await getCalendarDaySetting(parsed.date);
+  if (cfg?.blocked) return 'Deze dag is geblokkeerd. Geen nablijven mogelijk.';
+  if (cfg && !cfg.allowDetentions) {
+    return 'Voor deze dag zijn geen nablijven toegestaan volgens de kalender.';
+  }
+
+  const strafstudieAllowed =
+    parsed.dayOfWeek === 'MAANDAG' && cfg?.allowStrafstudie !== false;
+  if (detention.isDoublePeriod && !strafstudieAllowed) {
+    return 'Op deze dag is geen strafstudie toegestaan. Alleen gewoon nablijven.';
+  }
+  if (!strafstudieAllowed) {
+    detention.isDoublePeriod = false;
+    detention.timePeriod = undefined;
+  }
+
+  const dayStudents = await getStudents(parsed.dayOfWeek);
+  if (dayStudents.length > 0 && !isStudentOnDayList(dayStudents, detention.student)) {
+    return studentNotOnDayListMessage(detention.student, parsed.dayOfWeek);
+  }
+  return null;
+}
+
+function scheduleError(message: string) {
+  return NextResponse.json(
+    { success: false, error: message, details: message },
+    { status: 400 }
+  );
 }
 
 function withDetentionId(detention: Detention): Detention {
@@ -76,6 +116,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    const scheduleErr = await validateDetentionSchedule(detention);
+    if (scheduleErr) return scheduleError(scheduleErr);
 
     if (detention.date) {
       const { all, sameDay } = await loadDetentionsForDate(detention.date);
@@ -127,6 +169,8 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
+    const scheduleErr = await validateDetentionSchedule(detention);
+    if (scheduleErr) return scheduleError(scheduleErr);
 
     if (detention.date) {
       const { all, sameDay } = await loadDetentionsForDate(detention.date);

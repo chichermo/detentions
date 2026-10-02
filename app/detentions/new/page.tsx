@@ -20,26 +20,10 @@ import {
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
-import { format, parseISO, getDay } from 'date-fns';
-
-const DAYS: DayOfWeek[] = ['MAANDAG', 'DINSDAG', 'DONDERDAG'];
-
-// Función para obtener el día de la semana desde una fecha
-const getDayOfWeekFromDate = (dateStr: string): DayOfWeek => {
-  const date = parseISO(dateStr);
-  const dayOfWeek = getDay(date); // 0 = domingo, 1 = lunes, etc.
-  
-  // Convertir a nuestro formato: lunes=1, martes=2, jueves=4
-  // Nuestros días válidos: MAANDAG, DINSDAG, DONDERDAG
-  const dayMap: { [key: number]: DayOfWeek } = {
-    1: 'MAANDAG',  // Lunes
-    2: 'DINSDAG',  // Martes
-    4: 'DONDERDAG', // Jueves
-  };
-  
-  // Si el día no es uno de los válidos, devolver MAANDAG por defecto
-  return dayMap[dayOfWeek] || 'MAANDAG';
-};
+import { format, parseISO } from 'date-fns';
+import nl from 'date-fns/locale/nl';
+import { nablijvenDayLabel, parseSessionDate } from '@/lib/calendarUtils';
+import LoadingPage from '@/app/components/ui/LoadingPage';
 
 function parseDateParam(value: string | null): string | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -50,18 +34,22 @@ function NewDetentionPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateFromUrl = parseDateParam(searchParams.get('date'));
+  const parsedSession = useMemo(
+    () => (dateFromUrl ? parseSessionDate(dateFromUrl) : null),
+    [dateFromUrl]
+  );
+  const date = parsedSession?.date ?? '';
+  const selectedDay: DayOfWeek | null = parsedSession?.dayOfWeek ?? null;
   const [students, setStudents] = useState<Student[]>([]);
   const [staffNames, setStaffNames] = useState<string[]>([]);
-  const [date, setDate] = useState(() => dateFromUrl || format(new Date(), 'yyyy-MM-dd'));
   const [detentions, setDetentions] = useState<Partial<Detention>[]>([]);
   const [existingOnDate, setExistingOnDate] = useState<Detention[]>([]);
+  const [scheduleBlock, setScheduleBlock] = useState<string | null>(null);
 
   useEffect(() => {
-    if (dateFromUrl) setDate(dateFromUrl);
-  }, [dateFromUrl]);
-  
-  // Calcular el día de la semana automáticamente desde la fecha
-  const selectedDay = useMemo(() => getDayOfWeekFromDate(date), [date]);
+    if (!parsedSession) router.replace('/calendar');
+  }, [parsedSession, router]);
+
   const [allowStrafstudie, setAllowStrafstudie] = useState(true);
 
   useEffect(() => {
@@ -75,10 +63,23 @@ function NewDetentionPageInner() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!date || !selectedDay) return;
       try {
         const days = await fetchCalendarDays(date, date);
         const cfg = getDaySettingFromList(date, days);
-        if (!cancelled) setAllowStrafstudie(cfg?.allowStrafstudie !== false);
+        if (cancelled) return;
+        if (cfg?.blocked) {
+          setScheduleBlock('Deze dag is geblokkeerd. Geen nablijven mogelijk.');
+          setAllowStrafstudie(false);
+          return;
+        }
+        if (cfg && !cfg.allowDetentions) {
+          setScheduleBlock('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
+          setAllowStrafstudie(false);
+          return;
+        }
+        setScheduleBlock(null);
+        setAllowStrafstudie(selectedDay === 'MAANDAG' && cfg?.allowStrafstudie !== false);
       } catch {
         if (!cancelled) setAllowStrafstudie(true);
       }
@@ -86,7 +87,7 @@ function NewDetentionPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [date]);
+  }, [date, selectedDay]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,10 +183,26 @@ function NewDetentionPageInner() {
   };
 
   const handleSave = async () => {
+    if (!selectedDay || !parseSessionDate(date)) {
+      router.replace('/calendar');
+      return;
+    }
+    if (scheduleBlock) {
+      alert(scheduleBlock);
+      return;
+    }
+
     for (let i = 0; i < detentions.length; i++) {
       const err = validateRequiredDetentionFields(detentions[i]);
       if (err) {
         alert(`Nablijven #${i + 1}: ${err}`);
+        return;
+      }
+      const onList = students.some((s) => s.name === detentions[i].student);
+      if (!onList) {
+        alert(
+          `Nablijven #${i + 1}: kies een leerling van de ${nablijvenDayLabel(selectedDay)}lijst.`
+        );
         return;
       }
     }
@@ -305,13 +322,17 @@ function NewDetentionPageInner() {
     }
   };
 
+  if (!parsedSession) {
+    return <LoadingPage label="Kalender openen..." />;
+  }
+
   return (
     <div className="app-page">
       <header className="glass sticky top-0 z-50 border-b border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/calendar')}
               className="btn-ghost p-2"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -337,22 +358,26 @@ function NewDetentionPageInner() {
               <label className="form-label">
                 Datum
               </label>
-              <DateField
-                value={date}
-                onChange={setDate}
-                className="input-field date-field w-full"
-              />
+              <p className="input-field flex items-center text-slate-100">
+                {date ? format(parseISO(date), 'EEEE d MMMM yyyy', { locale: nl }) : '—'}
+              </p>
               <p className="text-sm text-slate-400 mt-2">
-                Dag: {selectedDay}
+                Deze datum komt van de kalender
+                {selectedDay ? ` · leerlingen van ${nablijvenDayLabel(selectedDay)}` : ''}
+                {selectedDay === 'MAANDAG' && !allowStrafstudie ? ' · geen strafstudie' : ''}
                 {' · '}
                 {existingOnDate.length + detentions.length}/{MAX_DETECTIONS_PER_SESSION} leerlingen
                 {existingOnDate.length > 0 ? ` (${existingOnDate.length} al op deze datum)` : ''}
               </p>
+              {scheduleBlock && (
+                <p className="text-sm text-red-300 mt-2">{scheduleBlock}</p>
+              )}
             </div>
             <div className="flex items-end">
               <button
                 onClick={handleSave}
-                className="w-full btn-primary flex items-center justify-center gap-2"
+                disabled={!!scheduleBlock}
+                className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="h-5 w-5" />
                 Sessie Opslaan

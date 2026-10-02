@@ -93,6 +93,7 @@ export default function DetentionEditPanel({
           <FieldLabel>Datum nablijven *</FieldLabel>
           <DateField
             required
+            nablijvenOnly
             value={detention.date || ''}
             onChange={(v) => onChange('date', v)}
             className="input-field date-field w-full"

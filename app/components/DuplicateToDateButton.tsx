@@ -93,6 +93,7 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
         </label>
         <DateField
           id={fieldId}
+          nablijvenOnly
           value={targetDate}
           onChange={setTargetDate}
           className="input-field date-field w-full"

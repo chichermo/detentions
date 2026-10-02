@@ -11,7 +11,6 @@ import {
   Clock,
   ArrowRight,
   BarChart3,
-  Plus,
   Download,
   LayoutDashboard,
   Sparkles,
@@ -203,10 +202,6 @@ export default function Home() {
                 <span className="hidden sm:inline">Backup</span>
               </button>
               <BackupRestore />
-              <Link href="/detentions/new" className="btn-primary flex items-center gap-2 text-sm">
-                <Plus className="h-4 w-4" />
-                <span>Nieuwe sessie</span>
-              </Link>
             </div>
           </div>
         </div>
@@ -265,11 +260,8 @@ export default function Home() {
           {filteredSessions.length === 0 ? (
             <div className="empty-state">
               <Calendar className="h-12 w-12 text-muted mb-4 opacity-60" />
-              <p className="text-secondary font-medium mb-4">Nog geen sessies geregistreerd.</p>
-              <Link href="/detentions/new" className="btn-primary inline-flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Eerste sessie aanmaken
-              </Link>
+              <p className="text-secondary font-medium">Nog geen sessies geregistreerd.</p>
+              <p className="text-sm text-muted mt-2">Open de kalender en klik een datum om een sessie te starten.</p>
             </div>
           ) : (
             <div className="space-y-3">
