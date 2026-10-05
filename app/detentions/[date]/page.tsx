@@ -18,6 +18,7 @@ import {
   validateUniqueStudentOnDate,
   validateStrafstudieCoversRefusals,
   getDetentionStudentName,
+  foldPersonNameKey,
   normalizeDetentionDate,
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
@@ -228,7 +229,9 @@ export default function DetentionSessionPage() {
     }
 
     const original = detentions.find((d) => d.id === editingId);
-    const student = students.find((s) => s.name === editingDetention.student);
+    const student = students.find(
+      (s) => foldPersonNameKey(s.name) === foldPersonNameKey(editingDetention.student || '')
+    );
     const studentDisplayName = student
       ? `${student.name} - ${student.grade}`
       : original?.student || editingDetention.student || '';

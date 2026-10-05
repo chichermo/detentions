@@ -11,16 +11,27 @@ export function getDetentionStudentName(student: string): string {
 }
 
 function studentKey(student: string): string {
-  return getDetentionStudentName(student).toLowerCase();
+  return foldPersonNameKey(student);
+}
+
+/** Vergelijk namen ongeacht accenten (René/Rene) en soort streepje. */
+export function foldPersonNameKey(value: string): string {
+  return getDetentionStudentName(value)
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
 }
 
 export function isStudentOnDayList(
   students: { name: string }[],
   studentName: string
 ): boolean {
-  const key = getDetentionStudentName(studentName).trim().toLowerCase();
+  const key = foldPersonNameKey(studentName);
   if (!key) return false;
-  return students.some((s) => s.name.trim().toLowerCase() === key);
+  return students.some((s) => foldPersonNameKey(s.name) === key);
 }
 
 export function studentNotOnDayListMessage(studentName: string, day: DayOfWeek): string {
