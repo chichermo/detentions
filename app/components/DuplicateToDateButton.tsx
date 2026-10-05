@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Copy } from 'lucide-react';
+import { CalendarPlus, Copy } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { Detention } from '@/types';
@@ -26,6 +26,7 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
   const [busy, setBusy] = useState(false);
 
   const studentName = getDetentionStudentName(detention.student);
+  const isReplan = !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd;
   const fieldId = `duplicate-to-date-${detention.id}`;
 
   const close = () => {
@@ -40,7 +41,11 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
     try {
       const result = await copyDetentionsToDate([detention], detention.date, targetDate);
       const targetLabel = format(parseISO(result.targetDate), 'EEEE d MMMM yyyy', { locale: nl });
-      alert(`${studentName} gekopieerd naar ${targetLabel}.${result.extra}`);
+      alert(
+        isReplan
+          ? `De weigering van ${studentName} blijft staan. Nieuwe strafstudie ingepland op ${targetLabel}.${result.extra}`
+          : `${studentName} gekopieerd naar ${targetLabel}.${result.extra}`
+      );
       setOpen(false);
       setTargetDate('');
       router.push(`/detentions/${result.targetDate}`);
@@ -60,18 +65,33 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
           e.stopPropagation();
           setOpen(true);
         }}
-        className="detention-card__action"
-        title="Dupliceren naar andere datum"
+        className={
+          isReplan
+            ? 'btn-secondary text-xs px-2.5 py-1.5 shrink-0'
+            : 'detention-card__action'
+        }
+        title={isReplan ? 'Nieuwe strafstudie inplannen' : 'Dupliceren naar andere datum'}
         disabled={disabled}
       >
-        <Copy className="h-5 w-5" />
+        {isReplan ? (
+          <>
+            <CalendarPlus className="h-4 w-4 inline-block mr-1 -mt-0.5" />
+            Nieuwe strafstudie
+          </>
+        ) : (
+          <Copy className="h-5 w-5" />
+        )}
       </button>
 
       <Modal
         open={open}
         onClose={close}
-        title="Nablijven dupliceren"
-        description={`Kopieer ${studentName} naar een andere datum.`}
+        title={isReplan ? 'Nieuwe strafstudie inplannen' : 'Nablijven dupliceren'}
+        description={
+          isReplan
+            ? `De weigering van ${studentName} blijft op deze dag staan. Kies de nieuwe maandag.`
+            : `Kopieer ${studentName} naar een andere datum.`
+        }
         footer={
           <>
             <button type="button" className="btn-secondary flex-1" onClick={close} disabled={busy}>
@@ -83,13 +103,13 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
               onClick={handleDuplicate}
               disabled={!targetDate || busy}
             >
-              {busy ? 'Bezig…' : 'Dupliceren'}
+              {busy ? 'Bezig…' : isReplan ? 'Inplannen' : 'Dupliceren'}
             </button>
           </>
         }
       >
         <label className="form-label" htmlFor={fieldId}>
-          Nieuwe datum (maandag, dinsdag of donderdag)
+          {isReplan ? 'Nieuwe maandag' : 'Nieuwe datum (maandag, dinsdag of donderdag)'}
         </label>
         <DateField
           id={fieldId}

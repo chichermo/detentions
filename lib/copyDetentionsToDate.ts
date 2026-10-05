@@ -84,6 +84,11 @@ export async function copyDetentionsToDate(
       strafstudieOmgezet += 1;
     }
 
+    const isReplan = !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd;
+    if (isReplan && !isTargetMonday) {
+      throwCopy('Een nieuwe strafstudie kan alleen op een maandag.');
+    }
+
     const payload: Detention = {
       ...detention,
       id: `detention-${stamp}-${i}`,
@@ -92,7 +97,7 @@ export async function copyDetentionsToDate(
       number: existingOnTarget.length + i + 1,
       isDoublePeriod,
       timePeriod: isDoublePeriod ? detention.timePeriod : undefined,
-      sourceDetentionId: undefined,
+      sourceDetentionId: isReplan ? detention.id : undefined,
       nablijvenGeweigerd: false,
       didNotAttend: false,
     };
