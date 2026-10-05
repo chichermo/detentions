@@ -183,6 +183,22 @@ export function validateStrafstudieCoversRefusals(
   if (previous?.isDoublePeriod) return null;
 
   const key = studentKey(detention.student || '');
+  const hasUnmatchedStrafstudieWeigering = existing.some((d) => {
+    if (d.id === excludeId) return false;
+    if (!d.isDoublePeriod || !d.nablijvenGeweigerd) return false;
+    if (studentKey(d.student) !== key) return false;
+    const srcDate = normalizeDetentionDate(d.date);
+    if (!srcDate || srcDate >= date) return false;
+    const alreadyReplanned = existing.some((later) => {
+      if (later.id === excludeId || later.id === d.id) return false;
+      if (!later.isDoublePeriod) return false;
+      if (studentKey(later.student) !== key) return false;
+      const laterDate = normalizeDetentionDate(later.date);
+      return !!laterDate && laterDate > srcDate && laterDate <= date;
+    });
+    return !alreadyReplanned;
+  });
+  if (hasUnmatchedStrafstudieWeigering) return null;
   const refusals = existing.filter((d) => {
     if (d.id === excludeId) return false;
     if (d.isDoublePeriod) return false;

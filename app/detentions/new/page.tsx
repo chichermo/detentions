@@ -543,7 +543,7 @@ function NewDetentionPageInner() {
                   </label>
                   {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
                     <p className="text-xs text-amber-300/90 px-1">
-                      Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt — niet omdat dit de strafstudie zelf is.
+                      Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt. Bij een tweede weigering: laat deze datum staan en plan een nieuwe strafstudie op een andere maandag.
                     </p>
                   )}
                   {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (

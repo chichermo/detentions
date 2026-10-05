@@ -236,20 +236,35 @@ export default function DetentionSessionPage() {
       ? `${student.name} - ${student.grade}`
       : original?.student || editingDetention.student || '';
 
+    const keepRefusedStrafstudie =
+      dateChanged &&
+      !!original?.isDoublePeriod &&
+      !!original.nablijvenGeweigerd &&
+      isDoublePeriod;
+
     const updatedDetention: Detention = {
       ...editingDetention as Detention,
-      id: editingId,
+      id: keepRefusedStrafstudie ? `detention-${Date.now()}-replan` : editingId,
       student: studentDisplayName,
       date: parsed.date,
       dayOfWeek: parsed.dayOfWeek,
       isDoublePeriod,
       timePeriod: isDoublePeriod ? editingDetention.timePeriod : undefined,
+      nablijvenGeweigerd: keepRefusedStrafstudie ? false : !!editingDetention.nablijvenGeweigerd,
+      didNotAttend: keepRefusedStrafstudie ? false : !!editingDetention.didNotAttend,
+      sourceDetentionId: keepRefusedStrafstudie
+        ? original?.id
+        : editingDetention.sourceDetentionId,
       number: dateChanged
         ? targetDetentions.length + 1
         : editingDetention.number || original?.number || 1,
     };
 
-    const dupErr = validateUniqueStudentOnDate(updatedDetention, targetDetentions, editingId);
+    const dupErr = validateUniqueStudentOnDate(
+      updatedDetention,
+      targetDetentions,
+      keepRefusedStrafstudie ? undefined : editingId
+    );
     if (dupErr) {
       alert(dupErr);
       return;
@@ -261,7 +276,7 @@ export default function DetentionSessionPage() {
       const mergeErr = validateStrafstudieCoversRefusals(
         updatedDetention,
         Array.isArray(allDetentions) ? allDetentions : [],
-        editingId
+        keepRefusedStrafstudie ? undefined : editingId
       );
       if (mergeErr) {
         alert(mergeErr);
@@ -287,6 +302,11 @@ export default function DetentionSessionPage() {
       }
       setEditingId(null);
       setEditingDetention(null);
+      if (keepRefusedStrafstudie) {
+        alert(
+          'De geweigerde strafstudie blijft op de oorspronkelijke datum staan. Er is een nieuwe strafstudie ingepland. Bij een nieuwe weigering vink je opnieuw geweigerd aan op die nieuwe datum.'
+        );
+      }
       if (dateChanged) {
         router.push(`/detentions/${parsed.date}`);
       } else {
@@ -366,8 +386,10 @@ export default function DetentionSessionPage() {
       return;
     }
 
-    const student = students.find(s => s.name === newDetention.student);
-    if (!student) {
+    const student = students.find(
+      (s) => foldPersonNameKey(s.name) === foldPersonNameKey(newDetention.student || '')
+    );
+    if (!student && !newDetention.isDoublePeriod) {
       alert(`Kies een leerling van de ${nablijvenDayLabel(parsed.dayOfWeek)}lijst.`);
       return;
     }
@@ -377,7 +399,9 @@ export default function DetentionSessionPage() {
       number: newDetention.number || detentions.length + 1,
       date: parsed.date,
       dayOfWeek: parsed.dayOfWeek,
-      student: `${student.name} - ${student.grade}`,
+      student: student
+        ? `${student.name} - ${student.grade}`
+        : String(newDetention.student || ''),
       teacher: newDetention.teacher || '',
       reason: newDetention.reason || '',
       task: newDetention.task || '',
@@ -789,7 +813,7 @@ function DetentionForm({
         </label>
         {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
           <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
-            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt — niet omdat dit de strafstudie zelf is.
+            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt. Bij een tweede weigering: laat deze datum staan en plan een nieuwe strafstudie op een andere maandag.
           </p>
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (

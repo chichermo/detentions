@@ -197,7 +197,7 @@ export default function DetentionEditPanel({
         </div>
         {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt — niet omdat dit de strafstudie zelf is.
+            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt. Bij een tweede weigering: laat deze datum staan en plan een nieuwe strafstudie op een andere maandag.
           </p>
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
