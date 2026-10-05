@@ -199,7 +199,7 @@ function NewDetentionPageInner() {
         return;
       }
       const onList = students.some((s) => s.name === detentions[i].student);
-      if (!onList) {
+      if (!onList && !detentions[i].isDoublePeriod) {
         alert(
           `Nablijven #${i + 1}: kies een leerling van de ${nablijvenDayLabel(selectedDay)}lijst.`
         );

@@ -54,9 +54,12 @@ async function validateDetentionSchedule(detention: Detention): Promise<string |
     detention.timePeriod = undefined;
   }
 
-  const dayStudents = await getStudents(parsed.dayOfWeek);
-  if (dayStudents.length > 0 && !isStudentOnDayList(dayStudents, detention.student)) {
-    return studentNotOnDayListMessage(detention.student, parsed.dayOfWeek);
+  // Strafstudie is altijd maandag, ook voor leerlingen van di/do (opvolging weigering).
+  if (!detention.isDoublePeriod) {
+    const dayStudents = await getStudents(parsed.dayOfWeek);
+    if (dayStudents.length > 0 && !isStudentOnDayList(dayStudents, detention.student)) {
+      return studentNotOnDayListMessage(detention.student, parsed.dayOfWeek);
+    }
   }
   return null;
 }
