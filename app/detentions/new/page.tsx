@@ -151,6 +151,7 @@ function NewDetentionPageInner() {
     timePeriod: undefined,
     nablijvenGeweigerd: false,
     didNotAttend: false,
+    followUpClosed: false,
   });
 
   const addDetention = () => {
@@ -169,9 +170,11 @@ function NewDetentionPageInner() {
   };
 
   const updateDetention = (index: number, field: keyof Detention, value: any) => {
-    const updated = [...detentions];
-    updated[index] = { ...updated[index], [field]: value };
-    setDetentions(updated);
+    setDetentions((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const getStudentDisplayName = (studentName: string): string => {
@@ -231,6 +234,7 @@ function NewDetentionPageInner() {
       timePeriod: d.timePeriod,
       nablijvenGeweigerd: d.nablijvenGeweigerd || false,
       didNotAttend: d.didNotAttend || false,
+      followUpClosed: !!(d.followUpClosed && d.nablijvenGeweigerd && d.isDoublePeriod),
     }));
 
     if (detentionsToSave.length === 0) {
@@ -536,15 +540,33 @@ function NewDetentionPageInner() {
                       checked={detention.nablijvenGeweigerd || false}
                       onChange={(e) => {
                         updateDetention(index, 'nablijvenGeweigerd', e.target.checked);
+                        if (!e.target.checked) {
+                          updateDetention(index, 'followUpClosed', false);
+                        }
                       }}
                       className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
                     />
                     <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
                   </label>
                   {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
-                    <p className="text-xs text-amber-300/90 px-1">
-                      Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt. Bij een tweede weigering: laat deze datum staan en plan een nieuwe strafstudie op een andere maandag.
-                    </p>
+                    <>
+                      <p className="text-xs text-amber-300/90 px-1">
+                        Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.
+                      </p>
+                      <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={detention.followUpClosed || false}
+                          onChange={(e) =>
+                            updateDetention(index, 'followUpClosed', e.target.checked)
+                          }
+                          className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+                        />
+                        <span className="text-sm font-medium text-slate-300">
+                          Opgevolgd — school geeft een ander gevolg
+                        </span>
+                      </label>
+                    </>
                   )}
                   {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
                     <p className="text-xs text-amber-300/90 px-1">
@@ -561,6 +583,7 @@ function NewDetentionPageInner() {
                           updateDetention(index, 'isDoublePeriod', isChecked);
                           if (!isChecked) {
                             updateDetention(index, 'timePeriod', undefined);
+                            updateDetention(index, 'followUpClosed', false);
                           }
                         }}
                         className="h-5 w-5 text-amber-600 focus:ring-amber-500 rounded border-slate-500 bg-slate-700 cursor-pointer"

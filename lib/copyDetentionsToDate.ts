@@ -84,7 +84,8 @@ export async function copyDetentionsToDate(
       strafstudieOmgezet += 1;
     }
 
-    const isReplan = !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd;
+    const isReplan =
+      !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd && !detention.followUpClosed;
     if (isReplan && !isTargetMonday) {
       throwCopy('Een nieuwe strafstudie kan alleen op een maandag.');
     }
@@ -100,6 +101,7 @@ export async function copyDetentionsToDate(
       sourceDetentionId: isReplan ? detention.id : undefined,
       nablijvenGeweigerd: false,
       didNotAttend: false,
+      followUpClosed: false,
     };
 
     const dupErr = validateUniqueStudentOnDate(payload, [...existingOnTarget, ...planned]);

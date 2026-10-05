@@ -129,6 +129,8 @@ function FollowUpTable({
                       <span className="text-slate-100">
                         Strafstudie {formatDay(row.linked.date)}
                       </span>
+                    ) : row.sources[0]?.followUpClosed ? (
+                      <span className="text-slate-100">Opgevolgd</span>
                     ) : (
                       <span className="text-red-100 font-medium">Nog in te plannen</span>
                     )}

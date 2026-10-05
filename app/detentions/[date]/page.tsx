@@ -252,6 +252,11 @@ export default function DetentionSessionPage() {
       timePeriod: isDoublePeriod ? editingDetention.timePeriod : undefined,
       nablijvenGeweigerd: keepRefusedStrafstudie ? false : !!editingDetention.nablijvenGeweigerd,
       didNotAttend: keepRefusedStrafstudie ? false : !!editingDetention.didNotAttend,
+      followUpClosed: keepRefusedStrafstudie
+        ? false
+        : !!editingDetention.followUpClosed &&
+          !!editingDetention.nablijvenGeweigerd &&
+          isDoublePeriod,
       sourceDetentionId: keepRefusedStrafstudie
         ? original?.id
         : editingDetention.sourceDetentionId,
@@ -355,6 +360,7 @@ export default function DetentionSessionPage() {
       timePeriod: undefined,
       nablijvenGeweigerd: false,
       didNotAttend: false,
+      followUpClosed: false,
     });
     setShowAddForm(true);
     fetchStudents(dayOfWeek);
@@ -413,6 +419,10 @@ export default function DetentionSessionPage() {
       timePeriod: newDetention.timePeriod,
       nablijvenGeweigerd: newDetention.nablijvenGeweigerd || false,
       didNotAttend: newDetention.didNotAttend || false,
+      followUpClosed:
+        !!newDetention.followUpClosed &&
+        !!newDetention.nablijvenGeweigerd &&
+        !!newDetention.isDoublePeriod,
     };
 
     const dupErr = validateUniqueStudentOnDate(detentionToSave, detentions);
@@ -584,7 +594,9 @@ export default function DetentionSessionPage() {
                     students={availableStudents}
                     staffNames={staffNames}
                     allowStrafstudie={allowStrafstudie}
-                    onChange={(field, value) => setNewDetention({ ...newDetention, [field]: value })}
+                    onChange={(field, value) =>
+                      setNewDetention((prev) => (prev ? { ...prev, [field]: value } : prev))
+                    }
                   />
                 </>
               );
@@ -806,15 +818,31 @@ function DetentionForm({
           <input
             type="checkbox"
             checked={detention.nablijvenGeweigerd || false}
-            onChange={(e) => onChange('nablijvenGeweigerd', e.target.checked)}
+            onChange={(e) => {
+              onChange('nablijvenGeweigerd', e.target.checked);
+              if (!e.target.checked) onChange('followUpClosed', false);
+            }}
             className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
           />
           <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
         </label>
         {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
-          <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
-            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt. Bij een tweede weigering: laat deze datum staan en plan een nieuwe strafstudie op een andere maandag.
-          </p>
+          <>
+            <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
+              Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.
+            </p>
+            <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+              <input
+                type="checkbox"
+                checked={detention.followUpClosed || false}
+                onChange={(e) => onChange('followUpClosed', e.target.checked)}
+                className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+              />
+              <span className="text-sm font-medium text-slate-300">
+                Opgevolgd — school geeft een ander gevolg
+              </span>
+            </label>
+          </>
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
@@ -831,6 +859,7 @@ function DetentionForm({
                 onChange('isDoublePeriod', isChecked);
                 if (!isChecked) {
                   onChange('timePeriod', undefined);
+                  onChange('followUpClosed', false);
                 }
               }}
               className="h-5 w-5 text-amber-600 focus:ring-amber-500 rounded border-slate-500 bg-slate-700 cursor-pointer"

@@ -98,6 +98,7 @@ export default function DetentionSessionList({
                         <Flag on={!!detention.shouldPrint} label="Afdrukken" />
                         <Flag on={!!detention.canUseChromebook} label="Chromebook" />
                         <Flag on={!!detention.nablijvenGeweigerd} label="Geweigerd" />
+                        <Flag on={!!detention.followUpClosed} label="Opgevolgd" />
                         {isMonday && detention.isDoublePeriod && (
                           <span className="detention-flag detention-flag--amber">Strafstudie</span>
                         )}

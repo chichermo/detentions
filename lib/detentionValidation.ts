@@ -185,7 +185,7 @@ export function validateStrafstudieCoversRefusals(
   const key = studentKey(detention.student || '');
   const hasUnmatchedStrafstudieWeigering = existing.some((d) => {
     if (d.id === excludeId) return false;
-    if (!d.isDoublePeriod || !d.nablijvenGeweigerd) return false;
+    if (!d.isDoublePeriod || !d.nablijvenGeweigerd || d.followUpClosed) return false;
     if (studentKey(d.student) !== key) return false;
     const srcDate = normalizeDetentionDate(d.date);
     if (!srcDate || srcDate >= date) return false;
@@ -202,7 +202,7 @@ export function validateStrafstudieCoversRefusals(
   const refusals = existing.filter((d) => {
     if (d.id === excludeId) return false;
     if (d.isDoublePeriod) return false;
-    if (!d.nablijvenGeweigerd) return false;
+    if (!d.nablijvenGeweigerd || d.followUpClosed) return false;
     if (studentKey(d.student) !== key) return false;
     const srcDate = normalizeDetentionDate(d.date);
     return !!srcDate && srcDate < date;

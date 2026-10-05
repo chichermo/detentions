@@ -171,10 +171,21 @@ export default function DetentionEditPanel({
               checked={detention.nablijvenGeweigerd || false}
               onChange={(e) => {
                 onChange('nablijvenGeweigerd', e.target.checked);
+                if (!e.target.checked) onChange('followUpClosed', false);
               }}
             />
             Geweigerd
           </label>
+          {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+            <label className="detention-edit-card__check">
+              <input
+                type="checkbox"
+                checked={detention.followUpClosed || false}
+                onChange={(e) => onChange('followUpClosed', e.target.checked)}
+              />
+              Opgevolgd
+            </label>
+          )}
           {editIsMonday && allowStrafstudie && (
             <label className="detention-edit-card__check">
               <input
@@ -183,7 +194,10 @@ export default function DetentionEditPanel({
                 onChange={(e) => {
                   const checked = e.target.checked;
                   onChange('isDoublePeriod', checked);
-                  if (!checked) onChange('timePeriod', undefined);
+                  if (!checked) {
+                    onChange('timePeriod', undefined);
+                    onChange('followUpClosed', false);
+                  }
                 }}
               />
               Strafstudie (maandag)
@@ -197,7 +211,7 @@ export default function DetentionEditPanel({
         </div>
         {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Alleen aanvinken als de leerling deze strafstudie weigert of vertrekt. Bij een tweede weigering: laat deze datum staan en plan een nieuwe strafstudie op een andere maandag.
+            Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.
           </p>
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (

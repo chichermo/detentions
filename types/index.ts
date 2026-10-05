@@ -34,6 +34,7 @@ export interface Detention {
   nablijvenGeweigerd?: boolean; // Leerling heeft nablijven geweigerd
   didNotAttend?: boolean; // Niet komen opdagen (zonder geweigerd)
   sourceDetentionId?: string; // Koppeling naar oorspronkelijke nablijven (strafstudie op maandag)
+  followUpClosed?: boolean; // School gaf een ander gevolg; geen nieuwe strafstudie meer nodig
 }
 
 export interface CalendarDaySetting {

@@ -266,7 +266,7 @@ export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpD
         student: row.student,
         sources: [source],
         linked,
-        hasOpenFollowUp: !linked,
+        hasOpenFollowUp: !linked && !source.followUpClosed,
       });
     }
   }
@@ -352,7 +352,9 @@ function buildFollowUpRows(
         findBySourceId,
         reservedIds
       );
-      const hasOpenFollowUp = row.detentions.some((source) => !linkedBySourceId[source.id]);
+      const hasOpenFollowUp = row.detentions.some(
+        (source) => !linkedBySourceId[source.id] && !source.followUpClosed
+      );
       return { ...row, hasOpenFollowUp, linkedBySourceId };
     })
     .sort(

@@ -26,7 +26,8 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
   const [busy, setBusy] = useState(false);
 
   const studentName = getDetentionStudentName(detention.student);
-  const isReplan = !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd;
+  const isReplan =
+    !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd && !detention.followUpClosed;
   const fieldId = `duplicate-to-date-${detention.id}`;
 
   const close = () => {
