@@ -147,6 +147,16 @@ export function validateUniqueStudentOnDate(
 /** Strafstudie mag tot twee weken later vallen (donderdag → maandag daarna). */
 const STRAFSTUDIE_FOLLOW_UP_DAYS = 21;
 
+function looksLikeNablijvenWeigeringFollowUp(reason?: string, extraNotes?: string): boolean {
+  const text = `${reason || ''} ${extraNotes || ''}`
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase();
+  if (!text.trim()) return false;
+  if (/\bherinplanning\b/.test(text) || /weiger\w*\s+strafstudie/.test(text)) return false;
+  return /\b(weiger|geweigerd)\b/.test(text);
+}
+
 function calendarDaysBetween(fromDate: string, toDate: string): number {
   const from = Date.parse(`${fromDate}T00:00:00`);
   const to = Date.parse(`${toDate}T00:00:00`);
@@ -209,6 +219,7 @@ export function validateStrafstudieCoversRefusals(
   });
   if (refusals.length === 0) return null;
 
+  const refusalIds = new Set(refusals.map((r) => r.id));
   const covering = existing.filter((d) => {
     if (d.id === excludeId) return false;
     if (!d.isDoublePeriod) return false;
@@ -216,6 +227,9 @@ export function validateStrafstudieCoversRefusals(
     if (studentKey(d.student) !== key) return false;
     const strafDate = normalizeDetentionDate(d.date);
     if (!strafDate || strafDate >= date) return false;
+    // Alleen strafstudie die bij deze weigering hoort, geen losstaande strafstudie.
+    if (d.sourceDetentionId && refusalIds.has(d.sourceDetentionId)) return true;
+    if (!looksLikeNablijvenWeigeringFollowUp(d.reason, d.extraNotes)) return false;
     return refusals.some((r) => {
       const srcDate = normalizeDetentionDate(r.date);
       if (!srcDate || srcDate >= strafDate) return false;
