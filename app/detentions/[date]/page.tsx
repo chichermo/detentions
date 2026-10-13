@@ -239,7 +239,9 @@ export default function DetentionSessionPage() {
     const keepRefusedStrafstudie =
       dateChanged &&
       !!original?.isDoublePeriod &&
-      !!original.nablijvenGeweigerd &&
+      (!!original.nablijvenGeweigerd ||
+        !!original.removedFromStrafstudie ||
+        !!original.removedFromNablijven) &&
       isDoublePeriod;
 
     const updatedDetention: Detention = {
@@ -254,7 +256,16 @@ export default function DetentionSessionPage() {
       didNotAttend: keepRefusedStrafstudie ? false : !!editingDetention.didNotAttend,
       followUpClosed: keepRefusedStrafstudie
         ? false
-        : !!editingDetention.followUpClosed && !!editingDetention.nablijvenGeweigerd,
+        : !!editingDetention.followUpClosed &&
+          (!!editingDetention.nablijvenGeweigerd ||
+            !!editingDetention.removedFromNablijven ||
+            !!editingDetention.removedFromStrafstudie),
+      removedFromNablijven: keepRefusedStrafstudie
+        ? false
+        : !!editingDetention.removedFromNablijven,
+      removedFromStrafstudie: keepRefusedStrafstudie
+        ? false
+        : parsed.dayOfWeek === 'MAANDAG' && !!editingDetention.removedFromStrafstudie,
       sourceDetentionId: keepRefusedStrafstudie
         ? original?.id
         : editingDetention.sourceDetentionId,
@@ -359,6 +370,8 @@ export default function DetentionSessionPage() {
       nablijvenGeweigerd: false,
       didNotAttend: false,
       followUpClosed: false,
+      removedFromNablijven: false,
+      removedFromStrafstudie: false,
     });
     setShowAddForm(true);
     fetchStudents(dayOfWeek);
@@ -417,7 +430,14 @@ export default function DetentionSessionPage() {
       timePeriod: newDetention.timePeriod,
       nablijvenGeweigerd: newDetention.nablijvenGeweigerd || false,
       didNotAttend: newDetention.didNotAttend || false,
-      followUpClosed: !!newDetention.followUpClosed && !!newDetention.nablijvenGeweigerd,
+      followUpClosed:
+        !!newDetention.followUpClosed &&
+        (!!newDetention.nablijvenGeweigerd ||
+          !!newDetention.removedFromNablijven ||
+          !!newDetention.removedFromStrafstudie),
+      removedFromNablijven: !!newDetention.removedFromNablijven,
+      removedFromStrafstudie:
+        parsed.dayOfWeek === 'MAANDAG' && !!newDetention.removedFromStrafstudie,
     };
 
     const dupErr = validateUniqueStudentOnDate(detentionToSave, detentions);
@@ -653,6 +673,7 @@ export default function DetentionSessionPage() {
                       if (parsed.dayOfWeek !== 'MAANDAG') {
                         next.isDoublePeriod = false;
                         next.timePeriod = undefined;
+                        next.removedFromStrafstudie = false;
                       }
                       fetchStudents(parsed.dayOfWeek);
                     }
@@ -661,6 +682,7 @@ export default function DetentionSessionPage() {
                 });
               }}
               onDelete={handleDelete}
+              onStatusUpdated={fetchDetentions}
               onShowHistory={
                 canViewHistory
                   ? (id) => {
@@ -815,18 +837,62 @@ function DetentionForm({
             checked={detention.nablijvenGeweigerd || false}
             onChange={(e) => {
               onChange('nablijvenGeweigerd', e.target.checked);
-              if (!e.target.checked) onChange('followUpClosed', false);
+              if (
+                !e.target.checked &&
+                !detention.removedFromNablijven &&
+                !detention.removedFromStrafstudie
+              ) {
+                onChange('followUpClosed', false);
+              }
             }}
             className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
           />
           <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
         </label>
-        {detention.nablijvenGeweigerd && (
+        <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+          <input
+            type="checkbox"
+            checked={detention.removedFromNablijven || false}
+            onChange={(e) => {
+              onChange('removedFromNablijven', e.target.checked);
+              if (
+                !e.target.checked &&
+                !detention.nablijvenGeweigerd &&
+                !detention.removedFromStrafstudie
+              ) {
+                onChange('followUpClosed', false);
+              }
+            }}
+            className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+          />
+          <span className="text-sm font-medium text-slate-300">Uit nablijven gezet</span>
+        </label>
+        {isMonday && (
+          <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+            <input
+              type="checkbox"
+              checked={detention.removedFromStrafstudie || false}
+              onChange={(e) => {
+                onChange('removedFromStrafstudie', e.target.checked);
+                if (
+                  !e.target.checked &&
+                  !detention.nablijvenGeweigerd &&
+                  !detention.removedFromNablijven
+                ) {
+                  onChange('followUpClosed', false);
+                }
+              }}
+              className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+            />
+            <span className="text-sm font-medium text-slate-300">Uit strafstudie gezet</span>
+          </label>
+        )}
+        {(detention.nablijvenGeweigerd ||
+          detention.removedFromNablijven ||
+          detention.removedFromStrafstudie) && (
           <>
             <p className="text-xs text-amber-300/90 px-1 md:col-span-2">
-              {detention.isDoublePeriod
-                ? 'Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.'
-                : 'Normaal volgt een strafstudie op maandag. Ander gevolg van school: vink Opgevolgd aan — dan wordt er geen strafstudie meer gekoppeld.'}
+              Dit komt in Nog in te plannen tot er een (nieuwe) strafstudie is, of tot je Opgevolgd aanvinkt.
             </p>
             <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
               <input

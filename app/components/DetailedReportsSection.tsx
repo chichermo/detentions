@@ -20,6 +20,14 @@ interface Props {
   hideFollowUp?: boolean;
 }
 
+function followUpKindLabel(d: Detention): string {
+  const parts: string[] = [];
+  if (d.nablijvenGeweigerd) parts.push('geweigerd');
+  if (d.removedFromNablijven) parts.push('uit nablijven gezet');
+  if (d.removedFromStrafstudie) parts.push('uit strafstudie gezet');
+  return parts.join(' · ') || 'op te volgen';
+}
+
 function formatDay(date: string): string {
   const day = normalizeDetentionDate(date);
   try {
@@ -112,7 +120,7 @@ function FollowUpTable({
             <thead>
               <tr>
                 <th>Leerling</th>
-                <th>Geweigerd op</th>
+                <th>Op</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -121,8 +129,9 @@ function FollowUpTable({
                 <tr key={row.key}>
                   <td className="font-medium">{row.student}</td>
                   <td>
-                    {row.sources.map((d) => formatDay(d.date)).join(', ')}
-                    {' · geweigerd'}
+                    {row.sources
+                      .map((d) => `${formatDay(d.date)} · ${followUpKindLabel(d)}`)
+                      .join(', ')}
                   </td>
                   <td className="text-sm">
                     {row.linked ? (

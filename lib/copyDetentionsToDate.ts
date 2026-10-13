@@ -10,6 +10,7 @@ import {
   normalizeDetentionDate,
 } from '@/lib/detentionValidation';
 import { parseSessionDate } from '@/lib/calendarUtils';
+import { isStrafstudieFollowUpSource } from '@/lib/detentionReports';
 
 export class CopyDetentionsError extends Error {
   constructor(message: string) {
@@ -84,10 +85,15 @@ export async function copyDetentionsToDate(
       strafstudieOmgezet += 1;
     }
 
-    const isReplan =
-      !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd && !detention.followUpClosed;
+    const isReplan = isStrafstudieFollowUpSource(detention) && !detention.followUpClosed;
     if (isReplan && !isTargetMonday) {
       throwCopy('Een nieuwe strafstudie kan alleen op een maandag.');
+    }
+    if (isReplan && !allowStrafOnTarget) {
+      throwCopy('Op deze maandag is geen strafstudie toegestaan.');
+    }
+    if (isReplan) {
+      isDoublePeriod = true;
     }
 
     const payload: Detention = {
@@ -102,6 +108,8 @@ export async function copyDetentionsToDate(
       nablijvenGeweigerd: false,
       didNotAttend: false,
       followUpClosed: false,
+      removedFromNablijven: false,
+      removedFromStrafstudie: false,
     };
 
     const dupErr = validateUniqueStudentOnDate(payload, [...existingOnTarget, ...planned]);

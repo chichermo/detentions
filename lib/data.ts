@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 import { TABLES } from './tables';
 import { sortStudentsByClass } from './studentImport';
 import { recordDetentionAudit } from './audit';
-import { encodeFollowUpClosedNotes, readFollowUpClosed } from './followUpClosed';
+import { canCloseFollowUp, encodeDetentionNoteFlags, readDetentionNoteFlags } from './followUpClosed';
 
 // Detectar si Supabase está configurado
 const useSupabase = supabase !== null;
@@ -438,7 +438,7 @@ export async function deleteStaffMember(id: string): Promise<void> {
 }
 
 function mapDetentionRow(d: Record<string, unknown>): Detention {
-  const followUp = readFollowUpClosed(d);
+  const flags = readDetentionNoteFlags(d);
   return {
     id: d.id as string,
     number: d.number as number,
@@ -451,13 +451,15 @@ function mapDetentionRow(d: Record<string, unknown>): Detention {
     lvsDate: (d.lvs_date as string) || undefined,
     shouldPrint: (d.should_print as boolean) || false,
     canUseChromebook: (d.can_use_chromebook as boolean) || false,
-    extraNotes: followUp.extraNotes,
+    extraNotes: flags.extraNotes,
     isDoublePeriod: (d.is_double_period as boolean) || false,
     timePeriod: (d.time_period as Detention['timePeriod']) || undefined,
     nablijvenGeweigerd: (d.nablijven_geweigerd as boolean) || false,
     didNotAttend: (d.did_not_attend as boolean) || false,
     sourceDetentionId: (d.source_detention_id as string) || undefined,
-    followUpClosed: followUp.followUpClosed,
+    followUpClosed: flags.followUpClosed,
+    removedFromNablijven: flags.removedFromNablijven,
+    removedFromStrafstudie: flags.removedFromStrafstudie,
   };
 }
 
@@ -527,10 +529,11 @@ function detentionToRow(detention: Detention) {
     lvs_date: detention.lvsDate || null,
     should_print: detention.shouldPrint,
     can_use_chromebook: detention.canUseChromebook,
-    extra_notes: encodeFollowUpClosedNotes(
-      detention.extraNotes,
-      !!(detention.followUpClosed && detention.nablijvenGeweigerd)
-    ),
+    extra_notes: encodeDetentionNoteFlags(detention.extraNotes, {
+      followUpClosed: !!(detention.followUpClosed && canCloseFollowUp(detention)),
+      removedFromNablijven: !!detention.removedFromNablijven,
+      removedFromStrafstudie: !!detention.removedFromStrafstudie,
+    }),
     is_double_period: detention.isDoublePeriod || false,
     time_period: detention.timePeriod || null,
     nablijven_geweigerd: detention.nablijvenGeweigerd || false,

@@ -152,6 +152,8 @@ function NewDetentionPageInner() {
     nablijvenGeweigerd: false,
     didNotAttend: false,
     followUpClosed: false,
+    removedFromNablijven: false,
+    removedFromStrafstudie: false,
   });
 
   const addDetention = () => {
@@ -234,7 +236,12 @@ function NewDetentionPageInner() {
       timePeriod: d.timePeriod,
       nablijvenGeweigerd: d.nablijvenGeweigerd || false,
       didNotAttend: d.didNotAttend || false,
-      followUpClosed: !!(d.followUpClosed && d.nablijvenGeweigerd),
+      followUpClosed: !!(
+        d.followUpClosed &&
+        (d.nablijvenGeweigerd || d.removedFromNablijven || d.removedFromStrafstudie)
+      ),
+      removedFromNablijven: !!d.removedFromNablijven,
+      removedFromStrafstudie: selectedDay === 'MAANDAG' && !!d.removedFromStrafstudie,
     }));
 
     if (detentionsToSave.length === 0) {
@@ -540,7 +547,11 @@ function NewDetentionPageInner() {
                       checked={detention.nablijvenGeweigerd || false}
                       onChange={(e) => {
                         updateDetention(index, 'nablijvenGeweigerd', e.target.checked);
-                        if (!e.target.checked) {
+                        if (
+                          !e.target.checked &&
+                          !detention.removedFromNablijven &&
+                          !detention.removedFromStrafstudie
+                        ) {
                           updateDetention(index, 'followUpClosed', false);
                         }
                       }}
@@ -548,12 +559,50 @@ function NewDetentionPageInner() {
                     />
                     <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
                   </label>
-                  {detention.nablijvenGeweigerd && (
+                  <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={detention.removedFromNablijven || false}
+                      onChange={(e) => {
+                        updateDetention(index, 'removedFromNablijven', e.target.checked);
+                        if (
+                          !e.target.checked &&
+                          !detention.nablijvenGeweigerd &&
+                          !detention.removedFromStrafstudie
+                        ) {
+                          updateDetention(index, 'followUpClosed', false);
+                        }
+                      }}
+                      className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+                    />
+                    <span className="text-sm font-medium text-slate-300">Uit nablijven gezet</span>
+                  </label>
+                  {selectedDay === 'MAANDAG' && (
+                    <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={detention.removedFromStrafstudie || false}
+                        onChange={(e) => {
+                          updateDetention(index, 'removedFromStrafstudie', e.target.checked);
+                          if (
+                            !e.target.checked &&
+                            !detention.nablijvenGeweigerd &&
+                            !detention.removedFromNablijven
+                          ) {
+                            updateDetention(index, 'followUpClosed', false);
+                          }
+                        }}
+                        className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+                      />
+                      <span className="text-sm font-medium text-slate-300">Uit strafstudie gezet</span>
+                    </label>
+                  )}
+                  {(detention.nablijvenGeweigerd ||
+                    detention.removedFromNablijven ||
+                    detention.removedFromStrafstudie) && (
                     <>
                       <p className="text-xs text-amber-300/90 px-1">
-                        {detention.isDoublePeriod
-                          ? 'Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.'
-                          : 'Normaal volgt een strafstudie op maandag. Ander gevolg van school: vink Opgevolgd aan — dan wordt er geen strafstudie meer gekoppeld.'}
+                        Dit komt in Nog in te plannen tot er een (nieuwe) strafstudie is, of tot je Opgevolgd aanvinkt.
                       </p>
                       <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
                         <input

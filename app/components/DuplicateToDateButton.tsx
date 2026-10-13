@@ -13,6 +13,7 @@ import {
   copyDetentionsErrorMessage,
 } from '@/lib/copyDetentionsToDate';
 import { getDetentionStudentName } from '@/lib/detentionValidation';
+import { isStrafstudieFollowUpSource } from '@/lib/detentionReports';
 
 type Props = {
   detention: Detention;
@@ -26,8 +27,7 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
   const [busy, setBusy] = useState(false);
 
   const studentName = getDetentionStudentName(detention.student);
-  const isReplan =
-    !!detention.isDoublePeriod && !!detention.nablijvenGeweigerd && !detention.followUpClosed;
+  const isReplan = isStrafstudieFollowUpSource(detention) && !detention.followUpClosed;
   const fieldId = `duplicate-to-date-${detention.id}`;
 
   const close = () => {

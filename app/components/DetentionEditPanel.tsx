@@ -7,6 +7,7 @@ import StaffNameInput from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { isMonday as isMondayDate, parseSessionDate } from '@/lib/calendarUtils';
+import { canCloseFollowUp } from '@/lib/followUpClosed';
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <span className="detention-field-label">{children}</span>;
@@ -171,19 +172,51 @@ export default function DetentionEditPanel({
               checked={detention.nablijvenGeweigerd || false}
               onChange={(e) => {
                 onChange('nablijvenGeweigerd', e.target.checked);
-                if (!e.target.checked) onChange('followUpClosed', false);
+                if (
+                  !e.target.checked &&
+                  !detention.removedFromNablijven &&
+                  !detention.removedFromStrafstudie
+                ) {
+                  onChange('followUpClosed', false);
+                }
               }}
             />
             Geweigerd
           </label>
-          {detention.nablijvenGeweigerd && (
+          <label className="detention-edit-card__check">
+            <input
+              type="checkbox"
+              checked={detention.removedFromNablijven || false}
+              onChange={(e) => {
+                onChange('removedFromNablijven', e.target.checked);
+                if (
+                  !e.target.checked &&
+                  !detention.nablijvenGeweigerd &&
+                  !detention.removedFromStrafstudie
+                ) {
+                  onChange('followUpClosed', false);
+                }
+              }}
+            />
+            Uit nablijven gezet
+          </label>
+          {editIsMonday && (
             <label className="detention-edit-card__check">
               <input
                 type="checkbox"
-                checked={detention.followUpClosed || false}
-                onChange={(e) => onChange('followUpClosed', e.target.checked)}
+                checked={detention.removedFromStrafstudie || false}
+                onChange={(e) => {
+                  onChange('removedFromStrafstudie', e.target.checked);
+                  if (
+                    !e.target.checked &&
+                    !detention.nablijvenGeweigerd &&
+                    !detention.removedFromNablijven
+                  ) {
+                    onChange('followUpClosed', false);
+                  }
+                }}
               />
-              Opgevolgd
+              Uit strafstudie gezet
             </label>
           )}
           {editIsMonday && allowStrafstudie && (
@@ -205,15 +238,25 @@ export default function DetentionEditPanel({
               Geen strafstudie op deze maandag — alleen gewoon nablijven.
             </p>
           )}
+          {canCloseFollowUp(detention) && (
+            <label className="detention-edit-card__check">
+              <input
+                type="checkbox"
+                checked={detention.followUpClosed || false}
+                onChange={(e) => onChange('followUpClosed', e.target.checked)}
+              />
+              Opgevolgd
+            </label>
+          )}
         </div>
-        {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+        {canCloseFollowUp(detention) && detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.
+            Dit blijft in Nog in te plannen tot er een nieuwe strafstudie is, of tot je Opgevolgd aanvinkt.
           </p>
         )}
-        {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
+        {canCloseFollowUp(detention) && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Normaal volgt een strafstudie op maandag. Ander gevolg van school: vink Opgevolgd aan — dan wordt er geen strafstudie meer gekoppeld.
+            Dit komt in Nog in te plannen tot er een strafstudie is, of tot je Opgevolgd aanvinkt.
           </p>
         )}
 

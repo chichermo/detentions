@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns';
 import DragDropDetentions from '@/app/components/DragDropDetentions';
 import DetentionEditPanel from '@/app/components/DetentionEditPanel';
 import DuplicateToDateButton from '@/app/components/DuplicateToDateButton';
+import RemovedFromSessionButtons from '@/app/components/RemovedFromSessionButtons';
 import { Detention, Student } from '@/types';
 
 interface DetentionSessionListProps {
@@ -22,6 +23,7 @@ interface DetentionSessionListProps {
   onChange: (field: keyof Detention, value: unknown) => void;
   onDelete: (id: string) => void;
   onShowHistory?: (id: string) => void;
+  onStatusUpdated?: () => void;
 }
 
 function Flag({ on, label }: { on: boolean; label: string }) {
@@ -48,6 +50,7 @@ export default function DetentionSessionList({
   onChange,
   onDelete,
   onShowHistory,
+  onStatusUpdated,
 }: DetentionSessionListProps) {
   const dragDisabled = editingId !== null;
 
@@ -99,6 +102,8 @@ export default function DetentionSessionList({
                         <Flag on={!!detention.canUseChromebook} label="Chromebook" />
                         <Flag on={!!detention.nablijvenGeweigerd} label="Geweigerd" />
                         <Flag on={!!detention.followUpClosed} label="Opgevolgd" />
+                        <Flag on={!!detention.removedFromNablijven} label="Uit nablijven" />
+                        <Flag on={!!detention.removedFromStrafstudie} label="Uit strafstudie" />
                         {isMonday && detention.isDoublePeriod && (
                           <span className="detention-flag detention-flag--amber">Strafstudie</span>
                         )}
@@ -134,6 +139,13 @@ export default function DetentionSessionList({
                       </button>
                     </div>
                   </div>
+
+                  <RemovedFromSessionButtons
+                    detention={detention}
+                    isMonday={isMonday}
+                    disabled={dragDisabled}
+                    onUpdated={onStatusUpdated}
+                  />
 
                   <dl className="detention-card__meta">
                     <div>

@@ -53,11 +53,22 @@ export function getDoubleMissedOrRejected(detentions: Detention[]): StudentRepor
   );
 }
 
+/** Gewone nablijven die een strafstudie nodig heeft (geweigerd of uit nablijven gezet). */
+export function isNablijvenFollowUpSource(d: Detention): boolean {
+  return isRegularDetention(d) && !!(d.nablijvenGeweigerd || d.removedFromNablijven);
+}
+
+/** Strafstudie (of maandag) die een nieuwe strafstudie nodig heeft. */
+export function isStrafstudieFollowUpSource(d: Detention): boolean {
+  if (d.removedFromStrafstudie) {
+    return d.dayOfWeek === 'MAANDAG' || !!d.isDoublePeriod;
+  }
+  return isDoubleDetention(d) && !!(d.nablijvenGeweigerd || d.removedFromNablijven);
+}
+
 /** Geweigerd op gewone nablijven (ma/di/do) → verwachte strafstudie op (volgende) maandag */
 export function getTriggeredDoubleSource(detentions: Detention[]): Detention[] {
-  return detentions.filter(
-    (d) => isRegularDetention(d) && !!d.nablijvenGeweigerd
-  );
+  return detentions.filter(isNablijvenFollowUpSource);
 }
 
 /** Strafstudie mag tot twee weken later vallen (donderdag → maandag daarna: tot 18 dagen). */
@@ -387,9 +398,9 @@ export function isStrafstudieWeigering(d: Detention): boolean {
   return isDoubleDetention(d) && !!d.nablijvenGeweigerd;
 }
 
-/** Geweigerde strafstudie → verwachte nieuwe strafstudie. */
+/** Geweigerde of uitgezette strafstudie → verwachte nieuwe strafstudie. */
 export function getTriggeredStrafstudieSource(detentions: Detention[]): Detention[] {
-  return detentions.filter((d) => isStrafstudieWeigering(d));
+  return detentions.filter(isStrafstudieFollowUpSource);
 }
 
 /**
