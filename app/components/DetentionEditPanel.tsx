@@ -176,7 +176,7 @@ export default function DetentionEditPanel({
             />
             Geweigerd
           </label>
-          {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+          {detention.nablijvenGeweigerd && (
             <label className="detention-edit-card__check">
               <input
                 type="checkbox"
@@ -194,10 +194,7 @@ export default function DetentionEditPanel({
                 onChange={(e) => {
                   const checked = e.target.checked;
                   onChange('isDoublePeriod', checked);
-                  if (!checked) {
-                    onChange('timePeriod', undefined);
-                    onChange('followUpClosed', false);
-                  }
+                  if (!checked) onChange('timePeriod', undefined);
                 }}
               />
               Strafstudie (maandag)
@@ -216,7 +213,7 @@ export default function DetentionEditPanel({
         )}
         {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
           <p className="text-xs text-amber-400/90 col-span-full">
-            Elke weigering krijgt een eigen strafstudie op een vrije maandag. De koppeling gebeurt automatisch — de datum hoeft niet in de reden.
+            Normaal volgt een strafstudie op maandag. Ander gevolg van school: vink Opgevolgd aan — dan wordt er geen strafstudie meer gekoppeld.
           </p>
         )}
 

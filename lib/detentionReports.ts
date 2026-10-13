@@ -260,7 +260,7 @@ export function flattenFollowUpDisplayRows(rows: FollowUpReportRow[]): FollowUpD
       normalizeDetentionDate(a.date).localeCompare(normalizeDetentionDate(b.date))
     );
     for (const source of sources) {
-      const linked = row.linkedBySourceId[source.id];
+      const linked = source.followUpClosed ? undefined : row.linkedBySourceId[source.id];
       result.push({
         key: source.id,
         student: row.student,
@@ -347,7 +347,7 @@ function buildFollowUpRows(
   return groupByStudent(sources)
     .map((row) => {
       const linkedBySourceId = assignUniqueFollowUps(
-        row.detentions,
+        row.detentions.filter((source) => !source.followUpClosed),
         all,
         findBySourceId,
         reservedIds

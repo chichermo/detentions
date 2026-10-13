@@ -234,7 +234,7 @@ function NewDetentionPageInner() {
       timePeriod: d.timePeriod,
       nablijvenGeweigerd: d.nablijvenGeweigerd || false,
       didNotAttend: d.didNotAttend || false,
-      followUpClosed: !!(d.followUpClosed && d.nablijvenGeweigerd && d.isDoublePeriod),
+      followUpClosed: !!(d.followUpClosed && d.nablijvenGeweigerd),
     }));
 
     if (detentionsToSave.length === 0) {
@@ -548,10 +548,12 @@ function NewDetentionPageInner() {
                     />
                     <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
                   </label>
-                  {detention.nablijvenGeweigerd && detention.isDoublePeriod && (
+                  {detention.nablijvenGeweigerd && (
                     <>
                       <p className="text-xs text-amber-300/90 px-1">
-                        Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.
+                        {detention.isDoublePeriod
+                          ? 'Laat deze datum staan. Nieuwe maandag: knop Nieuwe strafstudie. Ander gevolg van school: vink Opgevolgd aan.'
+                          : 'Normaal volgt een strafstudie op maandag. Ander gevolg van school: vink Opgevolgd aan — dan wordt er geen strafstudie meer gekoppeld.'}
                       </p>
                       <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
                         <input
@@ -568,11 +570,6 @@ function NewDetentionPageInner() {
                       </label>
                     </>
                   )}
-                  {detention.nablijvenGeweigerd && !detention.isDoublePeriod && (
-                    <p className="text-xs text-amber-300/90 px-1">
-                      Elke weigering krijgt een eigen strafstudie op een vrije maandag. De koppeling gebeurt automatisch — de datum hoeft niet in de reden.
-                    </p>
-                  )}
                   {selectedDay === 'MAANDAG' && allowStrafstudie && (
                     <div className="flex items-center gap-3 p-4 bg-amber-600/20 rounded-xl hover:bg-amber-600/30 transition-colors border border-amber-500/50">
                       <input
@@ -583,7 +580,6 @@ function NewDetentionPageInner() {
                           updateDetention(index, 'isDoublePeriod', isChecked);
                           if (!isChecked) {
                             updateDetention(index, 'timePeriod', undefined);
-                            updateDetention(index, 'followUpClosed', false);
                           }
                         }}
                         className="h-5 w-5 text-amber-600 focus:ring-amber-500 rounded border-slate-500 bg-slate-700 cursor-pointer"
