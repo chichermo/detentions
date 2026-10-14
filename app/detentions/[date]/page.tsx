@@ -847,27 +847,31 @@ function DetentionForm({
             }}
             className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
           />
-          <span className="text-sm font-medium text-slate-300">Nablijven geweigerd?</span>
+          <span className="text-sm font-medium text-slate-300">
+            {detention.isDoublePeriod ? 'Strafstudie geweigerd?' : 'Nablijven geweigerd?'}
+          </span>
         </label>
-        <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
-          <input
-            type="checkbox"
-            checked={detention.removedFromNablijven || false}
-            onChange={(e) => {
-              onChange('removedFromNablijven', e.target.checked);
-              if (
-                !e.target.checked &&
-                !detention.nablijvenGeweigerd &&
-                !detention.removedFromStrafstudie
-              ) {
-                onChange('followUpClosed', false);
-              }
-            }}
-            className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
-          />
-          <span className="text-sm font-medium text-slate-300">Uit nablijven gezet</span>
-        </label>
-        {isMonday && (
+        {!detention.isDoublePeriod && (
+          <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
+            <input
+              type="checkbox"
+              checked={detention.removedFromNablijven || false}
+              onChange={(e) => {
+                onChange('removedFromNablijven', e.target.checked);
+                if (
+                  !e.target.checked &&
+                  !detention.nablijvenGeweigerd &&
+                  !detention.removedFromStrafstudie
+                ) {
+                  onChange('followUpClosed', false);
+                }
+              }}
+              className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-500 bg-slate-700"
+            />
+            <span className="text-sm font-medium text-slate-300">Uit nablijven gezet</span>
+          </label>
+        )}
+        {!!detention.isDoublePeriod && (
           <label className="flex items-center gap-3 p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 cursor-pointer transition-colors border border-slate-600">
             <input
               type="checkbox"
@@ -917,6 +921,9 @@ function DetentionForm({
                 onChange('isDoublePeriod', isChecked);
                 if (!isChecked) {
                   onChange('timePeriod', undefined);
+                  onChange('removedFromStrafstudie', false);
+                } else {
+                  onChange('removedFromNablijven', false);
                 }
               }}
               className="h-5 w-5 text-amber-600 focus:ring-amber-500 rounded border-slate-500 bg-slate-700 cursor-pointer"

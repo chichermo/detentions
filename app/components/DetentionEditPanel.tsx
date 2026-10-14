@@ -181,26 +181,28 @@ export default function DetentionEditPanel({
                 }
               }}
             />
-            Geweigerd
+            {detention.isDoublePeriod ? 'Strafstudie geweigerd' : 'Nablijven geweigerd'}
           </label>
-          <label className="detention-edit-card__check">
-            <input
-              type="checkbox"
-              checked={detention.removedFromNablijven || false}
-              onChange={(e) => {
-                onChange('removedFromNablijven', e.target.checked);
-                if (
-                  !e.target.checked &&
-                  !detention.nablijvenGeweigerd &&
-                  !detention.removedFromStrafstudie
-                ) {
-                  onChange('followUpClosed', false);
-                }
-              }}
-            />
-            Uit nablijven gezet
-          </label>
-          {editIsMonday && (
+          {!detention.isDoublePeriod && (
+            <label className="detention-edit-card__check">
+              <input
+                type="checkbox"
+                checked={detention.removedFromNablijven || false}
+                onChange={(e) => {
+                  onChange('removedFromNablijven', e.target.checked);
+                  if (
+                    !e.target.checked &&
+                    !detention.nablijvenGeweigerd &&
+                    !detention.removedFromStrafstudie
+                  ) {
+                    onChange('followUpClosed', false);
+                  }
+                }}
+              />
+              Uit nablijven gezet
+            </label>
+          )}
+          {!!detention.isDoublePeriod && (
             <label className="detention-edit-card__check">
               <input
                 type="checkbox"
@@ -227,7 +229,12 @@ export default function DetentionEditPanel({
                 onChange={(e) => {
                   const checked = e.target.checked;
                   onChange('isDoublePeriod', checked);
-                  if (!checked) onChange('timePeriod', undefined);
+                  if (!checked) {
+                    onChange('timePeriod', undefined);
+                    onChange('removedFromStrafstudie', false);
+                  } else {
+                    onChange('removedFromNablijven', false);
+                  }
                 }}
               />
               Strafstudie (maandag)

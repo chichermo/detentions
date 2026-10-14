@@ -100,7 +100,10 @@ export default function DetentionSessionList({
                       <div className="detention-card__flags">
                         <Flag on={!!detention.shouldPrint} label="Afdrukken" />
                         <Flag on={!!detention.canUseChromebook} label="Chromebook" />
-                        <Flag on={!!detention.nablijvenGeweigerd} label="Geweigerd" />
+                        <Flag
+                          on={!!detention.nablijvenGeweigerd}
+                          label={detention.isDoublePeriod ? 'Strafstudie geweigerd' : 'Geweigerd'}
+                        />
                         <Flag on={!!detention.followUpClosed} label="Opgevolgd" />
                         <Flag on={!!detention.removedFromNablijven} label="Uit nablijven" />
                         <Flag on={!!detention.removedFromStrafstudie} label="Uit strafstudie" />
@@ -142,7 +145,6 @@ export default function DetentionSessionList({
 
                   <RemovedFromSessionButtons
                     detention={detention}
-                    isMonday={isMonday}
                     disabled={dragDisabled}
                     onUpdated={onStatusUpdated}
                   />

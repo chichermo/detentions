@@ -6,18 +6,17 @@ import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 
 type Props = {
   detention: Detention;
-  isMonday: boolean;
   disabled?: boolean;
   onUpdated?: () => void;
 };
 
 export default function RemovedFromSessionButtons({
   detention,
-  isMonday,
   disabled,
   onUpdated,
 }: Props) {
   const [busy, setBusy] = useState(false);
+  const isStrafstudie = !!detention.isDoublePeriod;
 
   const save = async (patch: Partial<Detention>) => {
     if (busy || disabled) return;
@@ -65,52 +64,72 @@ export default function RemovedFromSessionButtons({
 
   return (
     <div className="detention-card__dismiss">
-      <button
-        type="button"
-        className={`detention-card__dismiss-btn ${
-          detention.nablijvenGeweigerd ? 'is-on' : ''
-        }`}
-        disabled={busy || disabled}
-        aria-pressed={!!detention.nablijvenGeweigerd}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggle({ nablijvenGeweigerd: !detention.nablijvenGeweigerd });
-        }}
-      >
-        Nablijven geweigerd
-      </button>
-      <button
-        type="button"
-        className={`detention-card__dismiss-btn ${
-          detention.removedFromNablijven ? 'is-on' : ''
-        }`}
-        disabled={busy || disabled}
-        aria-pressed={!!detention.removedFromNablijven}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggle({ removedFromNablijven: !detention.removedFromNablijven });
-        }}
-      >
-        Uit nablijven gezet
-      </button>
-      {isMonday && (
-        <button
-          type="button"
-          className={`detention-card__dismiss-btn ${
-            detention.removedFromStrafstudie ? 'is-on' : ''
-          }`}
-          disabled={busy || disabled}
-          aria-pressed={!!detention.removedFromStrafstudie}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggle({ removedFromStrafstudie: !detention.removedFromStrafstudie });
-          }}
-        >
-          Uit strafstudie gezet
-        </button>
+      {isStrafstudie ? (
+        <>
+          <button
+            type="button"
+            className={`detention-card__dismiss-btn ${
+              detention.nablijvenGeweigerd ? 'is-on' : ''
+            }`}
+            disabled={busy || disabled}
+            aria-pressed={!!detention.nablijvenGeweigerd}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle({ nablijvenGeweigerd: !detention.nablijvenGeweigerd });
+            }}
+          >
+            Strafstudie geweigerd
+          </button>
+          <button
+            type="button"
+            className={`detention-card__dismiss-btn ${
+              detention.removedFromStrafstudie ? 'is-on' : ''
+            }`}
+            disabled={busy || disabled}
+            aria-pressed={!!detention.removedFromStrafstudie}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle({ removedFromStrafstudie: !detention.removedFromStrafstudie });
+            }}
+          >
+            Uit strafstudie gezet
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            className={`detention-card__dismiss-btn ${
+              detention.nablijvenGeweigerd ? 'is-on' : ''
+            }`}
+            disabled={busy || disabled}
+            aria-pressed={!!detention.nablijvenGeweigerd}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle({ nablijvenGeweigerd: !detention.nablijvenGeweigerd });
+            }}
+          >
+            Nablijven geweigerd
+          </button>
+          <button
+            type="button"
+            className={`detention-card__dismiss-btn ${
+              detention.removedFromNablijven ? 'is-on' : ''
+            }`}
+            disabled={busy || disabled}
+            aria-pressed={!!detention.removedFromNablijven}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle({ removedFromNablijven: !detention.removedFromNablijven });
+            }}
+          >
+            Uit nablijven gezet
+          </button>
+        </>
       )}
     </div>
   );
