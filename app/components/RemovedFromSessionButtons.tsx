@@ -49,8 +49,37 @@ export default function RemovedFromSessionButtons({
     }
   };
 
+  const stillNeedsFollowUp = (patch: Partial<Detention>) =>
+    !!(
+      (patch.nablijvenGeweigerd ?? detention.nablijvenGeweigerd) ||
+      (patch.removedFromNablijven ?? detention.removedFromNablijven) ||
+      (patch.removedFromStrafstudie ?? detention.removedFromStrafstudie)
+    );
+
+  const toggle = (patch: Partial<Detention>) => {
+    save({
+      ...patch,
+      followUpClosed: stillNeedsFollowUp(patch) ? detention.followUpClosed : false,
+    });
+  };
+
   return (
     <div className="detention-card__dismiss">
+      <button
+        type="button"
+        className={`detention-card__dismiss-btn ${
+          detention.nablijvenGeweigerd ? 'is-on' : ''
+        }`}
+        disabled={busy || disabled}
+        aria-pressed={!!detention.nablijvenGeweigerd}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggle({ nablijvenGeweigerd: !detention.nablijvenGeweigerd });
+        }}
+      >
+        Nablijven geweigerd
+      </button>
       <button
         type="button"
         className={`detention-card__dismiss-btn ${
@@ -61,7 +90,7 @@ export default function RemovedFromSessionButtons({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          save({ removedFromNablijven: !detention.removedFromNablijven });
+          toggle({ removedFromNablijven: !detention.removedFromNablijven });
         }}
       >
         Uit nablijven gezet
@@ -77,7 +106,7 @@ export default function RemovedFromSessionButtons({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            save({ removedFromStrafstudie: !detention.removedFromStrafstudie });
+            toggle({ removedFromStrafstudie: !detention.removedFromStrafstudie });
           }}
         >
           Uit strafstudie gezet
