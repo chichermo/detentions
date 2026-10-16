@@ -590,8 +590,6 @@ export default function StatisticsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <DetailedReportsSection detentions={detentions} followUpOnly />
-
         {/* Filtros */}
         <div className="card p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -726,6 +724,8 @@ export default function StatisticsPage() {
           <KpiCard label="Nablijven geweigerd" value={nablijvenGeweigerd.length} icon={XCircle} tone="red" />
           <KpiCard label="Strafstudie geweigerd" value={strafstudieGeweigerd.length} icon={XCircle} tone="rose" />
         </div>
+
+        <DetailedReportsSection detentions={detentions} followUpOnly />
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
