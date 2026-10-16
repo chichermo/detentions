@@ -718,7 +718,6 @@ export default function StatisticsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <KpiCard label="Totaal nablijven" value={stats.total} icon={BarChart3} tone="indigo" />
           <KpiCard label="Totaal strafstudies" value={strafstudieDetentions.length} icon={BookOpen} tone="rose" />
-          <KpiCard label="Te printen" value={stats.toPrint} icon={FileText} tone="purple" />
           <KpiCard label="Nablijven geweigerd" value={nablijvenGeweigerd.length} icon={XCircle} tone="red" />
           <KpiCard label="Strafstudie geweigerd" value={strafstudieGeweigerd.length} icon={XCircle} tone="rose" />
         </div>
