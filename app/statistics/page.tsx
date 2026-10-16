@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { ArrowLeft, BarChart3, FileSpreadsheet, FileText, Filter, RefreshCw, XCircle, BookOpen } from 'lucide-react';
+import { ArrowLeft, BarChart3, FileSpreadsheet, FileText, Filter, RefreshCw, XCircle, BookOpen, Percent } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parse } from 'date-fns';
 import nl from 'date-fns/locale/nl';
@@ -132,11 +132,17 @@ export default function StatisticsPage() {
   };
 
   const filteredDetentions = getFilteredDetentions();
-  const nablijvenGeweigerd = filteredDetentions.filter(
-    (d) => d.nablijvenGeweigerd && !d.isDoublePeriod
-  );
-  const strafstudieGeweigerd = filteredDetentions.filter(isStrafstudieWeigering);
+  const nablijvenDetentions = filteredDetentions.filter((d) => !d.isDoublePeriod);
+  const nablijvenGeweigerd = nablijvenDetentions.filter((d) => d.nablijvenGeweigerd);
   const strafstudieDetentions = filteredDetentions.filter((d) => d.isDoublePeriod);
+  const strafstudieGeweigerd = filteredDetentions.filter(isStrafstudieWeigering);
+
+  const shareLabel = (part: number, whole: number): string => {
+    if (whole <= 0) return '0%';
+    const pct = (part / whole) * 100;
+    const rounded = pct >= 10 || pct === 0 ? pct.toFixed(0) : pct.toFixed(1);
+    return `${rounded.replace('.', ',')}%`;
+  };
 
   // Estadísticas calculadas
   const stats = {
@@ -714,12 +720,49 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        {/* Resumen de Estadísticas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <KpiCard label="Totaal nablijven" value={stats.total} icon={BarChart3} tone="indigo" />
-          <KpiCard label="Totaal strafstudies" value={strafstudieDetentions.length} icon={BookOpen} tone="rose" />
-          <KpiCard label="Nablijven geweigerd" value={nablijvenGeweigerd.length} icon={XCircle} tone="red" />
-          <KpiCard label="Strafstudie geweigerd" value={strafstudieGeweigerd.length} icon={XCircle} tone="rose" />
+        <div className="space-y-4 sm:space-y-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <KpiCard
+              label="Totaal nablijven"
+              value={nablijvenDetentions.length}
+              icon={BarChart3}
+              tone="indigo"
+            />
+            <KpiCard
+              label="Nablijven geweigerd"
+              value={nablijvenGeweigerd.length}
+              icon={XCircle}
+              tone="red"
+            />
+            <KpiCard
+              label="Aandeel geweigerd"
+              value={shareLabel(nablijvenGeweigerd.length, nablijvenDetentions.length)}
+              hint={`${nablijvenGeweigerd.length} van ${nablijvenDetentions.length}`}
+              icon={Percent}
+              tone="red"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <KpiCard
+              label="Totaal strafstudies"
+              value={strafstudieDetentions.length}
+              icon={BookOpen}
+              tone="rose"
+            />
+            <KpiCard
+              label="Strafstudie geweigerd"
+              value={strafstudieGeweigerd.length}
+              icon={XCircle}
+              tone="rose"
+            />
+            <KpiCard
+              label="Aandeel geweigerd"
+              value={shareLabel(strafstudieGeweigerd.length, strafstudieDetentions.length)}
+              hint={`${strafstudieGeweigerd.length} van ${strafstudieDetentions.length}`}
+              icon={Percent}
+              tone="rose"
+            />
+          </div>
         </div>
 
         <DetailedReportsSection detentions={detentions} followUpOnly />
