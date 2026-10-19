@@ -54,8 +54,8 @@ const GROUPS: Array<{ label: string; match: (text: string) => boolean }> = [
     match: (t) => /\bgsm\b/.test(t) || /\bsmartphone\b/.test(t) || /\bgsmgebruik\b/.test(t),
   },
   {
-    label: 'Straftaak niet gemaakt',
-    match: (t) => /\bstraftaak\b/.test(t) && /\b(niet|geen)\b/.test(t),
+    label: 'Straftaak/inhaalwerk niet gemaakt',
+    match: (t) => /\bstraftak/.test(t) || /\binhaalwerk\b/.test(t),
   },
   {
     label: 'Hersteltaak niet gemaakt',
@@ -64,10 +64,6 @@ const GROUPS: Array<{ label: string; match: (text: string) => boolean }> = [
   {
     label: 'Reflectietaak niet gemaakt',
     match: (t) => /\breflectietaak\b/.test(t),
-  },
-  {
-    label: 'Inhaalwerk niet gemaakt',
-    match: (t) => /\binhaalwerk\b/.test(t),
   },
   {
     label: 'School verlaten over de middag',
