@@ -50,6 +50,10 @@ const GROUPS: Array<{ label: string; match: (text: string) => boolean }> = [
     match: (t) => /\b3\s*x\s*te\s*laat\b/.test(t),
   },
   {
+    label: 'GSM-gebruik',
+    match: (t) => /\bgsm\b/.test(t) || /\bsmartphone\b/.test(t) || /\bgsmgebruik\b/.test(t),
+  },
+  {
     label: 'Straftaak niet gemaakt',
     match: (t) => /\bstraftaak\b/.test(t) && /\b(niet|geen)\b/.test(t),
   },
