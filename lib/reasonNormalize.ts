@@ -55,11 +55,11 @@ const GROUPS: Array<{ label: string; match: (text: string) => boolean }> = [
   },
   {
     label: 'Straftaak/inhaalwerk niet gemaakt',
-    match: (t) => /\bstraf\s*taa?k/.test(t) || /\binhaalwerk\b/.test(t),
-  },
-  {
-    label: 'Hersteltaak/reflectietaak niet gemaakt',
-    match: (t) => /\bherstel\s*taa?k/.test(t) || /\breflectie\s*taa?k/.test(t),
+    match: (t) =>
+      /\bstraf\s*taa?k/.test(t) ||
+      /\binhaalwerk\b/.test(t) ||
+      /\bherstel\s*taa?k/.test(t) ||
+      /\breflectie\s*taa?k/.test(t),
   },
   {
     label: 'School verlaten over de middag',
