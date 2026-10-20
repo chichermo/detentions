@@ -25,12 +25,7 @@ import InstallPrompt from '@/app/components/InstallPrompt';
 import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
-import {
-  canManageListsAndRights,
-  canOpenOpvoedersCalendar,
-  OPVOEDERS_CALENDAR_URL,
-  shouldLandOnCalendar,
-} from '@/lib/auth';
+import { canManageListsAndRights, shouldLandOnCalendar } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
@@ -103,19 +98,6 @@ const NAV_ITEMS = [
     iconClass: 'nav-icon bg-gradient-to-br from-[#67c6e8] to-[#3d9fc4] text-[#0a1820]',
     linkClass: 'text-[#9dd9f0]',
     fullOnly: true,
-    adminOnly: false,
-  },
-  {
-    href: OPVOEDERS_CALENDAR_URL,
-    title: 'Opvoeders',
-    desc: 'Weekkalender, apart venster',
-    icon: Calendar,
-    cardClass: 'nav-card-mint',
-    iconClass: 'nav-icon bg-gradient-to-br from-[#6db877] to-[#4e9a5c] text-[#0a1f12]',
-    linkClass: 'text-[#b7e0bc]',
-    fullOnly: false,
-    adminOnly: true,
-    external: true,
   },
 ] as const;
 
@@ -125,12 +107,10 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [canManageLists, setCanManageLists] = useState(false);
-  const [canOpenOpvoeders, setCanOpenOpvoeders] = useState(false);
 
   useEffect(() => {
     const lists = canManageListsAndRights();
     setCanManageLists(lists);
-    setCanOpenOpvoeders(canOpenOpvoedersCalendar());
     const wantHub = new URLSearchParams(window.location.search).get('hub') === '1';
     if (shouldLandOnCalendar() && !wantHub) {
       router.replace('/calendar');
@@ -231,13 +211,12 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
-          {NAV_ITEMS.filter(
-            (item) =>
-              (!item.fullOnly || canManageLists) &&
-              (!('adminOnly' in item && item.adminOnly) || canOpenOpvoeders),
-          ).map((item) => {
-            const className = `nav-card ${item.cardClass} group ${'featured' in item && item.featured ? 'nav-card-featured' : ''}`;
-            const inner = (
+          {NAV_ITEMS.filter((item) => !item.fullOnly || canManageLists).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-card ${item.cardClass} group ${'featured' in item && item.featured ? 'nav-card-featured' : ''}`}
+            >
               <div className="relative flex flex-col gap-4">
                 <div className={item.iconClass}>
                   <item.icon className="h-6 w-6" />
@@ -253,26 +232,8 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </div>
               </div>
-            );
-            if ('external' in item && item.external) {
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={className}
-                >
-                  {inner}
-                </a>
-              );
-            }
-            return (
-              <Link key={item.href} href={item.href} className={className}>
-                {inner}
-              </Link>
-            );
-          })}
+            </Link>
+          ))}
         </div>
 
         <div className="card p-6 sm:p-8">
