@@ -41,6 +41,14 @@ export function canViewLogboek(): boolean {
   return canManageListsAndRights();
 }
 
+/** Kalender opvoeders: voorlopig alleen het portaalaccount admin. */
+export function canOpenOpvoedersCalendar(): boolean {
+  return normalizeUsername(getPortalUsername()) === 'admin';
+}
+
+export const OPVOEDERS_CALENDAR_URL =
+  'https://kalender-ruby.vercel.app/calendar/cmvfekes30002l204wnx0yb5l';
+
 export function persistActorUsername(username: string): void {
   if (typeof window === 'undefined') return;
   const name = username.trim();

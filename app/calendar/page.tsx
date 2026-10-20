@@ -31,7 +31,12 @@ import {
   saveCalendarDay,
   getDaySettingFromList,
 } from '@/lib/calendarDaysClient';
-import { canManageCalendarSettings, shouldLandOnCalendar } from '@/lib/auth';
+import {
+  canManageCalendarSettings,
+  canOpenOpvoedersCalendar,
+  OPVOEDERS_CALENDAR_URL,
+  shouldLandOnCalendar,
+} from '@/lib/auth';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
 
@@ -47,6 +52,7 @@ export default function CalendarPage() {
   const [draftNotice, setDraftNotice] = useState('');
   const [mounted, setMounted] = useState(false);
   const [canAdminCalendar, setCanAdminCalendar] = useState(false);
+  const [canOpenOpvoeders, setCanOpenOpvoeders] = useState(false);
   const [landedFromAdminHome, setLandedFromAdminHome] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
@@ -75,6 +81,7 @@ export default function CalendarPage() {
   useEffect(() => {
     setMounted(true);
     setCanAdminCalendar(canManageCalendarSettings());
+    setCanOpenOpvoeders(canOpenOpvoedersCalendar());
     setLandedFromAdminHome(shouldLandOnCalendar());
   }, []);
 
@@ -239,7 +246,19 @@ export default function CalendarPage() {
                 </div>
               </div>
             </div>
-            <RoleSelector />
+            <div className="flex items-center gap-2 shrink-0">
+              {canOpenOpvoeders ? (
+                <a
+                  href={OPVOEDERS_CALENDAR_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-secondary text-sm px-3 py-2"
+                >
+                  Opvoeders
+                </a>
+              ) : null}
+              <RoleSelector />
+            </div>
           </div>
         </div>
       </header>
