@@ -25,7 +25,7 @@ import {
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
-import { nablijvenDayLabel, parseSessionDate } from '@/lib/calendarUtils';
+import { isStrafstudiePermitted, nablijvenDayLabel, parseSessionDate } from '@/lib/calendarUtils';
 import { canViewLogboek } from '@/lib/auth';
 
 export default function DetentionSessionPage() {
@@ -196,7 +196,7 @@ export default function DetentionSessionPage() {
         alert('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
         return;
       }
-      allowStrafOnTarget = cfg?.allowStrafstudie !== false;
+      allowStrafOnTarget = isStrafstudiePermitted(parsed.dayOfWeek, cfg);
     } catch {
       /* offline: doorgaan */
     }
@@ -222,11 +222,7 @@ export default function DetentionSessionPage() {
     }
 
     const isTargetMonday = parsed.dayOfWeek === 'MAANDAG';
-    let isDoublePeriod = !!editingDetention.isDoublePeriod && isTargetMonday;
-    if (isTargetMonday && !allowStrafOnTarget && isDoublePeriod) {
-      alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
-      return;
-    }
+    let isDoublePeriod = !!editingDetention.isDoublePeriod && isTargetMonday && allowStrafOnTarget;
 
     const original = detentions.find((d) => d.id === editingId);
     const student = students.find(
@@ -398,15 +394,13 @@ export default function DetentionSessionPage() {
       return;
     }
 
-    if (parsed.dayOfWeek === 'MAANDAG' && !allowStrafstudie && newDetention.isDoublePeriod) {
-      alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
-      return;
-    }
+    const isDoublePeriod =
+      !!newDetention.isDoublePeriod && parsed.dayOfWeek === 'MAANDAG' && allowStrafstudie;
 
     const student = students.find(
       (s) => foldPersonNameKey(s.name) === foldPersonNameKey(newDetention.student || '')
     );
-    if (!student && !newDetention.isDoublePeriod) {
+    if (!student && !isDoublePeriod) {
       alert(`Kies een leerling van de ${nablijvenDayLabel(parsed.dayOfWeek)}lijst.`);
       return;
     }
@@ -426,8 +420,8 @@ export default function DetentionSessionPage() {
       shouldPrint: newDetention.shouldPrint || false,
       canUseChromebook: newDetention.canUseChromebook || false,
       extraNotes: newDetention.extraNotes || '',
-      isDoublePeriod: newDetention.isDoublePeriod || false,
-      timePeriod: newDetention.timePeriod,
+      isDoublePeriod,
+      timePeriod: isDoublePeriod ? newDetention.timePeriod : undefined,
       nablijvenGeweigerd: newDetention.nablijvenGeweigerd || false,
       didNotAttend: newDetention.didNotAttend || false,
       followUpClosed:
@@ -676,6 +670,17 @@ export default function DetentionSessionPage() {
                         next.removedFromStrafstudie = false;
                       }
                       fetchStudents(parsed.dayOfWeek);
+                      fetchCalendarDays(parsed.date, parsed.date).then((days) => {
+                        const cfg = getDaySettingFromList(parsed.date, days);
+                        if (isStrafstudiePermitted(parsed.dayOfWeek, cfg)) return;
+                        setEditingDetention((prev) =>
+                          prev && prev.date === parsed.date
+                            ? { ...prev, isDoublePeriod: false, timePeriod: undefined }
+                            : prev
+                        );
+                      }).catch(() => {
+                        /* offline: opslaan zet strafstudie zo nodig om naar gewoon nablijven */
+                      });
                     }
                   }
                   return next;

@@ -115,6 +115,7 @@ export default function DuplicateToDateButton({ detention, disabled }: Props) {
         <DateField
           id={fieldId}
           nablijvenOnly
+          requireStrafstudie={isReplan}
           value={targetDate}
           onChange={setTargetDate}
           className="input-field date-field w-full"

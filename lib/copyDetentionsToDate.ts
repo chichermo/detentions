@@ -9,7 +9,7 @@ import {
   validateUniqueStudentOnDate,
   normalizeDetentionDate,
 } from '@/lib/detentionValidation';
-import { parseSessionDate } from '@/lib/calendarUtils';
+import { isStrafstudiePermitted, parseSessionDate } from '@/lib/calendarUtils';
 import { isStrafstudieFollowUpSource } from '@/lib/detentionReports';
 
 export class CopyDetentionsError extends Error {
@@ -53,7 +53,7 @@ export async function copyDetentionsToDate(
     if (cfg && !cfg.allowDetentions) {
       throwCopy('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
     }
-    allowStrafOnTarget = cfg?.allowStrafstudie !== false;
+    allowStrafOnTarget = isStrafstudiePermitted(parsed.dayOfWeek, cfg);
   } catch (error) {
     if (error instanceof CopyDetentionsError) throw error;
     /* offline: verder met clientvalidatie */

@@ -1,12 +1,17 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Save, X } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import StaffNameInput from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
 import { sortStudentsByClass } from '@/lib/studentImport';
-import { isMonday as isMondayDate, parseSessionDate } from '@/lib/calendarUtils';
+import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
+import {
+  isMonday as isMondayDate,
+  isStrafstudiePermitted,
+  parseSessionDate,
+} from '@/lib/calendarUtils';
 import { canCloseFollowUp } from '@/lib/followUpClosed';
 
 function FieldLabel({ children }: { children: ReactNode }) {
@@ -46,6 +51,33 @@ export default function DetentionEditPanel({
     : detention.date && /^\d{4}-\d{2}-\d{2}$/.test(detention.date)
       ? isMondayDate(new Date(`${detention.date}T12:00:00`))
       : !!isMonday;
+  const [dateAllowsStrafstudie, setDateAllowsStrafstudie] = useState(allowStrafstudie);
+
+  useEffect(() => {
+    if (!parsedDate) {
+      setDateAllowsStrafstudie(allowStrafstudie);
+      return;
+    }
+    if (parsedDate.dayOfWeek !== 'MAANDAG') {
+      setDateAllowsStrafstudie(false);
+      return;
+    }
+    let cancelled = false;
+    fetchCalendarDays(parsedDate.date, parsedDate.date)
+      .then((days) => {
+        if (cancelled) return;
+        const cfg = getDaySettingFromList(parsedDate.date, days);
+        setDateAllowsStrafstudie(isStrafstudiePermitted(parsedDate.dayOfWeek, cfg));
+      })
+      .catch(() => {
+        if (!cancelled) setDateAllowsStrafstudie(allowStrafstudie);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [parsedDate?.date, parsedDate?.dayOfWeek, allowStrafstudie]);
+
+  const showStrafstudie = editIsMonday && dateAllowsStrafstudie;
 
   return (
     <div className="detention-edit-card">
@@ -221,7 +253,7 @@ export default function DetentionEditPanel({
               Uit strafstudie gezet
             </label>
           )}
-          {editIsMonday && allowStrafstudie && (
+          {showStrafstudie && (
             <label className="detention-edit-card__check">
               <input
                 type="checkbox"
@@ -240,7 +272,7 @@ export default function DetentionEditPanel({
               Strafstudie (maandag)
             </label>
           )}
-          {editIsMonday && !allowStrafstudie && (
+          {editIsMonday && !showStrafstudie && (
             <p className="text-xs text-orange-300/90 col-span-full">
               Geen strafstudie op deze maandag — alleen gewoon nablijven.
             </p>

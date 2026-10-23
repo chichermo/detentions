@@ -1,4 +1,4 @@
-import { DayOfWeek } from '@/types';
+import { CalendarDaySetting, DayOfWeek } from '@/types';
 import { getDay, parseISO, addDays, format } from 'date-fns';
 
 export function getDayOfWeekFromDate(dateStr: string): DayOfWeek {
@@ -38,6 +38,16 @@ export function upcomingNablijvenDate(from: Date = new Date()): string {
 
 export function isMonday(date: Date): boolean {
   return getDay(date) === 1;
+}
+
+/** Strafstudie (16:00–17:40) alleen op maandag, tenzij die dag 'geen strafstudie' heeft. Gewoon nablijven blijft mogelijk. */
+export function isStrafstudiePermitted(
+  dayOfWeek: DayOfWeek,
+  cfg?: Pick<CalendarDaySetting, 'blocked' | 'allowDetentions' | 'allowStrafstudie'> | null
+): boolean {
+  if (dayOfWeek !== 'MAANDAG') return false;
+  if (cfg?.blocked || cfg?.allowDetentions === false) return false;
+  return cfg?.allowStrafstudie !== false;
 }
 
 /** Geldige nablijvendag (ma/di/do) of null. */

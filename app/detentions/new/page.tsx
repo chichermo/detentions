@@ -219,7 +219,9 @@ function NewDetentionPageInner() {
     }
 
     const sessionDate = normalizeDetentionDate(date) || date;
-    const detentionsToSave: Detention[] = detentions.map((d, index) => ({
+    const detentionsToSave: Detention[] = detentions.map((d, index) => {
+      const isDoublePeriod = !!d.isDoublePeriod && selectedDay === 'MAANDAG' && allowStrafstudie;
+      return {
       id: `detention-${Date.now()}-${index}`,
       number: d.number || index + 1,
       date: sessionDate,
@@ -232,8 +234,8 @@ function NewDetentionPageInner() {
       shouldPrint: d.shouldPrint || false,
       canUseChromebook: d.canUseChromebook || false,
       extraNotes: d.extraNotes || '',
-      isDoublePeriod: d.isDoublePeriod || false,
-      timePeriod: d.timePeriod,
+      isDoublePeriod,
+      timePeriod: isDoublePeriod ? d.timePeriod : undefined,
       nablijvenGeweigerd: d.nablijvenGeweigerd || false,
       didNotAttend: d.didNotAttend || false,
       followUpClosed: !!(
@@ -242,7 +244,8 @@ function NewDetentionPageInner() {
       ),
       removedFromNablijven: !!d.removedFromNablijven,
       removedFromStrafstudie: selectedDay === 'MAANDAG' && !!d.removedFromStrafstudie,
-    }));
+    };
+    });
 
     if (detentionsToSave.length === 0) {
       alert('Voeg ten minste één nablijven toe voordat je opslaat.');
@@ -293,14 +296,6 @@ function NewDetentionPageInner() {
       }
       if (cfg && !cfg.allowDetentions) {
         alert('Voor deze dag zijn geen nablijven toegestaan volgens de kalender.');
-        return;
-      }
-      if (
-        selectedDay === 'MAANDAG' &&
-        cfg?.allowStrafstudie === false &&
-        detentionsToSave.some((d) => d.isDoublePeriod)
-      ) {
-        alert('Op deze maandag is geen strafstudie toegestaan. Alleen gewoon nablijven.');
         return;
       }
     } catch {

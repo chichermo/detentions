@@ -15,7 +15,7 @@ import {
   validateStrafstudieCoversRefusals,
   validateUniqueStudentOnDate,
 } from '@/lib/detentionValidation';
-import { NABLIJVEN_DATE_ERROR, parseSessionDate } from '@/lib/calendarUtils';
+import { isStrafstudiePermitted, NABLIJVEN_DATE_ERROR, parseSessionDate } from '@/lib/calendarUtils';
 import { withSuggestedSourceDetention } from '@/lib/detentionReports';
 
 export const dynamic = 'force-dynamic';
@@ -44,11 +44,7 @@ async function validateDetentionSchedule(detention: Detention): Promise<string |
     return 'Voor deze dag zijn geen nablijven toegestaan volgens de kalender.';
   }
 
-  const strafstudieAllowed =
-    parsed.dayOfWeek === 'MAANDAG' && cfg?.allowStrafstudie !== false;
-  if (detention.isDoublePeriod && !strafstudieAllowed) {
-    return 'Op deze dag is geen strafstudie toegestaan. Alleen gewoon nablijven.';
-  }
+  const strafstudieAllowed = isStrafstudiePermitted(parsed.dayOfWeek, cfg);
   if (!strafstudieAllowed) {
     detention.isDoublePeriod = false;
     detention.timePeriod = undefined;

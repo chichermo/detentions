@@ -30,6 +30,8 @@ type Props = {
   min?: string;
   /** Alleen maandag, dinsdag en donderdag, en geen geblokkeerde kalenderdagen. */
   nablijvenOnly?: boolean;
+  /** Alleen dagen waarop strafstudie mag (paarse 'geen strafstudie'-maandagen uitgesloten). */
+  requireStrafstudie?: boolean;
 };
 
 function toDisplay(iso: string): string {
@@ -49,6 +51,7 @@ export default function DateField({
   id,
   min,
   nablijvenOnly = false,
+  requireStrafstudie = false,
 }: Props) {
   const nativeRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -210,7 +213,7 @@ export default function DateField({
                 const closed = !!cfg?.blocked || cfg?.allowDetentions === false;
                 const noStrafstudie =
                   inMonth && weekdayOk && !closed && isMonday(day) && cfg?.allowStrafstudie === false;
-                const selectable = inMonth && weekdayOk && !closed;
+                const selectable = inMonth && weekdayOk && !closed && (!requireStrafstudie || !noStrafstudie);
                 const isSelected = !!selected && isSameDay(day, selected) && selectable;
                 const reason = !weekdayOk
                   ? 'Geen nablijven op woensdag, vrijdag, zaterdag of zondag'
@@ -219,7 +222,9 @@ export default function DateField({
                     : cfg?.allowDetentions === false
                       ? 'Geen nablijven toegestaan op deze dag'
                       : noStrafstudie
-                        ? 'Wel nablijven, geen strafstudie'
+                        ? requireStrafstudie
+                          ? 'Geen strafstudie op deze maandag'
+                          : 'Wel nablijven, geen strafstudie'
                         : undefined;
                 return (
                   <button
@@ -249,7 +254,9 @@ export default function DateField({
               })}
             </div>
             <p className="mt-2 text-xs text-slate-400">
-              Alleen maandag, dinsdag en donderdag. Rood: geen nablijven. Paars: wel nablijven, geen strafstudie.
+              {requireStrafstudie
+                ? 'Alleen maandagen met strafstudie. Paars: geen strafstudie die dag.'
+                : 'Alleen maandag, dinsdag en donderdag. Rood: geen nablijven. Paars: wel nablijven, geen strafstudie.'}
             </p>
           </div>,
           document.body
