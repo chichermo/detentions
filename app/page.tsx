@@ -16,7 +16,6 @@ import {
   Sparkles,
   Shield,
   ClipboardList,
-  CalendarRange,
 } from 'lucide-react';
 import LoadingPage from '@/app/components/ui/LoadingPage';
 import { DetentionSession } from '@/types';
@@ -58,16 +57,6 @@ const NAV_ITEMS = [
     cardClass: 'nav-card-mint',
     iconClass: 'nav-icon bg-gradient-to-br from-[#5eead4] to-[#2dd4bf] text-[#0a1f1a]',
     linkClass: 'text-[#8ef0d8]',
-    fullOnly: false,
-  },
-  {
-    href: '/weekoverzicht',
-    title: 'Weekoverzicht',
-    desc: 'Nablijven van deze week bekijken en afdrukken',
-    icon: CalendarRange,
-    cardClass: 'nav-card-violet',
-    iconClass: 'nav-icon bg-gradient-to-br from-[#a78bfa] to-[#7c5cc7] text-[#1a1028]',
-    linkClass: 'text-[#d4c4fd]',
     fullOnly: false,
   },
   {

@@ -8,7 +8,7 @@ import PageHeader from '@/app/components/ui/PageHeader';
 import LoadingPage from '@/app/components/ui/LoadingPage';
 import RankList from '@/app/components/ui/RankList';
 import { Detention, Student } from '@/types';
-import { format, subMonths, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, subDays, subMonths, subYears, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import ChartCard from '@/app/components/charts/ChartCard';
 import NablijvenLineChart from '@/app/components/charts/NablijvenLineChart';
@@ -72,8 +72,7 @@ export default function DashboardPage() {
 
     switch (period) {
       case 'week':
-        startDate = startOfWeek(now, { weekStartsOn: 1 });
-        endDate = endOfWeek(now, { weekStartsOn: 1 });
+        startDate = subDays(now, 7);
         break;
       case 'month':
         startDate = startOfMonth(now);
@@ -103,11 +102,7 @@ export default function DashboardPage() {
     total: filteredDetentions.length,
     thisWeek: detentions.filter(d => {
       const detDate = parseISO(d.date);
-      const now = new Date();
-      return isWithinInterval(detDate, {
-        start: startOfWeek(now, { weekStartsOn: 1 }),
-        end: endOfWeek(now, { weekStartsOn: 1 }),
-      });
+      return isWithinInterval(detDate, { start: subDays(new Date(), 7), end: new Date() });
     }).length,
     uniqueStudents: new Set(filteredDetentions.map(d => d.student.split(' - ')[0])).size,
     withChromebook: filteredDetentions.filter(d => d.canUseChromebook).length,

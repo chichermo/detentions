@@ -44,21 +44,19 @@ export default function DetentionSessionPage() {
   const [allowStrafstudie, setAllowStrafstudie] = useState(true);
   const [nablijvenAllowed, setNablijvenAllowed] = useState(true);
   const [canViewHistory, setCanViewHistory] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const fetchDetentions = useCallback(async () => {
     try {
-      const response = await apiFetch(`/api/detentions?date=${encodeURIComponent(date)}`);
+      const response = await apiFetch(`/api/detentions?date=${date}`);
       const data = await response.json();
-      if (!Array.isArray(data)) {
-        setDetentions([]);
-        return;
-      }
+      // Ordenar por número para asegurar que aparezcan en orden
+      // Asegurar que todos los números sean válidos (>= 1)
       const validData = data.map((d: Detention) => ({
         ...d,
         number: d.number && d.number > 0 ? d.number : 1
       }));
       const sorted = validData.sort((a: Detention, b: Detention) => a.number - b.number);
+      // Re-numerar si hay números duplicados o faltantes
       const renumbered = sorted.map((d: Detention, index: number) => ({
         ...d,
         number: index + 1
@@ -66,9 +64,6 @@ export default function DetentionSessionPage() {
       setDetentions(renumbered);
     } catch (error) {
       console.error('Error fetching detentions:', error);
-      setDetentions([]);
-    } finally {
-      setLoading(false);
     }
   }, [date]);
 
@@ -633,11 +628,7 @@ export default function DetentionSessionPage() {
           </div>
         )}
 
-        {loading ? (
-          <div className="card p-16 text-center">
-            <p className="text-slate-400 font-medium">Nablijven laden…</p>
-          </div>
-        ) : detentions.length === 0 && !showAddForm ? (
+        {detentions.length === 0 && !showAddForm ? (
           <div className="card p-16 text-center">
             <p className="text-slate-400 font-medium mb-4">Geen nablijven geregistreerd voor deze datum.</p>
             {nablijvenAllowed ? (
