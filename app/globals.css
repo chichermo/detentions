@@ -1183,8 +1183,10 @@ body {
 }
 
 @media print {
+  body,
   .app-page {
     background: white !important;
+    color: black !important;
   }
 
   .app-page::before {
@@ -1192,17 +1194,36 @@ body {
   }
 
   .card,
+  .table-simple,
+  .table-simple th,
+  .table-simple td,
   .table-data thead,
-  .table-data td {
+  .table-data td,
+  .detention-card {
     background: white !important;
     color: black !important;
     border-color: #ccc !important;
+    box-shadow: none !important;
   }
 
   .text-slate-100,
   .text-slate-200,
   .text-slate-300,
-  .text-primary {
+  .text-slate-400,
+  .text-primary,
+  .text-muted,
+  .text-secondary,
+  .detention-card__student,
+  .detention-card__meta dt,
+  .detention-card__meta dd,
+  .detention-card__notes {
     color: black !important;
+  }
+
+  .detention-card__actions,
+  .detention-card__grip,
+  .detention-card__dismiss,
+  .print\:hidden {
+    display: none !important;
   }
 }

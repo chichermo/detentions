@@ -48,6 +48,7 @@ export default function CalendarPage() {
   const [mounted, setMounted] = useState(false);
   const [canAdminCalendar, setCanAdminCalendar] = useState(false);
   const [landedFromAdminHome, setLandedFromAdminHome] = useState(false);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -55,16 +56,22 @@ export default function CalendarPage() {
   const rangeEnd = format(endOfWeek(monthEnd, { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
   const loadData = useCallback(async () => {
+    setSessionsLoading(true);
     try {
-      const [sessionsRes, days] = await Promise.all([
-        apiFetch('/api/detentions/sessions'),
-        fetchCalendarDays(rangeStart, rangeEnd),
-      ]);
+      const sessionsRes = await apiFetch('/api/detentions/sessions');
       const data = await sessionsRes.json();
       setSessions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching calendar sessions:', error);
+      setSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+    try {
+      const days = await fetchCalendarDays(rangeStart, rangeEnd);
       setCalendarDays(days);
     } catch (error) {
-      console.error('Error fetching calendar data:', error);
+      console.error('Error fetching calendar days:', error);
     }
   }, [rangeStart, rangeEnd]);
 
@@ -239,7 +246,12 @@ export default function CalendarPage() {
                 </div>
               </div>
             </div>
-            <RoleSelector />
+            <div className="flex items-center gap-2">
+              <a href="/weekoverzicht" className="btn-secondary text-sm px-3 py-2 hidden sm:inline-flex">
+                Weekoverzicht
+              </a>
+              <RoleSelector />
+            </div>
           </div>
         </div>
       </header>
@@ -366,7 +378,9 @@ export default function CalendarPage() {
 
         <div className="card p-6 sm:p-8">
           <h2 className="section-title mb-6">Sessies van deze maand</h2>
-          {sessions.filter((s) => isSameMonth(parseISO(s.date), currentDate)).length === 0 ? (
+          {sessionsLoading ? (
+            <p className="text-slate-400 text-center py-12">Sessies laden…</p>
+          ) : sessions.filter((s) => isSameMonth(parseISO(s.date), currentDate)).length === 0 ? (
             <p className="text-slate-400 text-center py-12">Geen sessies deze maand.</p>
           ) : (
             <div className="space-y-3">
