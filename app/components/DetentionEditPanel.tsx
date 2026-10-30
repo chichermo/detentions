@@ -5,6 +5,7 @@ import { Save, X } from 'lucide-react';
 import { Detention, Student } from '@/types';
 import StaffNameInput from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
+import ReasonSelect from '@/app/components/ReasonSelect';
 import { sortStudentsByClass } from '@/lib/studentImport';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
 import {
@@ -150,13 +151,9 @@ export default function DetentionEditPanel({
 
         <div className="detention-edit-card__field">
           <FieldLabel>Reden *</FieldLabel>
-          <input
-            type="text"
-            required
+          <ReasonSelect
             value={detention.reason || ''}
-            onChange={(e) => onChange('reason', e.target.value)}
-            className="input-field w-full"
-            placeholder="Reden"
+            onChange={(v) => onChange('reason', v)}
           />
         </div>
 

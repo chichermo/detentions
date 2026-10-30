@@ -17,6 +17,7 @@ import {
 } from '@/lib/detentionValidation';
 import { isStrafstudiePermitted, NABLIJVEN_DATE_ERROR, parseSessionDate } from '@/lib/calendarUtils';
 import { withSuggestedSourceDetention } from '@/lib/detentionReports';
+import { applyCanonicalReason } from '@/lib/reasonNormalize';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,10 @@ function normalizeDetentionNames(detention: Detention): Detention {
     student: normalizeDetentionStudent(detention.student || ''),
     teacher: teacher || undefined,
   };
+}
+
+function withCanonicalReason(detention: Detention): Detention {
+  return applyCanonicalReason(detention);
 }
 
 async function validateDetentionSchedule(detention: Detention): Promise<string | null> {
@@ -107,7 +112,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const detention = withDetentionId(normalizeDetentionNames(await request.json()));
+    const detention = withCanonicalReason(
+      withDetentionId(normalizeDetentionNames(await request.json()))
+    );
     const requiredErr = validateRequiredDetentionFields(detention);
     if (requiredErr) {
       return NextResponse.json(
@@ -160,7 +167,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const detention = withDetentionId(normalizeDetentionNames(await request.json()));
+    const detention = withCanonicalReason(
+      withDetentionId(normalizeDetentionNames(await request.json()))
+    );
     const requiredErr = validateRequiredDetentionFields(detention);
     if (requiredErr) {
       return NextResponse.json(

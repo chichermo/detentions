@@ -165,7 +165,7 @@ export default function StatisticsPage() {
     byReason: filteredDetentions.reduce((acc, d) => {
       if (d.reason) {
         const reason = normalizeReasonLabel(d.reason);
-        acc[reason] = (acc[reason] || 0) + 1;
+        if (reason) acc[reason] = (acc[reason] || 0) + 1;
       }
       return acc;
     }, {} as Record<string, number>),

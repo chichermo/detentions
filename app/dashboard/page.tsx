@@ -159,8 +159,7 @@ export default function DashboardPage() {
     filteredDetentions.reduce((acc, d) => {
       if (d.reason) {
         const reason = normalizeReasonLabel(d.reason);
-        const label = reason.length > 30 ? `${reason.substring(0, 30)}...` : reason;
-        acc[label] = (acc[label] || 0) + 1;
+        if (reason) acc[reason] = (acc[reason] || 0) + 1;
       }
       return acc;
     }, {} as Record<string, number>)

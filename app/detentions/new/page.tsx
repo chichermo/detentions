@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import DetentionTemplateManager from '@/app/components/DetentionTemplate';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
+import ReasonSelect from '@/app/components/ReasonSelect';
 import { Student, Detention, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
@@ -20,6 +21,7 @@ import {
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
+import { applyCanonicalReason } from '@/lib/reasonNormalize';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { nablijvenDayLabel, parseSessionDate } from '@/lib/calendarUtils';
@@ -228,12 +230,14 @@ function NewDetentionPageInner() {
       dayOfWeek: selectedDay,
       student: getStudentDisplayName(d.student || ''),
       teacher: (d.teacher || '').trim(),
-      reason: (d.reason || '').trim(),
+      ...applyCanonicalReason({
+        reason: d.reason,
+        extraNotes: d.extraNotes || '',
+      }),
       task: d.task || '',
       lvsDate: d.lvsDate || '',
       shouldPrint: d.shouldPrint || false,
       canUseChromebook: d.canUseChromebook || false,
-      extraNotes: d.extraNotes || '',
       isDoublePeriod,
       timePeriod: isDoublePeriod ? d.timePeriod : undefined,
       nablijvenGeweigerd: d.nablijvenGeweigerd || false,
@@ -482,13 +486,9 @@ function NewDetentionPageInner() {
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Reden *
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <ReasonSelect
                     value={detention.reason || ''}
-                    onChange={(e) => updateDetention(index, 'reason', e.target.value)}
-                    className="input-field"
-                    placeholder="Bijv: Te veel chill outs"
+                    onChange={(v) => updateDetention(index, 'reason', v)}
                   />
                 </div>
 

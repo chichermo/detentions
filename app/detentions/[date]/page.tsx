@@ -9,6 +9,7 @@ import AuditHistory from '@/app/components/AuditHistory';
 import FileAttachment from '@/app/components/FileAttachment';
 import StaffNameInput, { fetchStaffNames } from '@/app/components/StaffNameInput';
 import DateField from '@/app/components/DateField';
+import ReasonSelect from '@/app/components/ReasonSelect';
 import { Detention, Student, DayOfWeek } from '@/types';
 import { apiFetch, OfflineQueuedError } from '@/lib/apiClient';
 import { fetchCalendarDays, getDaySettingFromList } from '@/lib/calendarDaysClient';
@@ -23,6 +24,7 @@ import {
   MAX_DETECTIONS_PER_SESSION,
 } from '@/lib/detentionValidation';
 import { sortStudentsByClass } from '@/lib/studentImport';
+import { applyCanonicalReason } from '@/lib/reasonNormalize';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
 import { isStrafstudiePermitted, nablijvenDayLabel, parseSessionDate } from '@/lib/calendarUtils';
@@ -241,7 +243,10 @@ export default function DetentionSessionPage() {
       isDoublePeriod;
 
     const updatedDetention: Detention = {
-      ...editingDetention as Detention,
+      ...applyCanonicalReason({
+        ...(editingDetention as Detention),
+        extraNotes: editingDetention.extraNotes || '',
+      }),
       id: keepRefusedStrafstudie ? `detention-${Date.now()}-replan` : editingId,
       student: studentDisplayName,
       date: parsed.date,
@@ -414,12 +419,14 @@ export default function DetentionSessionPage() {
         ? `${student.name} - ${student.grade}`
         : String(newDetention.student || ''),
       teacher: newDetention.teacher || '',
-      reason: newDetention.reason || '',
+      ...applyCanonicalReason({
+        reason: newDetention.reason,
+        extraNotes: newDetention.extraNotes || '',
+      }),
       task: newDetention.task || '',
       lvsDate: newDetention.lvsDate || '',
       shouldPrint: newDetention.shouldPrint || false,
       canUseChromebook: newDetention.canUseChromebook || false,
-      extraNotes: newDetention.extraNotes || '',
       isDoublePeriod,
       timePeriod: isDoublePeriod ? newDetention.timePeriod : undefined,
       nablijvenGeweigerd: newDetention.nablijvenGeweigerd || false,
@@ -782,13 +789,9 @@ function DetentionForm({
         <label className="form-label">
           Reden *
         </label>
-        <input
-          type="text"
-          required
+        <ReasonSelect
           value={detention.reason || ''}
-          onChange={(e) => onChange('reason', e.target.value)}
-          className="input-field"
-          placeholder="Bijv: Te veel chill outs"
+          onChange={(v) => onChange('reason', v)}
         />
       </div>
 
