@@ -6,6 +6,7 @@ import {
   buildDetailedReports,
   flattenFollowUpDisplayRows,
   FollowUpReportRow,
+  RepeatReasonFollowUpRow,
   StudentReportRow,
 } from '@/lib/detentionReports';
 import { format, parseISO } from 'date-fns';
@@ -154,6 +155,54 @@ function FollowUpTable({
   );
 }
 
+function RepeatReasonTable({ rows }: { rows: RepeatReasonFollowUpRow[] }) {
+  return (
+    <div className="card card-follow-up-repeat p-6">
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <h3 className="text-lg font-bold text-slate-100">3x dezelfde reden</h3>
+        {rows.length > 0 && <span className="badge-warning">{rows.length} op te volgen</span>}
+      </div>
+      <p className="text-sm text-amber-100/80 mb-4">
+        Vanaf 10 november: leerlingen met minstens 3 nablijven voor dezelfde reden. Andere telt niet mee.
+      </p>
+      {rows.length === 0 ? (
+        <p className="text-slate-300/70 text-sm py-4">
+          Nog geen leerlingen met 3 keer dezelfde reden sinds 10 november.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="table-simple w-full">
+            <thead>
+              <tr>
+                <th>Leerling</th>
+                <th>Reden</th>
+                <th>Op</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  <td className="font-medium">{row.student}</td>
+                  <td>{row.reason}</td>
+                  <td>
+                    {row.detentions.map((d) => formatDay(d.date)).join(', ')}
+                  </td>
+                  <td className="text-sm">
+                    <span className="text-amber-50 font-medium">
+                      {row.count}× · op te volgen
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DetailedReportsSection({ detentions, followUpOnly, hideFollowUp }: Props) {
   const reports = useMemo(() => buildDetailedReports(detentions), [detentions]);
 
@@ -171,6 +220,7 @@ export default function DetailedReportsSection({ detentions, followUpOnly, hideF
         rows={reports.strafstudieFollowUp}
         frameClass="card-follow-up-strafstudie"
       />
+      <RepeatReasonTable rows={reports.repeatReasonFollowUp} />
     </>
   );
 

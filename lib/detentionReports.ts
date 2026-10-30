@@ -1,6 +1,11 @@
 import { Detention } from '@/types';
 import { parseISO, differenceInCalendarDays } from 'date-fns';
 import { normalizeDetentionDate } from '@/lib/detentionValidation';
+import { ANDERE_REASON, normalizeReasonLabel } from '@/lib/reasonNormalize';
+
+/** Vanaf deze datum telt 3× dezelfde reden mee voor opvolging. */
+export const REPEAT_REASON_FOLLOW_UP_FROM = '2026-11-10';
+export const REPEAT_REASON_THRESHOLD = 3;
 
 export function studentKey(detention: Detention): string {
   return detention.student.split(' - ')[0].trim();
@@ -436,6 +441,50 @@ export function getPendingDoubleDetentions(detentions: Detention[]): StudentRepo
   return getFollowUpRows(detentions).filter((row) => row.hasOpenFollowUp);
 }
 
+export interface RepeatReasonFollowUpRow {
+  key: string;
+  student: string;
+  reason: string;
+  count: number;
+  detentions: Detention[];
+}
+
+/** Leerlingen met minstens 3 nablijven voor dezelfde reden, vanaf 10 november. Andere telt niet mee. */
+export function getRepeatReasonFollowUpRows(detentions: Detention[]): RepeatReasonFollowUpRow[] {
+  const grouped = new Map<string, { student: string; reason: string; detentions: Detention[] }>();
+
+  for (const detention of detentions) {
+    const day = normalizeDetentionDate(detention.date);
+    if (!day || day < REPEAT_REASON_FOLLOW_UP_FROM) continue;
+    const reason = normalizeReasonLabel(detention.reason || '');
+    if (!reason || reason === ANDERE_REASON) continue;
+    const student = studentKey(detention);
+    const key = `${student.toLowerCase()}::${reason}`;
+    const entry = grouped.get(key) || { student, reason, detentions: [] };
+    entry.detentions.push(detention);
+    grouped.set(key, entry);
+  }
+
+  return Array.from(grouped.entries())
+    .map(([key, row]) => ({
+      key,
+      student: row.student,
+      reason: row.reason,
+      count: row.detentions.length,
+      detentions: [...row.detentions].sort((a, b) =>
+        normalizeDetentionDate(a.date).localeCompare(normalizeDetentionDate(b.date))
+      ),
+    }))
+    .filter((row) => row.count >= REPEAT_REASON_THRESHOLD)
+    .sort((a, b) => {
+      const countDiff = b.count - a.count;
+      if (countDiff !== 0) return countDiff;
+      const aLast = normalizeDetentionDate(a.detentions[a.detentions.length - 1]?.date);
+      const bLast = normalizeDetentionDate(b.detentions[b.detentions.length - 1]?.date);
+      return bLast.localeCompare(aLast) || a.student.localeCompare(b.student, 'nl');
+    });
+}
+
 export interface DetailedReports {
   withDetentions: StudentReportRow[];
   withDoubleDetentions: StudentReportRow[];
@@ -443,6 +492,7 @@ export interface DetailedReports {
   pendingDouble: StudentReportRow[];
   followUp: FollowUpReportRow[];
   strafstudieFollowUp: FollowUpReportRow[];
+  repeatReasonFollowUp: RepeatReasonFollowUpRow[];
 }
 
 export function buildDetailedReports(detentions: Detention[]): DetailedReports {
@@ -455,5 +505,6 @@ export function buildDetailedReports(detentions: Detention[]): DetailedReports {
     pendingDouble: followUp.filter((row) => row.hasOpenFollowUp),
     followUp,
     strafstudieFollowUp,
+    repeatReasonFollowUp: getRepeatReasonFollowUpRows(detentions),
   };
 }
