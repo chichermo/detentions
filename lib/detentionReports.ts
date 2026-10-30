@@ -449,13 +449,17 @@ export interface RepeatReasonFollowUpRow {
   detentions: Detention[];
 }
 
-/** Leerlingen met minstens 3 nablijven voor dezelfde reden, vanaf 10 november. Andere telt niet mee. */
-export function getRepeatReasonFollowUpRows(detentions: Detention[]): RepeatReasonFollowUpRow[] {
+/** Leerlingen met minstens 3 nablijven voor dezelfde reden. Andere telt niet mee. */
+export function getRepeatReasonFollowUpRows(
+  detentions: Detention[],
+  fromDate: string | null = REPEAT_REASON_FOLLOW_UP_FROM
+): RepeatReasonFollowUpRow[] {
   const grouped = new Map<string, { student: string; reason: string; detentions: Detention[] }>();
 
   for (const detention of detentions) {
     const day = normalizeDetentionDate(detention.date);
-    if (!day || day < REPEAT_REASON_FOLLOW_UP_FROM) continue;
+    if (!day) continue;
+    if (fromDate && day < fromDate) continue;
     const reason = normalizeReasonLabel(detention.reason || '');
     if (!reason || reason === ANDERE_REASON) continue;
     const student = studentKey(detention);
@@ -493,6 +497,7 @@ export interface DetailedReports {
   followUp: FollowUpReportRow[];
   strafstudieFollowUp: FollowUpReportRow[];
   repeatReasonFollowUp: RepeatReasonFollowUpRow[];
+  repeatReasonPreview: RepeatReasonFollowUpRow[];
 }
 
 export function buildDetailedReports(detentions: Detention[]): DetailedReports {
@@ -506,5 +511,6 @@ export function buildDetailedReports(detentions: Detention[]): DetailedReports {
     followUp,
     strafstudieFollowUp,
     repeatReasonFollowUp: getRepeatReasonFollowUpRows(detentions),
+    repeatReasonPreview: getRepeatReasonFollowUpRows(detentions, null),
   };
 }
