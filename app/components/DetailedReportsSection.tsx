@@ -1,18 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Detention } from '@/types';
 import {
   buildDetailedReports,
   flattenFollowUpDisplayRows,
   FollowUpReportRow,
-  REPEAT_REASON_FOLLOW_UP_FROM,
   RepeatReasonFollowUpRow,
   StudentReportRow,
 } from '@/lib/detentionReports';
 import { format, parseISO } from 'date-fns';
 import nl from 'date-fns/locale/nl';
-import { normalizeDetentionDate, todayInBrussels } from '@/lib/detentionValidation';
+import { normalizeDetentionDate } from '@/lib/detentionValidation';
 
 interface Props {
   detentions: Detention[];
@@ -156,44 +155,19 @@ function FollowUpTable({
   );
 }
 
-function RepeatReasonTable({
-  liveRows,
-  previewRows,
-}: {
-  liveRows: RepeatReasonFollowUpRow[];
-  previewRows: RepeatReasonFollowUpRow[];
-}) {
-  const ruleActive = todayInBrussels() >= REPEAT_REASON_FOLLOW_UP_FROM;
-  const [showPreview, setShowPreview] = useState(!ruleActive);
-  const rows = showPreview ? previewRows : liveRows;
-
+function RepeatReasonTable({ rows }: { rows: RepeatReasonFollowUpRow[] }) {
   return (
     <div className="card card-follow-up-repeat p-6">
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <h3 className="text-lg font-bold text-slate-100">3x dezelfde reden</h3>
-        {showPreview ? (
-          <span className="badge-warning">Testbeeld</span>
-        ) : rows.length > 0 ? (
-          <span className="badge-warning">{rows.length} op te volgen</span>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => setShowPreview((v) => !v)}
-          className="ml-auto text-xs font-medium text-amber-50/90 underline decoration-amber-200/50 underline-offset-2 hover:text-white"
-        >
-          {showPreview ? 'Toon officiële telling (vanaf 10 nov)' : 'Toon testbeeld'}
-        </button>
+        {rows.length > 0 && <span className="badge-warning">{rows.length} op te volgen</span>}
       </div>
       <p className="text-sm text-amber-100/80 mb-4">
-        {showPreview
-          ? 'Testbeeld met de huidige nablijven, alsof de regel al gold. Officieel telt dit pas vanaf 10 november. Andere blijft buiten de telling.'
-          : 'Vanaf 10 november: leerlingen met minstens 3 nablijven voor dezelfde reden. Andere telt niet mee.'}
+        Vanaf 10 november: leerlingen met minstens 3 nablijven voor dezelfde reden. Andere telt niet mee.
       </p>
       {rows.length === 0 ? (
         <p className="text-slate-300/70 text-sm py-4">
-          {showPreview
-            ? 'Nog geen leerlingen met 3 keer dezelfde reden in de huidige nablijven.'
-            : 'Nog geen leerlingen met 3 keer dezelfde reden sinds 10 november.'}
+          Nog geen leerlingen met 3 keer dezelfde reden sinds 10 november.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -246,10 +220,7 @@ export default function DetailedReportsSection({ detentions, followUpOnly, hideF
         rows={reports.strafstudieFollowUp}
         frameClass="card-follow-up-strafstudie"
       />
-      <RepeatReasonTable
-        liveRows={reports.repeatReasonFollowUp}
-        previewRows={reports.repeatReasonPreview}
-      />
+      <RepeatReasonTable rows={reports.repeatReasonFollowUp} />
     </>
   );
 
