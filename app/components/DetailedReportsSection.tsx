@@ -102,8 +102,11 @@ function FollowUpTable({
   rows: FollowUpReportRow[];
   frameClass?: string;
 }) {
-  const openCount = rows.filter((row) => row.hasOpenFollowUp).length;
-  const displayRows = useMemo(() => flattenFollowUpDisplayRows(rows), [rows]);
+  const displayRows = useMemo(
+    () => flattenFollowUpDisplayRows(rows).filter((row) => row.hasOpenFollowUp),
+    [rows]
+  );
+  const openCount = displayRows.length;
 
   return (
     <div className={`card ${frameClass} p-6`}>
