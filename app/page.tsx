@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Calendar,
   Users,
@@ -25,7 +24,7 @@ import InstallPrompt from '@/app/components/InstallPrompt';
 import RoleSelector from '@/app/components/RoleSelector';
 import BackupRestore from '@/app/components/BackupRestore';
 import { apiFetch } from '@/lib/apiClient';
-import { canManageListsAndRights, shouldLandOnCalendar } from '@/lib/auth';
+import { canManageListsAndRights } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
@@ -102,7 +101,6 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function Home() {
-  const router = useRouter();
   const [sessions, setSessions] = useState<DetentionSession[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -111,13 +109,8 @@ export default function Home() {
   useEffect(() => {
     const lists = canManageListsAndRights();
     setCanManageLists(lists);
-    const wantHub = new URLSearchParams(window.location.search).get('hub') === '1';
-    if (shouldLandOnCalendar() && !wantHub) {
-      router.replace('/calendar');
-      return;
-    }
     fetchSessions();
-  }, [router]);
+  }, []);
 
   const fetchSessions = async () => {
     try {

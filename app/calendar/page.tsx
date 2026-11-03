@@ -31,7 +31,7 @@ import {
   saveCalendarDay,
   getDaySettingFromList,
 } from '@/lib/calendarDaysClient';
-import { canManageCalendarSettings, shouldLandOnCalendar } from '@/lib/auth';
+import { canManageCalendarSettings } from '@/lib/auth';
 import RoleSelector from '@/app/components/RoleSelector';
 import Modal from '@/app/components/ui/Modal';
 
@@ -47,7 +47,6 @@ export default function CalendarPage() {
   const [draftNotice, setDraftNotice] = useState('');
   const [mounted, setMounted] = useState(false);
   const [canAdminCalendar, setCanAdminCalendar] = useState(false);
-  const [landedFromAdminHome, setLandedFromAdminHome] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -75,7 +74,6 @@ export default function CalendarPage() {
   useEffect(() => {
     setMounted(true);
     setCanAdminCalendar(canManageCalendarSettings());
-    setLandedFromAdminHome(shouldLandOnCalendar());
   }, []);
 
   // Al cambiar de mes, cerrar modal si el día ya no aplica
@@ -220,7 +218,7 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               <button
-                onClick={() => router.push(landedFromAdminHome ? '/?hub=1' : '/')}
+                onClick={() => router.push('/')}
                 className="btn-ghost p-2 shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />
