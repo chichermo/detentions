@@ -880,7 +880,6 @@ export default function StatisticsPage() {
                     <tr>
                       <th>Datum</th>
                       <th>Leerling</th>
-                      <th>Periode</th>
                       <th>Reden</th>
                     </tr>
                   </thead>
@@ -889,7 +888,6 @@ export default function StatisticsPage() {
                       <tr key={d.id}>
                         <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
                         <td>{d.student}</td>
-                        <td>{d.timePeriod || '16:00-17:40'}</td>
                         <td>{d.reason || '-'}</td>
                       </tr>
                     ))}

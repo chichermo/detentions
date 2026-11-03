@@ -77,18 +77,6 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
       period2: stats2.uniqueStudents,
       ...getComparison(stats1.uniqueStudents, stats2.uniqueStudents),
     },
-    {
-      metric: 'Met Chromebook',
-      period1: stats1.withChromebook,
-      period2: stats2.withChromebook,
-      ...getComparison(stats1.withChromebook, stats2.withChromebook),
-    },
-    {
-      metric: 'Te Printen',
-      period1: stats1.toPrint,
-      period2: stats2.toPrint,
-      ...getComparison(stats1.toPrint, stats2.toPrint),
-    },
   ];
 
   const dayComparisonData = [
