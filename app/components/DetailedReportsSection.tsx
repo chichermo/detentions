@@ -218,7 +218,7 @@ export default function DetailedReportsSection({ detentions, followUpOnly, hideF
         frameClass="card-follow-up"
       />
       <FollowUpTable
-        title="Strafstudie weigeren"
+        title="Strafstudie weigeringen"
         emptyMessage="Geen open strafstudie-weigeringen om op te volgen."
         rows={reports.strafstudieFollowUp}
         frameClass="card-follow-up-strafstudie"
