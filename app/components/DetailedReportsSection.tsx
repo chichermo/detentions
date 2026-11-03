@@ -213,13 +213,13 @@ export default function DetailedReportsSection({ detentions, followUpOnly, hideF
     <>
       <FollowUpTable
         title="Opvolging weigeringen"
-        emptyMessage="Geen geweigerde nablijven in deze periode."
+        emptyMessage="Geen open weigeringen om op te volgen."
         rows={reports.followUp}
         frameClass="card-follow-up"
       />
       <FollowUpTable
         title="Strafstudie weigeren"
-        emptyMessage="Geen geweigerde strafstudies in deze periode."
+        emptyMessage="Geen open strafstudie-weigeringen om op te volgen."
         rows={reports.strafstudieFollowUp}
         frameClass="card-follow-up-strafstudie"
       />
