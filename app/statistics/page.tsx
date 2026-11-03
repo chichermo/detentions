@@ -899,43 +899,6 @@ export default function StatisticsPage() {
             </div>
           </div>
         </div>
-
-        {/* Overzicht Strafstudies */}
-        <div className="card p-6 mb-8">
-          <h3 className="text-lg font-bold text-slate-100 mb-4">Strafstudies ({strafstudieDetentions.length})</h3>
-          <div className="overflow-x-auto">
-            {strafstudieDetentions.length === 0 ? (
-              <p className="text-slate-400 py-4">Geen strafstudies in de geselecteerde periode.</p>
-            ) : (
-              <table className="table-simple">
-                <thead>
-                  <tr>
-                    <th>Datum</th>
-                    <th>Leerling</th>
-                    <th>Periode</th>
-                    <th className="text-center">Geweigerd</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {strafstudieDetentions.map((d) => (
-                    <tr key={d.id}>
-                      <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                      <td>{d.student}</td>
-                      <td>{d.timePeriod || '16:00-17:40'}</td>
-                      <td className="text-center">
-                        {isStrafstudieWeigering(d) ? (
-                          <span className="badge-danger">Ja</span>
-                        ) : (
-                          <span className="text-slate-500">Nee</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
       </main>
     </div>
   );
