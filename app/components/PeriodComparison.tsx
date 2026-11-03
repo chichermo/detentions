@@ -44,8 +44,6 @@ export default function PeriodComparison({ detentions }: PeriodComparisonProps) 
     return {
       total: detentions.length,
       uniqueStudents: new Set(detentions.map(d => d.student.split(' - ')[0])).size,
-      withChromebook: detentions.filter(d => d.canUseChromebook).length,
-      toPrint: detentions.filter(d => d.shouldPrint).length,
       byDay: {
         MAANDAG: detentions.filter(d => d.dayOfWeek === 'MAANDAG').length,
         DINSDAG: detentions.filter(d => d.dayOfWeek === 'DINSDAG').length,
