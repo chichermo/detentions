@@ -844,7 +844,6 @@ export default function StatisticsPage() {
                   <thead>
                     <tr>
                       <th>Datum</th>
-                      <th>Dag</th>
                       <th>Leerling</th>
                       <th>Reden</th>
                     </tr>
@@ -853,7 +852,6 @@ export default function StatisticsPage() {
                     {nablijvenGeweigerd.map((d) => (
                       <tr key={d.id}>
                         <td>{format(parseISO(d.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                        <td>{DAY_LABELS[d.dayOfWeek] ?? d.dayOfWeek}</td>
                         <td>{d.student}</td>
                         <td>{d.reason || '-'}</td>
                       </tr>
