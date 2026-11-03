@@ -936,59 +936,6 @@ export default function StatisticsPage() {
             )}
           </div>
         </div>
-
-        {/* Tabla Completa de Nablijven */}
-        <div className="card p-6">
-          <h3 className="text-lg font-bold text-slate-100 mb-4">Alle Nablijven ({filteredDetentions.length})</h3>
-          <div className="overflow-x-auto">
-            <table className="table-simple">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Datum</th>
-                  <th>Leerling</th>
-                  <th>Personeel</th>
-                  <th>Reden</th>
-                  <th className="text-center">Print</th>
-                  <th className="text-center">Chromebook</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDetentions.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
-                      Geen nablijven gevonden voor de geselecteerde filters.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDetentions.map((detention) => (
-                    <tr key={detention.id}>
-                      <td>{detention.number}</td>
-                      <td>{format(parseISO(detention.date), 'dd/MM/yyyy', { locale: nl })}</td>
-                      <td>{detention.student}</td>
-                      <td>{detention.teacher || '-'}</td>
-                      <td>{detention.reason || '-'}</td>
-                      <td className="text-center">
-                        {detention.shouldPrint ? (
-                          <span className="badge-success">✓</span>
-                        ) : (
-                          <span className="text-slate-500">-</span>
-                        )}
-                      </td>
-                      <td className="text-center">
-                        {detention.canUseChromebook ? (
-                          <span className="badge-success">✓</span>
-                        ) : (
-                          <span className="text-slate-500">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </main>
     </div>
   );
