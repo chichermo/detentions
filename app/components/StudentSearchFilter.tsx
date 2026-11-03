@@ -80,7 +80,7 @@ export default function StudentSearchFilter({
   const exact = options.find((option) => option.name.toLowerCase() === term);
 
   return (
-    <div className="relative">
+    <div className={`relative ${open ? 'z-[90]' : ''}`}>
       <label className="form-label">Leerling</label>
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none z-10" />

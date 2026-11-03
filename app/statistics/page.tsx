@@ -597,7 +597,7 @@ export default function StatisticsPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Filtros */}
-        <div className="card p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+        <div className="card relative z-20 p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Filter className="h-5 w-5 text-indigo-400" />
             <h2 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">Filters</h2>
